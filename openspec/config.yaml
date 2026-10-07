@@ -1,0 +1,83 @@
+# openspec/config.yaml — SDD configuration for project `tp2` (FixIt)
+# Initialized: 2026-10-06 | Persistence: hybrid (OpenSpec files + Engram)
+# NOTE: greenfield. Stack and tooling below are PLANNED (derived from openspec/drafts/), not detected from code.
+schema: spec-driven
+
+context: |
+  Project: FixIt (tp2, UNAJ "Aplicaciones Moviles") - Android repair marketplace; clients post repair requests, nearby professionals accept (first wins).
+  Stack (planned): Kotlin 2.4.20, AGP 9.2.1, compile/target/minSdk 37/37/26, Jetpack Compose (BOM 2026.09.00) + Material 3, Hilt, Navigation 3, Coil 3, coroutines/Flow.
+  Architecture (planned): Clean Architecture, multi-module Gradle (:app, :core:domain [pure Kotlin/JVM], :core:data, :core:ui, :features:auth|client|professional); MVVM/UDF with sealed UiState + StateFlow.
+  Phases: 1 = Fake in-memory repos + full UI (TP2 delivery); 2 = Firebase (Auth, Firestore, Storage) via Hilt bindings only; 3 = hardware (GPS, camera, photo picker).
+  Testing (planned): JUnit4 + kotlinx-coroutines-test, hand-written fakes, NO mocking library. Strict TDD. `./gradlew test` is not runnable yet (no Gradle project).
+  Style: code identifiers/packages/comments in English (base package ar.edu.unaj.fixit); UI strings in neutral Spanish via strings.xml; Conventional Commits.
+  Drafts: openspec/drafts/ holds pre-SDD material (project.md, design.md, tasks.md, specs/*). It is READ-ONLY input; promote content via the SDD pipeline, never edit in place.
+  State: not a git repository yet; no source code yet.
+
+# Strict TDD (user's global setting). Test runner is planned but not runnable until the Gradle project is scaffolded.
+strict_tdd: true
+
+testing:
+  status: planned          # flip to "available" once the Gradle project exists and `./gradlew test` runs
+  runner:
+    command: "./gradlew test"
+    framework: "JUnit4 + kotlinx-coroutines-test (hand-written fakes, no mocking library)"
+    runnable_now: false
+  layers:
+    unit: { available: false, planned: true, tool: "JUnit4 + kotlinx-coroutines-test (JVM, :core:domain first)" }
+    integration: { available: false, planned: false, tool: null }
+    e2e: { available: false, planned: false, tool: null }
+  coverage: { available: false, command: null }
+  quality:
+    linter: { available: false, command: null }
+    type_checker: { available: false, planned: true, command: "./gradlew build  # Kotlin compiler" }
+    formatter: { available: false, command: null }
+
+rules:
+  language:
+    - "Language contract: SDD prose (proposal, specs, design, tasks, verify and archive reports) MUST be written in neutral, professional Spanish (explicit user request); no regional slang or voseo."
+    - "Code identifiers, package names, class/function names, test names and code comments MUST be written in English."
+    - "Keep structural keywords stable for tooling: section headings such as 'ADDED Requirements' / 'MODIFIED Requirements' / 'REMOVED Requirements' / 'RENAMED Requirements' stay as in the OpenSpec convention."
+  proposal:
+    - "Write in neutral professional Spanish."
+    - "Include scope (in / out), rollback plan for risky changes, and the affected modules and phase tag ([Fase 1] / [Fase 2] / [Fase 3])."
+    - "Respect the Out of Scope list in openspec/drafts/project.md (payments, in-app chat, push notifications, admin panel, mutual rating, identity verification, editing published requests, role change, quantity limits, password recovery/email verification)."
+  specs:
+    - "Write in neutral professional Spanish."
+    - "Scenarios MUST use Given/When/Then expressed in Spanish as DADO / CUANDO / ENTONCES (use Y / O for additional steps)."
+    - "Use RFC 2119 keywords in Spanish: DEBE (MUST), NO DEBE (MUST NOT), DEBERÍA (SHOULD), NO DEBERÍA (SHOULD NOT), PUEDE (MAY). Keep them in uppercase."
+    - "Tag every requirement with its phase: [Fase 1], [Fase 2] or [Fase 3]. A Phase 1 requirement remains in force in later phases unless stated otherwise."
+    - "Domains follow the draft layout: auth, profiles, repair-requests, professional-feed, job-completion, contact, location, media, navigation."
+    - "Delta specs use ADDED / MODIFIED / REMOVED / RENAMED sections per the OpenSpec convention."
+    - "Every scenario MUST be covered either by a JVM test named `given X when Y then Z` or by a manual-checklist item. Scenarios that are purely visual, Android-intent, rotation, Firebase-console or hardware MUST carry [manual] at the end of their title and are verified by hand (design.md section 15)."
+  design:
+    - "Write in neutral professional Spanish; code snippets and identifiers in English."
+    - "Respect the strict dependency rule: :core:domain MUST NOT depend on Android, Firebase, Hilt or Compose; :features:* MUST NOT depend on :core:data nor on each other; navigation is resolved in :app via callbacks."
+    - "Errors are values: use sealed AppResult<T> with DomainError. Commands (suspend functions of repositories and use cases) return AppResult and MUST NOT throw to the presentation layer. Observation functions return Flow<AppResult<T>>: the data layer (Fake and Firebase) converts exceptions into DomainError and ViewModels only map AppResult to UiState (no .catch in ViewModels). Documented exceptions: AuthRepository.session is a Flow<SessionState> (never fails) and signOut() is a plain fun returning Unit; ContactRules Unauthorized is mapped to contact = null in the request detail (not a flow Error)."
+    - "Presentation uses MVVM/UDF: XxxRoute (stateful) + XxxScreen (stateless) + XxxViewModel (@HiltViewModel, MutableStateFlow/StateFlow) + XxxUiState (sealed interface for data screens; data class for forms)."
+    - "Inject Clock; never call System.currentTimeMillis in data/domain outside the Clock binding. Dispatchers are not injected globally: a single @IoDispatcher qualifier binding exists in CoreModule and is injected only by blocking adapters (Phase 2 ImageCompressor, Phase 3 Geocoder) through their constructor; repositories and ViewModels never receive a dispatcher."
+    - "Swapping Fake <-> Firebase MUST happen only in Hilt modules, without touching :core:domain or :features:*."
+    - "Document architecture decisions with rationale; include sequence diagrams for complex flows (e.g., atomic accept, review + reputation aggregate)."
+  tasks:
+    - "Write in neutral professional Spanish; group by phase with hierarchical numbering (e.g., 1.4.2), consistent with openspec/drafts/tasks.md."
+    - "Order tasks test-first: test (RED) -> minimal implementation (GREEN) -> refactor. Each implementation task is preceded by its test task."
+    - "Keep each task completable in one session; start with project scaffolding (Gradle multi-module, version catalog) before any feature work."
+    - "Include the review workload forecast guard lines (400-line budget) as required by the shared SDD protocol."
+  apply:
+    tdd: true
+    test_command: "./gradlew test"   # not runnable until the Gradle project exists (Phase 1, task 1.0)
+    guidelines:
+    - "Follow the Strict TDD cycle: write the failing test first, then the minimal implementation, then refactor."
+    - "Code and comments in English; UI text only via strings.xml in neutral Spanish (no hardcoded visible strings)."
+    - "Use hand-written fakes; do NOT introduce a mocking library."
+    - "Use Conventional Commits; never add AI attribution or Co-Authored-By trailers (user's global rule)."
+    - "Do not modify openspec/drafts/ — it is read-only reference material."
+  verify:
+    test_command: "./gradlew test"
+    build_command: "./gradlew build"
+    coverage_threshold: 0
+    guidelines:
+    - "Every spec scenario MUST be covered by a passing JVM test or, when its title is tagged [manual], by a completed item of the manual checklist (design.md section 15)."
+    - "If the Gradle project does not exist yet, report the test runner as unavailable instead of failing silently."
+  archive:
+    - "Warn before merging destructive deltas (REMOVED / MODIFIED) into openspec/specs/."
+    - "Archive folders are an audit trail: never modify or delete them."

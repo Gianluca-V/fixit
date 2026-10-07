@@ -1,0 +1,80 @@
+# SDD DAG state for change `fixit-mvp` (project tp2)
+change: fixit-mvp
+project: tp2
+artifact_store: hybrid
+created: 2026-10-06
+updated: 2026-10-06
+scope_note: "Specs only for now: user explicitly requested no source code yet."
+phases:
+  explore: skipped        # drafts in openspec/drafts/ used as source material
+  proposal: done
+  spec: done
+  design: done
+  tasks: done
+  apply: pending          # must NOT start until the user explicitly asks (specs only for now)
+  verify: pending
+  archive: pending
+artifacts:
+  proposal:
+    file: openspec/changes/fixit-mvp/proposal.md
+    engram_topic: sdd/fixit-mvp/proposal
+  spec:
+    dir: openspec/changes/fixit-mvp/specs/
+    engram_topic: sdd/fixit-mvp/spec
+  design:
+    file: openspec/changes/fixit-mvp/design.md
+    engram_topic: sdd/fixit-mvp/design
+  tasks:
+    file: openspec/changes/fixit-mvp/tasks.md
+    engram_topic: sdd/fixit-mvp/tasks
+    total_tasks: 161   # phase 1: 125, phase 2: 27, phase 3: 9
+delivery_strategy: ask-on-risk
+chain_strategy: pending            # decision needed before apply (400-line budget risk: High)
+next_recommended: [apply]
+# Verification items from design.md section 19 (to resolve when the Gradle project is scaffolded).
+open_items:
+  - "Verify ViewModel retention per navigation entry with per-tab history: compare with the professor's code that, after switching tab and coming back, the ViewModels and saveable state of the non-visible tab are kept (design 19, ViewModel retention item)"
+  - "Verify against the professor's repository the artifacts for hiltViewModel() and rememberViewModelStoreNavEntryDecorator (lifecycle-viewmodel-navigation3) and the exact semantics of goBackFrom (design 19, hiltViewModel artifacts item)"
+  - "Verify that Android modules can consume testFixtures(project(':core:domain')); fallback: copy the doubles into each src/test (design 19, testFixtures item)"
+  - "Verify Phase 2 offline Firestore writes: withTimeout stops waiting but does not cancel a queued write that may sync later; if it happens, use runTransaction also for create and updateProfile (design 19, Firestore offline writes item)"
+  - "Verify Dagger/Hilt generates factories for @Inject use cases defined in :core:domain (kotlin-jvm without KSP); fallback: @Provides in an app/data Hilt module (design 19)"
+  - "Verify key(userId) in the gate drops every entry ViewModelStore when the user changes (design 19, D20)"
+  - "Verify NavBackStack can be used as MutableList<NavKey> in JVM tests of NavigationState (design 19)"
+resolved:
+  - "Cancel allowed from OPEN and ACCEPTED, owning client only (ACCEPTED -> CANCELLED added)"
+  - "OPEN requests never expire"
+  - "No matching professional: publish anyway; client sees waiting state; no pre-check"
+  - "Profile editing in scope: name+phone (both roles); categories, base point, radius (professional); email and role immutable"
+  - "All assumptions approved as proposed"
+  - "Design alignment: multi-module kept; per-tab history replicating the professor's NavigationState; lost accept race shows a message and returns to Feed on confirm"
+  - "WhatsApp normalization: '+' -> digits as is; no '+' and starts with 54 -> as is; otherwise prefix 549"
+  - "Judgment-day fixes (2026-10-06): every scenario is covered by a JVM test or a manual-checklist item; scenarios that are visual / Android intent / rotation / Firebase console / hardware carry [manual] (design 15)"
+  - "Judgment-day fixes: RepairRequest gets cancelledAt and completedAt (Clock in the Fake, serverTimestamp in Firebase); Firestore rules hasOnly(['status','cancelledAt']) and hasOnly(['status','completedAt'])"
+  - "Judgment-day fixes: ReviewAlreadyExists removed; one review per request is an invariant of the terminal COMPLETED state"
+  - "Judgment-day fixes: observations return Flow<AppResult<T>>, the data layer converts exceptions, ViewModels only map AppResult to UiState (D6); repositories gain get(id) and use cases read fresh data (D19)"
+  - "Judgment-day fixes: FakeDatabase holds one MutableStateFlow<DbState> and one Mutex; failNextWrite test hook makes 'Falla parcial' testable (D10)"
+  - "Judgment-day fixes: domain returns numbers (Reputation.average as BigDecimal HALF_UP, distance rounded to 0.1 km); the UI formats with the device locale; Matching.isWithin is the pure inclusive boundary check"
+  - "Judgment-day fixes: Validators.coordinates, ValidationError.EMPTY_PASSWORD, email regex with trim().lowercase() (Validators and Fake), phone strips spaces/hyphens/parentheses; categories no longer say 'sin duplicados'"
+  - "Judgment-day fixes: 'Mis trabajos' list shows only the status; CompleteJobViewModel loads the request detail; optional status filter removed; professional detail depends on status and viewer (viewerIsAssignee), lost-race dialog kept"
+  - "Judgment-day fixes (Phase 2): withTimeout 15 s + exception mapping table + Storage maxUploadRetryTimeMillis; sign-up order Auth user -> users/{uid} with rollback; ImageCompressor with injected dispatcher and pure targetSize"
+  - "Judgment-day fixes: reputation protection limited to email and role; ratingSum/reviewCount stay writable through the aggregate clause (accepted weakness, D18)"
+  - "Judgment-day fixes (Phase 3): gallery uses PickVisualMedia when 1 slot remains, PickMultipleVisualMedia(remaining) otherwise"
+  - "Judgment-day suspects: NavigationState.navigate ignores a key already on top; Storage delete rule separated; users create always writes ratingSum 0 / reviewCount 0; PhoneFormatter.whatsAppUrl added"
+  - "Judgment-day round 2: pure experienceFor(SessionState): Experience (AUTH/CLIENT/PROFESSIONAL/LOADING) tested with SessionViewModel; navigation scenarios mapped to NavigationState JVM tests (explicit table in design 15) or tagged [manual]; dismiss-confirmation scenarios tagged [manual] and renamed (cancelacion / aceptacion)"
+  - "Judgment-day round 2: auth stack reuses NavigationState with a single pseudo-tab AUTH (same guarded navigate/goBackFrom)"
+  - "Judgment-day round 2: DomainException(error) in the data layer; Firestore transactions throw it; toDomainError() resolves it first (also through the cause chain); new row in design 13.4"
+  - "Judgment-day round 2 (Phase 2): session stays SignedOut while signUp/signIn runs (in-memory flag); rollback user.delete() in withContext(NonCancellable); orphan-account check uses the same flag"
+  - "Judgment-day round 2 (Phase 2): Storage upload with putBytes(bytes, storageMetadata { contentType = image/jpeg }); ImageCompressor applies EXIF orientation before compressing; targetSize coerceAtLeast(1)"
+  - "Judgment-day round 2 (Phase 2): coil-network-okhttp in :core:ui, INTERNET permission + google-services plugin in :app, exifinterface in :core:data; proposal phases/affected modules updated"
+  - "Judgment-day round 2: gate uses key(userId) around the role shell (D20); ViewModels read the id from AuthRepository.currentUserId(); manual scenario 'Otro usuario tras cerrar sesion no ve datos del anterior'"
+  - "Judgment-day round 2: Test*Repository one-shot per-operation error hooks (acceptError, completeError, updateProfileError, createError, observeError); FakeDatabase.failNextWrite consumed only by the next write that passes validation; currentUserId and passwords inside DbState"
+  - "Judgment-day round 2: use cases persist trimmed name, phone and description; description length rules on trimmed text; PhoneFormatter trims and strips spaces/hyphens/parentheses before checking the leading +"
+  - "Judgment-day round 2 (Phase 2): timestamps read with getTimestamp(field, ServerTimestampBehavior.ESTIMATE); DTO writes only createdAt on create; custom pending-write rule dropped"
+  - "Judgment-day round 2: Haversine clamps a to [0,1]; targetSize coerceAtLeast(1); picked URIs take(remaining); reputation UI minimumFractionDigits = 1; ObserveFeedUseCase distinctUntilChanged on (categories, base, radiusKm) before flatMapLatest"
+  - "Judgment-day round 2: documented D6 exceptions (session Flow<SessionState>, signOut() plain fun Unit, ContactRules Unauthorized -> contact = null); @IoDispatcher qualifier used only by blocking adapters; config rules.design aligned"
+  - "Judgment-day round 2: accept idempotent for the same professional (state machine note + Fake + Firestore transaction + scenario 'Aceptar de nuevo el mismo trabajo')"
+  - "Judgment-day round 2: detail flow transient emission documented (combining request/review/counterpart flows can emit a transient state, e.g. COMPLETED with review = null, in both Fake and Firebase; ViewModel tests use first { ... } on the final state)"
+  - "Judgment-day round 3: ObserveRequestDetailUseCase transient emission documented for Fake and Firebase (no 'never intermediate' claim); design 13.4 code fence fixed; coroutines dependencies per module (api core, play-services in :core:data Phase 2, android where needed)"
+  - "Judgment-day round 3: FakeDatabase computes writes with a pure lambda under the Mutex, reads failNextWrite/clock/ids before update, consumes hook after deciding; signIn/signOut under the same Mutex; D10 tuple aligned; Fake observe* use distinctUntilChanged; Test doubles gain signInError/signUpError/cancelError, observeError applies to every observe*"
+  - "Judgment-day round 3: media spec 'Usuario sin permiso' reworded to Storage path uid with limitation; storageMetadata { } KTX builder; onRetry sets Loading; NavigationState sketch typed MutableList<NavKey> plus resetToRoot; pro accept resets MY_JOBS to root; D20 fallback (reset stacks before signOut, recreate Activity); success criterion '10 distinct professionals accept at once -> exactly 1 success'"
+  - "Judgment-day round 2 wording: Haversine tolerance 'defined in the specs'; config type_checker.available false; client COMPLETED detail shows contact card; Phase 1 photo button 'Agregar foto de ejemplo'; Dagger factories item in design 19; firebaseCall/asResult JVM test row (virtual time); PhoneFormatter limitation adds 0xx 15 trunk formats; contact intents use try/catch ActivityNotFoundException (no <queries>)"
