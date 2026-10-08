@@ -1,6 +1,8 @@
 # Delta para Fotos (`media`)
 
-> Cambio: `fixit-mvp`. Alcance: adjuntar entre 1 y 3 fotos a una solicitud y mostrarlas. Comportamiento por fase: fotos simuladas (Fase 1), almacenamiento remoto (Fase 2), cámara y selector de galería reales (Fase 3).
+> Cambio: `fixit-mvp`. Alcance: adjuntar entre 1 y 3 fotos a una solicitud y mostrarlas. Comportamiento por fase: fotos simuladas (Fase 1), subida a Cloudinary mediante un *upload preset* sin firma (Fase 2), cámara y selector de galería reales (Fase 3).
+>
+> Restricción dura: el proyecto NO DEBE requerir tarjeta de crédito. Por eso las fotos NO usan Cloud Storage for Firebase (exige el plan Blaze) y Firestore guarda solo las URLs de entrega.
 >
 > Convención de verificación: cada escenario está cubierto por un test JVM o por un ítem del checklist manual. Los escenarios cuyo título termina en `[manual]` se verifican a mano (ver `design.md` §15).
 
@@ -48,14 +50,21 @@ El formulario DEBE mostrar miniaturas de las fotos agregadas y el detalle DEBE m
 - CUANDO se muestra el detalle
 - ENTONCES la segunda foto tiene la descripción "Foto 2 de 3"
 
-### Requirement: Subida de fotos al servicio [Fase 2]
+### Requirement: Subida de fotos a Cloudinary [Fase 2]
 
-Con el backend de Fase 2, las fotos DEBEN subirse antes de que la solicitud quede publicada. Cada imagen DEBE rotarse según su orientación EXIF y comprimirse a JPEG con lado mayor de hasta 1600 px y calidad 80, y subirse con tipo de contenido `image/jpeg`; el cálculo del tamaño de destino es una función pura (`targetSize(width, height, maxSide = 1600)`) que no amplía las imágenes pequeñas. Si falla la subida de alguna foto o la escritura posterior de la solicitud, la solicitud NO DEBE crearse, las fotos ya subidas DEBEN descartarse (mejor esfuerzo) y el resultado DEBE ser un error. Una subida que no termine en 15 segundos DEBE informar `Network`. Solo el cliente dueño PUEDE subir y borrar fotos de su solicitud.
+Con el backend de Fase 2, las fotos DEBEN subirse a Cloudinary antes de que la solicitud quede publicada, mediante una subida sin firma (*unsigned*) con un *upload preset* configurado en Cloudinary; la app NO DEBE contener ninguna clave secreta de Cloudinary. Cada imagen DEBE rotarse según su orientación EXIF y comprimirse a JPEG con lado mayor de hasta 1600 px y calidad 80 antes de subirse; el cálculo del tamaño de destino es una función pura (`targetSize(width, height, maxSide = 1600)`) que no amplía las imágenes pequeñas. La solicitud DEBE guardar en Firestore únicamente las URLs de entrega de las fotos (`photoUrls`), nunca los bytes. Si falla la subida de alguna foto o la escritura posterior de la solicitud, la solicitud NO DEBE crearse y el resultado DEBE ser un error. Una subida que no termine en 15 segundos DEBE informar `Network`; una falla de red DEBE mapearse a `Network` y cualquier otra falla del servicio de imágenes DEBE mapearse a `Unknown`.
+
+La app NO DEBE intentar borrar fotos ya subidas (el borrado exige la API firmada de Cloudinary). Las fotos subidas de una creación fallida o de una solicitud cancelada permanecen en Cloudinary (debilidad aceptada). El preset DEBE limitar la carpeta de destino, los formatos de imagen permitidos y el tamaño máximo.
 
 #### Escenario: Subida exitosa [manual]
 - DADO una solicitud con 2 fotos
 - CUANDO el cliente la publica
-- ENTONCES la solicitud queda con 2 fotos accesibles desde otro dispositivo
+- ENTONCES la solicitud queda con 2 fotos accesibles por URL desde otro dispositivo
+
+#### Escenario: Firestore guarda solo las URLs [manual]
+- DADO una solicitud publicada con 2 fotos
+- CUANDO se inspecciona su documento en la consola de Firestore
+- ENTONCES `photoUrls` contiene 2 URLs de Cloudinary y el documento no contiene datos binarios de imagen
 
 #### Escenario: Cálculo del tamaño de compresión
 - DADO una foto de 4000 x 3000 px, otra de 3000 x 4000 px y otra de 800 x 600 px
@@ -65,24 +74,36 @@ Con el backend de Fase 2, las fotos DEBEN subirse antes de que la solicitud qued
 #### Escenario: Calidad visual de la compresión [manual]
 - DADO una foto de 4000 x 3000 px
 - CUANDO se sube
-- ENTONCES la imagen almacenada es JPEG de calidad 80, su lado mayor es de 1600 px o menos y se ve nítida en el detalle
+- ENTONCES la imagen subida es JPEG de calidad 80, su lado mayor es de 1600 px o menos y se ve nítida en el detalle
 - Y una foto vertical tomada con la cámara se ve derecha (no rotada)
+
+#### Escenario: Mapeo de fallas de la subida
+- DADO un servicio de imágenes de prueba que falla por red, por tiempo agotado (más de 15 segundos en tiempo virtual) o por otro motivo
+- CUANDO se intenta subir una foto
+- ENTONCES el resultado es `Network`, `Network` y `Unknown` respectivamente, sin lanzar excepciones
 
 #### Escenario: Falla la segunda foto [manual]
 - DADO que falla la subida de la segunda de 2 fotos
 - CUANDO el cliente publica
-- ENTONCES se descarta la primera foto, no se crea la solicitud y se informa un error
+- ENTONCES no se crea la solicitud y se informa un error
+- Y la primera foto ya subida permanece en Cloudinary sin que la app intente borrarla
 
 #### Escenario: Falla la escritura de la solicitud [manual]
 - DADO que las 2 fotos se subieron y falla la escritura de la solicitud
 - CUANDO el cliente publica
-- ENTONCES se descartan las 2 fotos subidas, no se crea la solicitud y se informa un error
+- ENTONCES no se crea la solicitud y se informa un error
+- Y las 2 fotos permanecen en Cloudinary sin que la app intente borrarlas
 
-#### Escenario: Usuario sin permiso [manual]
-- DADO un usuario no autenticado, o que no es el dueño de la solicitud
-- CUANDO intenta subir una foto a esa solicitud
-- ENTONCES la subida es rechazada
-- Limitación: la regla solo puede verificar que el `uid` de la ruta sea el del usuario, porque las fotos se suben antes de que exista la solicitud
+#### Escenario: Preset sin firma y sin secretos en la app [manual]
+- DADO el APK de Fase 2 y el *upload preset* configurado en Cloudinary
+- CUANDO se revisan el código, los recursos y la configuración del preset
+- ENTONCES no hay API secret de Cloudinary en el repositorio ni en el APK
+- Y el preset limita carpeta, formatos de imagen y tamaño máximo
+
+#### Escenario: Cuentas sin tarjeta [manual]
+- DADO el proyecto Firebase y la cuenta de Cloudinary usados en Fase 2
+- CUANDO se revisan sus paneles de facturación
+- ENTONCES Firebase está en el plan Spark, Cloudinary está en su plan gratuito y ninguna cuenta tiene tarjeta cargada
 
 ### Requirement: Selector de galería [Fase 3]
 

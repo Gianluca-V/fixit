@@ -146,7 +146,7 @@ La pantalla de edición DEBE mostrar los valores actuales precargados, deshabili
 
 ### Requirement: Alcance de los cambios de perfil [Fase 1]
 
-Editar el perfil NO DEBE alterar el estado de ninguna solicitud. Los datos de contacto que ve la contraparte DEBEN reflejar siempre los valores vigentes del perfil. Los efectos de editar categorías, punto base o radio se limitan al feed (ver `professional-feed`).
+Editar el perfil NO DEBE alterar el estado de ninguna solicitud. Los datos de contacto que ve la contraparte DEBEN reflejar siempre los valores vigentes del perfil. Los efectos de editar categorías, punto base o radio se limitan al feed (ver `professional-feed`) y, en Fase 4, a las suscripciones a temas de avisos (ver `notifications`).
 
 #### Escenario: Contacto con el teléfono vigente
 - DADO una solicitud `ACCEPTED` cuyo cliente cambia su teléfono

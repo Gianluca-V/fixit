@@ -147,7 +147,7 @@ El sistema DEBE permitir iniciar sesión con email y contraseña. Antes de consu
 
 ### Requirement: Cierre de sesión [Fase 1]
 
-El sistema DEBE permitir cerrar sesión desde la pantalla de perfil de ambos roles.
+El sistema DEBE permitir cerrar sesión desde la pantalla de perfil de ambos roles. En Fase 4, iniciar y cerrar sesión además suscriben y desuscriben al dispositivo de los temas de avisos (ver `notifications`).
 
 #### Escenario: Cerrar sesión
 - DADO una sesión iniciada

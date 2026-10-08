@@ -1,7 +1,8 @@
-# Diseño: FixIt MVP (Fases 1–3)
+# Diseño: FixIt MVP (Fases 1–4)
 
 > Cambio `fixit-mvp`. El "qué" está en `proposal.md` y `specs/`; este documento define el "cómo".
 > Prioridad explícita del usuario: **la solución más simple posible** para un equipo sin experiencia en Kotlin ni Compose, sin dejar de mostrar los temas de la cátedra (Clase 4) y respetando la estructura multi-módulo, que es parte evaluada del TP.
+> **Restricción dura (2026-10-08)**: nada puede requerir tarjeta de crédito. Firebase queda en Spark (Auth + Firestore + FCM); las fotos van a Cloudinary (§13.7) y los avisos push los envía un Cloudflare Worker (§14b). Actualizado el 2026-10-08.
 
 ## 1. Cómo leer este diseño
 
@@ -12,11 +13,18 @@
 - `:app` une todo: arranca Hilt, elige qué mostrar según la sesión y resuelve la navegación.
 - Regla de oro: las dependencias apuntan **hacia el dominio**. Si una pantalla intenta usar Firebase o un Fake directamente, el proyecto no compila.
 - **Hilt** es el "enchufe": en un solo archivo decide si las pantallas reciben la versión Fake o la de Firebase.
-- Orden sugerido: §3 módulos → §5 dominio → §7 casos de uso → §8–9 pantallas y navegación → §10 flujos.
+- `worker/` (raíz del repositorio, fuera de Gradle) es un servidor mínimo en TypeScript que solo existe para la Fase 4: guarda la clave de FCM y envía los avisos.
+- Orden sugerido: §3 módulos → §5 dominio → §7 casos de uso → §8–9 pantallas y navegación → §10 flujos. Fase 2: §13. Fase 4: §14b.
 
 ## 2. Enfoque técnico
 
 Clean Architecture multi-módulo, igual que el repositorio de la cátedra (`mauromarod/unaj-am`), con MVVM/UDF: `XxxRoute` (con estado) → `XxxViewModel` (`StateFlow<XxxUiState>`) → caso de uso o interfaz de repositorio → implementación Fake (Fase 1) o Firebase (Fase 2). Todo lo que no es requisito de la cátedra se simplifica (ver §16).
+
+| Fase | Qué se agrega en `:core:data` / `:app` | Qué NO cambia |
+|---|---|---|
+| 2 | `Firebase*Repository` (Auth + Firestore, plan Spark); fotos con un `POST` HTTP a Cloudinary (preset sin firma, OkHttp, D21) | `:core:domain`, `:features:*` |
+| 3 | Ubicación real (`@Binds`), cámara y Photo Picker (UI) | `:core:domain` |
+| 4 | Decorador `NotifyingRepairRequestRepository` (D24), sincronización de temas FCM (D26), servicio FCM y enlace profundo en `:app` (D28); Worker en `worker/` (D23, D27) | `:core:domain`, `:features:*` |
 
 Versiones: usar la última estable al implementar para Compose BOM, Hilt, Navigation 3, Coil 3 y Firebase BoM. Referencia del repositorio de la cátedra: Kotlin 2.4.20, AGP 9.2.1, Compose BOM 2026.09.00, navigation3 1.2.0, lifecycle 2.11.0, Coil 3.6.3, minSdk 26, compile/targetSdk 37. Todas en `gradle/libs.versions.toml`.
 
@@ -38,7 +46,13 @@ graph TD
     pro --> domain
     ui --> domain
     data --> domain
+    data -. "HTTPS (Fase 2)" .-> cld(["Cloudinary"])
+    data -. "HTTPS + ID token (Fase 4)" .-> wk(["worker/ (Cloudflare)"])
+    wk -. "FCM HTTP v1" .-> fcm(["FCM"])
+    fcm -. "mensaje de datos" .-> app
 ```
+
+Las flechas punteadas son servicios externos por red, no dependencias de Gradle: `worker/` no es un módulo y no forma parte del APK.
 
 | Desde \ Hacia | `:core:domain` | `:core:ui` | `:core:data` | `:features:*` |
 |---|---|---|---|---|
@@ -51,10 +65,11 @@ graph TD
 | Módulo | Tipo / plugins | Dependencias externas principales |
 |---|---|---|
 | `:core:domain` | `kotlin-jvm`, `java-test-fixtures` | `kotlinx-coroutines-core` expuesto como `api` (los demás módulos lo reciben transitivamente), `javax.inject` (solo la anotación `@Inject`) |
-| `:core:data` | Android library, Hilt, KSP | Hilt, `kotlinx-coroutines-android` (dispatchers); Fase 2: Firebase BoM, `kotlinx-coroutines-play-services` (para `Task.await()`), `geofire-android-common`, `androidx.exifinterface`; Fase 3: `play-services-location` |
-| `:core:ui` | Android library, Compose | Compose BOM, Material 3, Coil 3; Fase 2: `coil-network-okhttp` (Coil 3 no trae cliente de red; hace falta para cargar las URLs https de Storage) |
-| `:features:*` | Android library, Compose, Hilt, KSP | `lifecycle-runtime-compose`, `hiltViewModel()` (mismo artefacto que la cátedra) |
-| `:app` | Android application, Compose, Hilt, KSP, Kotlin Serialization | Navigation 3, `lifecycle-viewmodel-navigation3`; Fase 2: plugin `google-services` y permiso `INTERNET` en el manifest |
+| `:core:data` | Android library, Hilt, KSP; Fase 2: `buildFeatures { buildConfig = true }` (D22) | Hilt, `kotlinx-coroutines-android` (dispatchers); Fase 2: Firebase BoM (`firebase-auth`, `firebase-firestore`; **sin** `firebase-storage`), `kotlinx-coroutines-play-services` (para `Task.await()`), `geofire-android-common`, `androidx.exifinterface`, `okhttp` + `okhttp-coroutines` (subida a Cloudinary, D21), `kotlinx-serialization-json` (solo la API `JsonElement` para leer la respuesta; no requiere el plugin); Fase 3: `play-services-location`; Fase 4: `firebase-messaging` (suscripción a temas) |
+| `:core:ui` | Android library, Compose | Compose BOM, Material 3, Coil 3; Fase 2: `coil-network-okhttp` (Coil 3 no trae cliente de red; hace falta para cargar las URLs https de Cloudinary) |
+| `:features:*` | Android library, Compose, Hilt, KSP | `lifecycle-runtime-compose`, `hiltViewModel()` (mismo artefacto que la cátedra). Sin cambios en Fases 2 y 4. |
+| `:app` | Android application, Compose, Hilt, KSP, Kotlin Serialization | Navigation 3, `lifecycle-viewmodel-navigation3`; Fase 2: plugin `google-services` y permiso `INTERNET` en el manifest; Fase 4: `firebase-messaging`, permiso `POST_NOTIFICATIONS`, `<service>` de `FixItMessagingService` y `MainActivity` con `launchMode="singleTop"` |
+| `worker/` (fuera de Gradle) | Cloudflare Worker, TypeScript, `wrangler` | Solo APIs estándar del runtime (`fetch`, WebCrypto); desarrollo: `wrangler`, `typescript`, `@cloudflare/workers-types`, `vitest` (D23) |
 
 Gradle simple: `settings.gradle.kts` con los 7 `include`, un `libs.versions.toml` y cada módulo declara sus plugins y su bloque `android {}` directamente (sin `build-logic` ni convention plugins, ver D2).
 
@@ -64,13 +79,16 @@ Paquete base `ar.edu.unaj.fixit`. Todos los archivos son nuevos (proyecto greenf
 
 ```
 settings.gradle.kts · build.gradle.kts · gradle/libs.versions.toml
-firestore.rules · firestore.indexes.json · storage.rules            (Fase 2)
+firestore.rules · firestore.indexes.json                            (Fase 2; ya no hay storage.rules)
+local.properties (NO versionado)  CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET (Fase 2), PUSH_WORKER_URL (Fase 4)
 app/            ar.edu.unaj.fixit
-  FixItApplication.kt (@HiltAndroidApp) · MainActivity.kt (@AndroidEntryPoint)
+  FixItApplication.kt (@HiltAndroidApp; Fase 4: crea el canal y arranca TopicSync) · MainActivity.kt (@AndroidEntryPoint; Fase 4: lee el enlace profundo del Intent)
   navigation/   Destinations.kt (claves @Serializable : NavKey) · TopLevelDestination.kt (pestañas por rol + pseudo-pestaña AUTH)
                 NavigationState.kt (una pila por pestaña; también para AUTH) · AppNavDisplay.kt (NavDisplay + entryProvider)
                 Experience.kt (enum Experience + experienceFor, pura) · FixItApp.kt (compuerta + SessionViewModel)
-  ui/           AppShell.kt (Scaffold + NavigationBar con las pestañas del rol)
+                (Fase 4) DeepLink.kt (DeepLinkDestination, deepLinkDestination(type, role, requestId), NavigationState.open; puras)
+  ui/           AppShell.kt (Scaffold + NavigationBar con las pestañas del rol; Fase 4: pide POST_NOTIFICATIONS)
+  push/         (Fase 4) FixItMessagingService.kt (@AndroidEntryPoint), Notifications.kt (canal + construcción del aviso + PendingIntent)
 core/domain/    ar.edu.unaj.fixit.core.domain
   model/        User, RepairRequest, Review, enums, GeoPoint, Place, SessionState, forms, RequestDetail, Limits
   result/       AppResult, DomainError, ValidationError
@@ -80,9 +98,13 @@ core/domain/    ar.edu.unaj.fixit.core.domain
   src/testFixtures/  TestAuthRepository, TestUserRepository, TestRepairRequestRepository, TestLocation, MainDispatcherRule
 core/data/      ar.edu.unaj.fixit.core.data
   fake/         FakeDatabase, SeedData, FakeAuthRepository, FakeUserRepository, FakeRepairRequestRepository, FakeLocation
-  firebase/     (Fase 2) Firebase*Repository, Dtos.kt (DTO + mappers), FirebaseCalls.kt (firebaseCall, asResult, DomainException, mapeo de excepciones), ImageCompressor.kt (+ targetSize)
+  firebase/     (Fase 2) Firebase*Repository, Dtos.kt (DTO + mappers), FirebaseCalls.kt (firebaseCall, asResult, DomainException, mapeo de excepciones)
+  cloudinary/   (Fase 2) CloudinaryConfig, PhotoUploader + CloudinaryUploader (+ buildUploadRequest, parseUploadResponse, CloudinaryUploadException), ImageCompressor.kt (+ targetSize)
   device/       (Fase 3) FusedLocationProvider, GeocoderAddressResolver
-  di/           RepositoryModule, CoreModule (+ @IoDispatcher), (Fase 2) FirebaseModule
+  push/         (Fase 4) PushEvent, WorkerClient + HttpWorkerClient (+ buildNotifyRequest), IdTokenProvider + FirebaseIdTokenProvider,
+                NotifyingRepairRequestRepository (+ withPush), TopicMessaging + FirebaseTopicMessaging, TopicSync (+ topicsFor, topicChanges),
+                PushDecision.kt (PushEventType, shouldNotify; puras), PushMessageHandler
+  di/           RepositoryModule, CoreModule (+ @IoDispatcher; Fase 4: @ApplicationScope), (Fase 2) FirebaseModule, NetworkModule (OkHttpClient, CloudinaryConfig; Fase 4: WorkerConfig)
 core/ui/        ar.edu.unaj.fixit.core.ui
   theme/        FixItTheme (Material 3)
   components/   LoadingContent, ErrorContent, StatusBadge, CategoryChips, PhotoThumbnails, PhotoPager,
@@ -92,6 +114,11 @@ core/ui/        ar.edu.unaj.fixit.core.ui
 features/auth/          ...feature.auth          signin/ · signup/
 features/client/        ...feature.client        myrequests/ · create/ · detail/ · complete/ · profile/ (perfil + edición)
 features/professional/  ...feature.professional  feed/ · detail/ · myjobs/ · profile/ (perfil + edición)
+worker/         (Fase 4, fuera de Gradle) package.json · tsconfig.json · wrangler.toml · .dev.vars (NO versionado)
+  src/          index.ts (POST /notify) · idToken.ts (verifica el ID token de Firebase, JWKS en caché)
+                googleAuth.ts (JWT RS256 con WebCrypto → token OAuth de FCM, en caché) · firestore.ts (lee requests/{id} por REST)
+                fcm.ts (envío HTTP v1) · rules.ts (decide destino del aviso, pura)
+  test/         rules.test.ts · idToken.test.ts (solo validación de claims, pura)
 ```
 
 ## 5. Dominio (`:core:domain`)
@@ -509,7 +536,8 @@ object CoreModule {
 - Hook de prueba `failNextWrite(error: DomainError)` en `FakeDatabase` (solo para tests): la **siguiente escritura que supere la validación** devuelve `AppResult.Error(error)` sin modificar el estado y el hook se consume. No lo consumen `signIn`, `signOut` ni las escrituras rechazadas antes por validación o por `Unauthorized`. Permite probar la "Falla parcial" (§15).
 - Los repositorios Fake reciben `FakeDatabase` y `Clock` por constructor.
 - `ImageCompressor` (Fase 2) y `GeocoderAddressResolver` (Fase 3) reciben `@IoDispatcher CoroutineDispatcher`; ningún repositorio ni ViewModel lo recibe.
-- Fase 2: `FirebaseModule` provee `FirebaseAuth`, `FirebaseFirestore` y `FirebaseStorage` (este último con `maxUploadRetryTimeMillis = 15_000`, §13.4), y se cambian los tres `@Binds` de repositorios. Fase 3: se cambian los dos de ubicación.
+- Fase 2: `FirebaseModule` provee `FirebaseAuth` y `FirebaseFirestore`; `NetworkModule` provee un `OkHttpClient` `@Singleton`, `CloudinaryConfig` (leído de `BuildConfig`, D22) y `@Binds PhotoUploader` → `CloudinaryUploader` (que `FirebaseRepairRequestRepository` recibe por constructor); se cambian los tres `@Binds` de repositorios. Fase 3: se cambian los dos de ubicación.
+- Fase 4: el `@Binds` de `RepairRequestRepository` se reemplaza por un `@Provides` que envuelve el repositorio Firebase con el decorador (§14b.3); `CoreModule` agrega `@ApplicationScope CoroutineScope`; `FirebaseModule` agrega `FirebaseMessaging`; `NetworkModule` agrega `WorkerConfig`.
 - Casos de uso: `@Inject constructor`, sin módulo. ViewModels: `@HiltViewModel` en cada feature.
 
 ## 12. Datos de ejemplo (Fase 1, `SeedData`)
@@ -550,7 +578,7 @@ Fotos de ejemplo: `android.resource://ar.edu.unaj.fixit/drawable/sample_repair_{
 | `reviews/{requestId}` | `professionalId`, `clientId`, `rating`, `comment`, `createdAt` |
 
 - **Alta de usuario**: el DTO escribe siempre `ratingSum = 0` y `reviewCount = 0`, para cualquier rol (también `CLIENT`), porque la regla de creación de `users/{uid}` lo exige (§13.3). El orden y los errores del registro están en §13.5.
-- **Crear**: `id = collection("requests").document().id` → comprimir cada foto (`ImageCompressor`, §13.6) → subir a `requestPhotos/{uid}/{id}/{i}.jpg` con `putBytes(bytes, storageMetadata { contentType = "image/jpeg" })` (sin ese metadato, la regla de Storage que exige `contentType` `image/.*` rechazaría la subida) → escribir el documento con las URLs de descarga y `GeoFireUtils.getGeoHashForLocation(...)`. Al crear, el DTO escribe como fecha **solo** `createdAt` (`serverTimestamp()`); `professionalId`, `acceptedAt`, `cancelledAt` y `completedAt` quedan ausentes hasta que la transacción correspondiente los escribe. Si falla una subida **o la escritura del documento**: borrar las fotos ya subidas (mejor esfuerzo; la regla de Storage permite borrar al dueño, §13.3) y devolver el error mapeado (§13.4). Cada subida y cada escritura va dentro de `firebaseCall` (15 s por operación).
+- **Crear**: `id = collection("requests").document().id` → por cada foto, en orden: comprimir (`ImageCompressor`, §13.6) y subir con `PhotoUploader.upload(bytes)` (implementado por `CloudinaryUploader`, §13.7), que devuelve la `secure_url` → escribir el documento con esas URLs en `photoUrls` y `GeoFireUtils.getGeoHashForLocation(...)`. Al crear, el DTO escribe como fecha **solo** `createdAt` (`serverTimestamp()`); `professionalId`, `acceptedAt`, `cancelledAt` y `completedAt` quedan ausentes hasta que la transacción correspondiente los escribe. Si falla una subida **o la escritura del documento**, se devuelve el error mapeado (§13.4) y **no** se intenta borrar nada: las fotos ya subidas quedan huérfanas en Cloudinary (borrar exige la API firmada; debilidad aceptada, D18). Cada subida y cada escritura va dentro de `firebaseCall` (15 s por operación).
 - **Aceptar / cancelar / completar**: `runTransaction` (dentro de `firebaseCall`) que lee la solicitud, aplica `RequestStateMachine` (más la idempotencia de aceptar del mismo profesional, §10.2) y escribe; cuando la regla de dominio da un `Error`, la transacción lo lanza como `DomainException(error)` (§13.4); cada una guarda su fecha (`acceptedAt`, `cancelledAt`, `completedAt`); completar además crea la reseña (con `completedAt` y `Review.createdAt`) y suma al agregado del profesional. Un error de reglas (`PERMISSION_DENIED`) se mapea a `Unauthorized`.
 - **Fechas**: en Fase 1 todas salen de `Clock.now()`; en Fase 2 se escriben con `serverTimestamp()` y se leen con `getTimestamp(campo, ServerTimestampBehavior.ESTIMATE)`, que devuelve una estimación local mientras el valor del servidor está pendiente (no hay regla propia de "escritura pendiente"; nunca `System.currentTimeMillis()` fuera de `CoreModule`).
 - **Lecturas frescas**: `get(id)` lee el documento directamente (no el estado de la sesión); lo usan los casos de uso para sus chequeos previos (D19).
@@ -574,6 +602,10 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function me() { return get(/databases/$(db)/documents/users/$(request.auth.uid)).data; }
     function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    // Only URLs of OUR Cloudinary account (replace <CLOUD_NAME> before deploying). `||` short-circuits, so p[1]/p[2] are never read out of range.
+    function isPhotoUrl(u) { return u is string && u.matches('https://res[.]cloudinary[.]com/<CLOUD_NAME>/image/upload/.+'); }
+    function validPhotos(p) { return p is list && p.size() >= 1 && p.size() <= 3 && isPhotoUrl(p[0])
+      && (p.size() < 2 || isPhotoUrl(p[1])) && (p.size() < 3 || isPhotoUrl(p[2])); }
 
     match /users/{uid} {
       allow read: if signedIn();   // KNOWN WEAKNESS: phone readable by any signed-in user
@@ -591,7 +623,7 @@ service cloud.firestore {
       allow create: if signedIn() && me().role == 'CLIENT'
         && request.resource.data.clientId == request.auth.uid
         && request.resource.data.status == 'OPEN'
-        && request.resource.data.photoUrls.size() >= 1 && request.resource.data.photoUrls.size() <= 3
+        && validPhotos(request.resource.data.photoUrls)
         && request.resource.data.description.size() >= 10 && request.resource.data.description.size() <= 500;
       allow update: if
         (signedIn() && me().role == 'PROFESSIONAL'                                   // accept
@@ -622,22 +654,7 @@ service cloud.firestore {
 }
 ```
 
-Storage (`storage.rules`). El `uid` en la ruta evita depender de metadatos. El borrado es una regla **separada** porque en un `delete` no existe `request.resource` (la regla de escritura con `size` y `contentType` siempre fallaría) y la limpieza de fotos huérfanas (§13.1) lo necesita:
-
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /requestPhotos/{uid}/{requestId}/{file} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null && request.auth.uid == uid;
-    }
-  }
-}
-```
+No hay `storage.rules`: Cloud Storage for Firebase no se usa (exige Blaze). El control de las fotos se reparte así: el **preset** de Cloudinary limita qué se puede subir (§13.7) y la regla `validPhotos` de Firestore exige que `photoUrls` tenga de 1 a 3 URLs de **nuestra** cuenta de Cloudinary (evita que una solicitud apunte a imágenes de cualquier sitio). No se puede probar en reglas que la foto la subió el mismo cliente (debilidad aceptada, D18).
 
 ### 13.4 Errores y tiempos de espera
 
@@ -647,7 +664,7 @@ Los repositorios Firebase nunca lanzan hacia el dominio: los comandos pasan por 
 class DomainException(val error: DomainError) : Exception()   // :core:data/firebase; never leaves the data layer
 ```
 
-Motivo: sin conexión, Firestore **encola** las escrituras y el `Task` no termina ni falla, y Storage reintenta una subida durante minutos; sin un límite, la pantalla quedaría esperando indefinidamente. Por eso toda escritura y subida tiene un `withTimeout` de 15 s que se traduce a `Network`, y `FirebaseModule` fija `FirebaseStorage.maxUploadRetryTimeMillis = 15_000`.
+Motivo: sin conexión, Firestore **encola** las escrituras y el `Task` no termina ni falla; una subida HTTP con red lenta puede tardar mucho. Sin un límite, la pantalla quedaría esperando indefinidamente. Por eso toda escritura y toda subida a Cloudinary va dentro de `firebaseCall`, con un `withTimeout` de 15 s que se traduce a `Network`. `firebaseCall` es genérico (no depende de Firebase): se conserva el nombre para no duplicar el envoltorio. La subida usa `executeAsync()` de `okhttp-coroutines`, que **cancela** el `Call` de OkHttp cuando `withTimeout` cancela la corrutina (no queda una subida colgada).
 
 ```kotlin
 const val WRITE_TIMEOUT_MS = 15_000L
@@ -671,12 +688,14 @@ Mapeo de excepciones (`Throwable.toDomainError()`):
 | Excepción | `DomainError` |
 |---|---|
 | `DomainException` (o una con `DomainException` como causa: `toDomainError()` la busca en la cadena de causas, porque el SDK puede envolver la excepción de una transacción) | su propio `error` (se evalúa **primero**) |
-| `FirebaseFirestoreException` `UNAVAILABLE` / `DEADLINE_EXCEEDED`, `FirebaseNetworkException`, `TimeoutCancellationException` (de `withTimeout`), `StorageException` `ERROR_RETRY_LIMIT_EXCEEDED` | `Network` |
-| `FirebaseFirestoreException` `PERMISSION_DENIED`, `StorageException` `ERROR_NOT_AUTHENTICATED` / `ERROR_NOT_AUTHORIZED` | `Unauthorized` |
-| `FirebaseFirestoreException` `NOT_FOUND`, `StorageException` `ERROR_OBJECT_NOT_FOUND` | `NotFound` |
+| `FirebaseFirestoreException` `UNAVAILABLE` / `DEADLINE_EXCEEDED`, `FirebaseNetworkException`, `TimeoutCancellationException` (de `withTimeout`) | `Network` |
+| `java.io.IOException` de OkHttp (`UnknownHostException`, `ConnectException`, `SocketTimeoutException`, etc.): sin red o conexión cortada durante la subida a Cloudinary | `Network` |
+| `CloudinaryUploadException(httpCode)` con cualquier código (400 formato o tamaño rechazado por el preset, 401/403 preset inexistente o no `unsigned`, 404 *cloud name* mal escrito, 429 límite de uso, 5xx) o respuesta 2xx sin `secure_url` (`httpCode` = el recibido) | `Unknown` (como pide `specs/media`: solo la red y el tiempo agotado son `Network`; el código queda en el log para diagnosticar) |
+| `FirebaseFirestoreException` `PERMISSION_DENIED` (incluye `validPhotos` rechazando una URL ajena) | `Unauthorized` |
+| `FirebaseFirestoreException` `NOT_FOUND` | `NotFound` |
 | `FirebaseAuthInvalidCredentialsException`, `FirebaseAuthInvalidUserException` | `InvalidCredentials` |
 | `FirebaseAuthUserCollisionException` | `EmailAlreadyInUse` |
-| Cualquier otra | `Unknown` |
+| Cualquier otra (incluida `IllegalStateException` por `CloudinaryConfig` vacío, §13.7) | `Unknown` |
 
 Limitación aceptada: el timeout deja de esperar, pero no cancela una escritura ya encolada en el SDK; puede sincronizarse más tarde (ver §19).
 
@@ -690,7 +709,7 @@ Limitación aceptada: el timeout deja de esperar, pero no cancela una escritura 
 
 ### 13.6 Compresión de imágenes
 
-`ImageCompressor` vive en `:core:data/firebase` y recibe `@ApplicationContext context: Context` y un `CoroutineDispatcher` por constructor (D13). `suspend fun compress(uri: String): ByteArray` corre en `withContext(dispatcher)`: decodifica la imagen, lee la orientación EXIF con `ExifInterface` (`androidx.exifinterface`) y la rota antes de comprimir (sin esto, las fotos de la cámara en vertical se verían acostadas, porque el JPEG recomprimido pierde el EXIF), la reescala con `targetSize` (sobre las dimensiones ya rotadas) y la comprime a JPEG calidad 80. La subida usa `putBytes(bytes, storageMetadata { contentType = "image/jpeg" })` (§13.1). El cálculo del tamaño es una función pura de nivel superior (sin Android), por eso se prueba en la JVM:
+`ImageCompressor` vive en `:core:data/cloudinary` y recibe `@ApplicationContext context: Context` y un `CoroutineDispatcher` por constructor (D13). `suspend fun compress(uri: String): ByteArray` corre en `withContext(dispatcher)`: decodifica la imagen, lee la orientación EXIF con `ExifInterface` (`androidx.exifinterface`) y la rota antes de comprimir (sin esto, las fotos de la cámara en vertical se verían acostadas, porque el JPEG recomprimido pierde el EXIF), la reescala con `targetSize` (sobre las dimensiones ya rotadas) y la comprime a JPEG calidad 80. Los bytes resultantes se suben con `CloudinaryUploader` como `image/jpeg` (§13.7). Comprimir antes de subir sigue siendo necesario: ahorra datos móviles y créditos del plan gratuito de Cloudinary, y garantiza que la foto respeta el límite de tamaño del preset. El cálculo del tamaño es una función pura de nivel superior (sin Android), por eso se prueba en la JVM:
 
 ```kotlin
 fun targetSize(width: Int, height: Int, maxSide: Int = 1600): Pair<Int, Int> {
@@ -703,11 +722,275 @@ fun targetSize(width: Int, height: Int, maxSide: Int = 1600): Pair<Int, Int> {
 
 `targetSize(4000, 3000)` = `1600 x 1200`; `targetSize(3000, 4000)` = `1200 x 1600`; `targetSize(800, 600)` = `800 x 600`. La calidad visual y la orientación del JPEG resultante se verifican a mano (§15).
 
+### 13.7 Fotos en Cloudinary (preset sin firma)
+
+**Decisión (D21)**: un `POST` multipart con OkHttp al endpoint público de subida, **sin** el SDK de Cloudinary para Android.
+
+| Opción | A favor | En contra | Decisión |
+|---|---|---|---|
+| SDK `cloudinary-android` (`MediaManager`) | Documentación oficial; reintentos propios | Estado global (`MediaManager.init` en `Application`); API de callbacks que hay que envolver con `suspendCancellableCoroutine`; despacha la subida en su propio servicio, así que `withTimeout` no la cancela de verdad; no se prueba en la JVM | Descartada |
+| OkHttp + `okhttp-coroutines` | Un solo concepto (un `POST` HTTP); `suspend` nativo y cancelable; el armado del pedido y la lectura de la respuesta son funciones puras probadas en la JVM; OkHttp ya llega al proyecto por `coil-network-okhttp` | ~40 líneas propias; sin reintentos automáticos (no hacen falta: el usuario reintenta) | **Elegida** |
+
+**Configuración (D22)**: `local.properties` (no versionado) → `core/data/build.gradle.kts` lo lee con `java.util.Properties` → `buildConfigField("String", "CLOUDINARY_CLOUD_NAME", ...)` y `CLOUDINARY_UPLOAD_PRESET` → `NetworkModule` provee `CloudinaryConfig(cloudName, uploadPreset)`. Si faltan, quedan vacíos: la Fase 1 compila igual y la primera subida falla con `IllegalStateException` → `Unknown` (el checklist lo detecta). No son secretos (se pueden extraer del APK), pero no publicarlos en el repositorio evita el abuso trivial por quien encuentre el repositorio.
+
+**Contrato** (`:core:data/cloudinary`):
+
+```kotlin
+data class CloudinaryConfig(val cloudName: String, val uploadPreset: String)
+class CloudinaryUploadException(val httpCode: Int) : Exception("Cloudinary upload failed: HTTP $httpCode")
+
+// Pure (JVM-tested): builds POST https://api.cloudinary.com/v1_1/{cloudName}/image/upload
+// multipart fields: file (bytes, image/jpeg, filename "photo.jpg") + upload_preset. Nothing else (the preset decides the rest).
+fun buildUploadRequest(config: CloudinaryConfig, bytes: ByteArray): Request
+
+// Pure (JVM-tested): 2xx with "secure_url" -> the URL; anything else -> throws CloudinaryUploadException(code).
+fun parseUploadResponse(code: Int, body: String): String
+
+interface PhotoUploader { suspend fun upload(bytes: ByteArray): String }   // seam for JVM tests of the error mapping
+
+class CloudinaryUploader @Inject constructor(private val client: OkHttpClient, private val config: CloudinaryConfig) : PhotoUploader {
+    override suspend fun upload(bytes: ByteArray): String {  // called inside firebaseCall (15 s, error mapping §13.4)
+        check(config.cloudName.isNotBlank() && config.uploadPreset.isNotBlank()) { "Cloudinary config missing" }
+        client.newCall(buildUploadRequest(config, bytes)).executeAsync().use { response ->  // cancellable (okhttp-coroutines)
+            return parseUploadResponse(response.code, response.body.string())
+        }
+    }
+}
+```
+
+`parseUploadResponse` usa `Json.parseToJsonElement(body).jsonObject["secure_url"]` de `kotlinx-serialization-json` (sin plugin ni clases `@Serializable`); se evita `org.json` porque en los tests JVM de Android es un stub que lanza excepción. `CloudinaryUploader` no recibe dispatcher: `executeAsync()` no bloquea (D13 se mantiene).
+
+**Preset sin firma** (consola de Cloudinary → *Settings → Upload → Upload presets*; se documenta paso a paso en el checklist de Fase 2):
+
+| Opción del preset | Valor | Para qué |
+|---|---|---|
+| *Signing mode* | `Unsigned` | La app sube sin secreto. |
+| *Asset folder* | `fixit/requests` (fija) | Todo lo de la app queda en una carpeta; lo ajeno se distingue y se borra a mano. |
+| *Use filename* / *Unique filename* / *Overwrite* | No / Sí / No | El cliente no elige el nombre ni pisa fotos existentes. |
+| *Allowed formats* | `jpg` | La app siempre sube JPEG comprimido; cualquier otro formato se rechaza (HTTP 400). |
+| Tamaño máximo | Límite de la cuenta gratuita (10 MB por imagen) + opción del preset si la consola la ofrece (objetivo: 2 MB) | La app sube ≤ 1600 px a calidad 80 (normalmente < 1 MB). Ver §19. |
+| *Incoming transformation* | `c_limit,w_1600,h_1600/q_auto:good` | Aunque alguien suba una imagen grande con el preset, se guarda reducida (ahorra créditos). |
+| Endpoint | `image/upload` (no `auto/upload`) | Cloudinary rechaza lo que no sea imagen. |
+
+La URL guardada es la `secure_url` (`https://res.cloudinary.com/<cloud>/image/upload/v.../fixit/requests/<id>.jpg`), que cumple `validPhotos` (§13.3). Coil la carga con `coil-network-okhttp` sin cambios en `:core:ui`. No se usan transformaciones en la URL de entrega (miniaturas) para no agregar lógica; queda como mejora futura.
+
 ## 14. Hardware (Fase 3)
 
 - **Ubicación**: `FusedLocationProvider` (`getCurrentLocation`, prioridad balanceada, timeout 10 s → `LocationUnavailable`) y `GeocoderAddressResolver` en `:core:data/device`; se cambian dos `@Binds`. Este último es bloqueante (Geocoder antes de API 33) y, igual que `ImageCompressor` en Fase 2, recibe su `CoroutineDispatcher` por constructor (D13).
 - **Permisos**: en la UI de las features, con `rememberLauncherForActivityResult(RequestMultiplePermissions())` solo al tocar "Usar mi ubicación"; manifest en `:app`.
 - **Fotos**: solo cambia `PhotoPickerButtons` en `:core:ui`. Fase 1: botón "Agregar foto de ejemplo". Fase 3: si falta exactamente 1 foto, `PickVisualMedia` (selección única); si faltan 2 o más, `PickMultipleVisualMedia(faltantes)` (el selector múltiple exige un máximo de al menos 2); y `TakePicture` con `FileProvider` (declarado en `:app`). La UI aplica `take(faltantes)` a los URIs devueltos (algunos selectores pueden entregar más de los pedidos) y entrega `uri.toString()` al ViewModel; el dominio solo ve `String`.
+
+## 14b. Notificaciones push (Fase 4, opcional)
+
+> Requiere la Fase 2 (el Worker valida el ID token de Firebase y lee Firestore). Sin `:core:domain` ni `:features:*` modificados: todo vive en `:core:data/push`, `:app` y `worker/`.
+
+### 14b.1 Piezas
+
+| Pieza | Dónde | Responsabilidad |
+|---|---|---|
+| `NotifyingRepairRequestRepository` + `withPush(...)` | `:core:data/push` | Decorador: tras un `create`, `accept` (no idempotente) o `cancel` de un `ACCEPTED` exitoso, pide el aviso sin esperarlo, con 5 s como máximo (D24). `withPush` devuelve el repositorio sin decorar si no hay Worker configurado. |
+| `WorkerClient` / `HttpWorkerClient` | `:core:data/push` | `send(idToken, event)`: `POST {PUSH_WORKER_URL}/notify`. |
+| `IdTokenProvider` / `FirebaseIdTokenProvider` | `:core:data/push` | `idToken(): String?` con `FirebaseAuth.currentUser?.getIdToken(false)?.await()`. |
+| `TopicSync` + `TopicMessaging` | `:core:data/push` | Suscribe y desuscribe temas FCM a partir de `AuthRepository.session` (D26). |
+| `PushMessageHandler` + `shouldNotify` | `:core:data/push` | Al llegar un mensaje: lee la solicitud y al usuario con la sesión y decide si se muestra (D25). |
+| `FixItMessagingService`, `Notifications` | `:app/push` | Recibe el mensaje, publica la notificación del sistema y arma el `PendingIntent`. |
+| `deepLinkDestination`, `NavigationState.open` | `:app/navigation` | Al tocar el aviso, resuelve el destino con (tipo, rol, `requestId`) y abre el detalle (D28). |
+| Worker | `worker/` | Valida el token, relee la solicitud, verifica el evento y envía por FCM HTTP v1 (D23, D27). |
+
+### 14b.2 Eventos
+
+| Evento (`PushEventType`) | Lo dispara en la app | El Worker exige (releyendo `requests/{id}`) | Tema destino | El dispositivo lo muestra si… | Al tocar |
+|---|---|---|---|---|---|
+| `NEW_REQUEST` | `create` → `Success` | `status == OPEN`, `clientId == uid` del token | `category_{CATEGORY}` (categoría leída de Firestore) | hay sesión `PROFESSIONAL` y `Matching.distanceIfMatches(pro, request) != null` (`OPEN`, categoría vigente, `isWithin` inclusivo) | (`PROFESSIONAL`) Feed → `ProRequestDetailKey` |
+| `REQUEST_ACCEPTED` | `accept` → `Success` **y** la solicitud no estaba ya `ACCEPTED` por ese profesional (lectura previa, §14b.3) | `status == ACCEPTED`, `professionalId == uid` | `user_{clientId}` | `request.clientId == usuario actual` y `status == ACCEPTED` | (`CLIENT`) Solicitudes → `ClientRequestDetailKey` |
+| `REQUEST_CANCELLED` | `cancel` → `Success` **con** `professionalId != null` (solo un `ACCEPTED` tiene profesional asignado) | `status == CANCELLED`, `clientId == uid`, `professionalId` presente | `user_{professionalId}` | `request.professionalId == usuario actual` y `status == CANCELLED` | (`PROFESSIONAL`) Mis trabajos → `ProRequestDetailKey` |
+
+Carga útil: mensaje **solo de datos**, sin bloque `notification`, con `android.priority = HIGH` y `ttl = 86400s`. `NEW_REQUEST` lleva exactamente `{ "type", "requestId", "category" }`; `REQUEST_ACCEPTED` y `REQUEST_CANCELLED` llevan exactamente `{ "type", "requestId" }`. Sin datos personales ni coordenadas: los temas no son privados (D18). El destino y la categoría salen siempre de lo leído en Firestore; el Worker ignora cualquier otro campo del cuerpo.
+
+### 14b.3 Decorador y binding
+
+```kotlin
+const val PUSH_TIMEOUT_MS = 5_000L
+
+class NotifyingRepairRequestRepository(
+    private val delegate: RepairRequestRepository,
+    private val worker: WorkerClient,
+    private val tokens: IdTokenProvider,
+    private val scope: CoroutineScope,           // @ApplicationScope: the request survives the ViewModel
+) : RepairRequestRepository by delegate {        // get/observe*/completeWithReview pass through unchanged
+    override suspend fun create(clientId: String, input: NewRequest) =
+        delegate.create(clientId, input).also { if (it is AppResult.Success) fire(NEW_REQUEST, it.data.id) }
+
+    override suspend fun accept(requestId: String, professionalId: String): AppResult<RepairRequest> {
+        val before = delegate.get(requestId)     // idempotent retry by the same professional -> no second request
+        val alreadyMine = before is AppResult.Success &&
+            before.data.status == RequestStatus.ACCEPTED && before.data.professionalId == professionalId
+        return delegate.accept(requestId, professionalId).also {
+            if (it is AppResult.Success && !alreadyMine) fire(REQUEST_ACCEPTED, it.data.id)
+        }
+    }
+
+    override suspend fun cancel(requestId: String) =
+        delegate.cancel(requestId).also {
+            if (it is AppResult.Success && it.data.professionalId != null) fire(REQUEST_CANCELLED, it.data.id) // only an ACCEPTED one had a professional
+        }
+
+    private fun fire(type: PushEventType, id: String) {
+        scope.launch {                                       // fire-and-forget: the caller never waits
+            try {
+                withTimeoutOrNull(PUSH_TIMEOUT_MS) {         // dropped after 5 s, no retries
+                    val token = tokens.idToken() ?: return@withTimeoutOrNull
+                    worker.send(token, PushEvent(type, id))
+                }
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { /* best effort: logged, never reaches presentation */ }
+        }
+    }
+}
+
+// Pure factory, JVM-tested: no Worker configured (Phases 1-3 or rollback) -> the same undecorated instance.
+fun withPush(real: RepairRequestRepository, workerUrl: String, worker: WorkerClient, tokens: IdTokenProvider, scope: CoroutineScope) =
+    if (workerUrl.isBlank()) real else NotifyingRepairRequestRepository(real, worker, tokens, scope)
+
+// RepositoryModule, Phase 4: the @Binds for RepairRequestRepository is REPLACED by
+companion object {
+    @Provides @Singleton
+    fun requests(real: FirebaseRepairRequestRepository, config: WorkerConfig, worker: WorkerClient,
+                 tokens: IdTokenProvider, @ApplicationScope scope: CoroutineScope): RepairRequestRepository =
+        withPush(real, config.baseUrl, worker, tokens, scope)
+}
+```
+
+- El resultado devuelto es **siempre** el del repositorio real: el aviso es de mejor esfuerzo y nunca cambia el éxito ni el error de crear, aceptar o cancelar. El llamador no espera nada (0 s ≤ 5 s exigidos); el pedido en segundo plano se descarta a los 5 s.
+- Los tres caminos (crear, aceptar y cancelar) pasan por el decorador porque los casos de uso solo conocen la interfaz `RepairRequestRepository`; `CancelRequestUseCase` llama a `cancel`, así que la cancelación queda cubierta.
+- **Aceptación idempotente**: la lectura previa con `get` evita el segundo pedido cuando la solicitud ya era del mismo profesional. Si dos toques del mismo profesional corren a la vez, ambos pueden leer `OPEN` y pedir dos avisos; el dispositivo los **reemplaza** (mismo `tag`, §14b.5). Costo: una lectura extra por aceptación.
+- `CoreModule` agrega `@Provides @Singleton @ApplicationScope fun appScope(): CoroutineScope = CoroutineScope(SupervisorJob())`. Es un *scope*, no un dispatcher inyectado (D13 se mantiene: usa `Dispatchers.Default` implícito). Solo lo reciben el decorador y `TopicSync`.
+- `HttpWorkerClient.send(idToken, event)`: arma el pedido con la función pura `buildNotifyRequest(baseUrl, idToken, event)` (`POST {baseUrl}/notify`, `Authorization: Bearer`, cuerpo `{ "type", "requestId" }`) y lo envía con `executeAsync()`; la respuesta HTTP no se interpreta (se registra con `Log.w` si no es 2xx).
+
+### 14b.4 Suscripción a temas (`TopicSync`)
+
+`FixItApplication.onCreate` llama `topicSync.start()`, que recolecta `AuthRepository.session` en el `@ApplicationScope`:
+
+1. Ignora `Loading`. `SignedIn(user)` → temas deseados `topicsFor(user)` = `{ user_{uid} }` ∪ (si es profesional) `{ category_{C} | C ∈ categorías }`. `SignedOut` → conjunto vacío.
+2. `distinctUntilChanged()`: cambios de nombre o de reputación no generan operaciones; **editar categorías** sí, porque en Fase 2 `session` vuelve a emitir con el perfil nuevo (§13.5). No hace falta tocar `UserRepository` ni la pantalla de edición.
+3. Para cada conjunto nuevo, la función pura `topicChanges(previous, desired)` devuelve `subscribe = desired − previous` y `unsubscribe = previous − desired` (`previous` es el último conjunto aplicado en este proceso; al arrancar es vacío). Así: **iniciar sesión** o restaurar la sesión al abrir la app suscribe todo el conjunto; **editar categorías** suscribe solo las agregadas y desuscribe solo las quitadas, sin tocar `user_{uid}` ni las que se mantienen; editar solo el radio no genera operaciones; **cerrar sesión** desuscribe `user_{uid}` y todos los `category_*` de esa cuenta; **cerrar la app** no hace nada.
+4. Cada operación es de mejor esfuerzo e independiente (`TopicMessaging` envuelve `subscribeToTopic(...).await()` con `withTimeout(15_000)`; una falla se registra y no detiene las demás ni la recolección). Como `TopicSync` no participa de `signIn`, `signOut` ni `updateProfile`, una falla nunca afecta esas operaciones. Cada arranque en frío vuelve a suscribir el conjunto deseado (idempotente), lo que repara fallas anteriores. `onNewToken` llama `topicSync.resubscribe()` (suscribe de nuevo el conjunto actual) por si el token cambió.
+
+Aunque una desuscripción falle, el dispositivo **no** muestra avisos ajenos: la decisión final la toma `shouldNotify` con la sesión actual (§14b.5).
+
+### 14b.5 Recepción, decisión y aviso
+
+```kotlin
+// Pure (core/data/push/PushDecision.kt), JVM-tested. Reuses domain Matching: no domain change.
+enum class PushEventType { NEW_REQUEST, REQUEST_ACCEPTED, REQUEST_CANCELLED }   // wire values: same names in the Worker
+data class PushEvent(val type: PushEventType, val requestId: String)
+
+fun shouldNotify(type: PushEventType, request: RepairRequest, viewer: User?): Boolean = when {
+    viewer == null -> false
+    type == NEW_REQUEST -> viewer.professional?.let { Matching.distanceIfMatches(it, request) } != null  // OPEN + category + isWithin
+    type == REQUEST_ACCEPTED -> request.clientId == viewer.id && request.status == RequestStatus.ACCEPTED
+    else -> request.professionalId == viewer.id && request.status == RequestStatus.CANCELLED               // REQUEST_CANCELLED
+}
+```
+
+- `PushMessageHandler.handle(data: Map<String, String>): PushEvent?`: `type` desconocido o sin `requestId` → `null`; sin sesión (`currentUserId() == null`) → `null`; lee `userRepository.get(uid)` y `requestRepository.get(requestId)` (si alguno da `Error` → `null`, sin lanzar); devuelve el evento si `shouldNotify`. Usa solo interfaces del dominio, por eso se prueba en la JVM con los dobles de `testFixtures`. La ubicación del profesional nunca sale del dispositivo.
+- `FixItMessagingService.onMessageReceived` (FCM lo ejecuta fuera del hilo principal, con la app en primer o segundo plano, porque el mensaje es solo de datos): `runBlocking { withTimeoutOrNull(10_000) { handler.handle(message.data) } }` y, si no es `null`, `Notifications.show(context, event)`. Se usa `runBlocking` porque el método es síncrono y FCM concede unos 20 s; WorkManager se descarta por ser una dependencia más (ver §19).
+- `Notifications.show`: canal `requests` (importancia alta, creado en `FixItApplication.onCreate`). Título y cuerpo son **textos fijos** de `strings.xml` de `:app` según el tipo ("Un profesional aceptó tu solicitud", "Hay una nueva solicitud cerca", "El cliente canceló un trabajo aceptado"): sin categoría, distancia, nombres ni datos de la solicitud. `tag = "${type}_${requestId}"` e id fijo, de modo que un aviso repetido reemplaza al anterior; `setAutoCancel(true)`. Si las notificaciones no están permitidas, no publica nada (sin `SecurityException`).
+- **Permiso** `POST_NOTIFICATIONS`: solo si `Build.VERSION.SDK_INT >= 33` y no está concedido, lo pide `AppShell` (`:app`) una vez al mostrarse el shell de un usuario con sesión, con `rememberLauncherForActivityResult(RequestPermission())`. En Android 12 o inferior no se muestra ningún diálogo. Si se deniega, la app funciona igual, sin avisos y sin mensajes de error. No se pide en la pantalla de autenticación.
+
+### 14b.6 Enlace profundo (tocar el aviso)
+
+```kotlin
+// :app/navigation/DeepLink.kt — pure, JVM-tested like NavigationState
+data class DeepLinkDestination(val tab: TopLevelDestination, val key: NavKey)
+
+// Pure function of (event type, session role, requestId). null = no detail (wrong role or no session).
+fun deepLinkDestination(type: PushEventType, role: UserRole?, requestId: String): DeepLinkDestination? = when {
+    type == REQUEST_ACCEPTED && role == UserRole.CLIENT -> DeepLinkDestination(REQUESTS, ClientRequestDetailKey(requestId))
+    type == NEW_REQUEST && role == UserRole.PROFESSIONAL -> DeepLinkDestination(FEED, ProRequestDetailKey(requestId))
+    type == REQUEST_CANCELLED && role == UserRole.PROFESSIONAL -> DeepLinkDestination(MY_JOBS, ProRequestDetailKey(requestId))
+    else -> null
+}
+
+fun NavigationState.open(destination: DeepLinkDestination?) {
+    val tab = destination?.tab ?: startTab              // wrong role: show the role's initial screen
+    selectTab(tab); resetToRoot(tab)
+    destination?.let { navigate(it.key) }
+}
+```
+
+- El `PendingIntent` (`FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT`, `requestCode = tag.hashCode()`) abre `MainActivity` con los extras `type` y `requestId` (el destino **no** viaja en el `Intent`: se resuelve con el rol vigente al tocar).
+- `MainActivity` (`singleTop`) guarda el par pendiente en un `MutableStateFlow<PushEvent?>`: en `onCreate` solo si `savedInstanceState == null` (una rotación no lo reaplica) y en `onNewIntent`. `FixItApp` lo procesa cuando la experiencia ya no es `LOADING`: si es `AUTH`, lo descarta y se ve la autenticación; si es `CLIENT` o `PROFESSIONAL`, dentro del `key(userId)` del shell corre `LaunchedEffect(event) { navigationState.open(deepLinkDestination(event.type, user.role, event.requestId)); consume() }`. La pantalla de detalle vuelve a verificar la visibilidad (§7), así que un `Intent` fabricado por otra app no expone nada.
+
+### 14b.7 Worker (`worker/`, TypeScript)
+
+**Contrato**:
+
+```
+POST /notify
+Authorization: Bearer <Firebase ID token>
+Content-Type: application/json
+{ "type": "NEW_REQUEST" | "REQUEST_ACCEPTED" | "REQUEST_CANCELLED", "requestId": "<id>" }   // any other field is ignored
+-> 204 sent | 400 invalid body | 401 invalid token | 403 checks failed | 404 request not found | 502 Firestore/OAuth/FCM failure
+```
+
+| Paso | Archivo | Detalle |
+|---|---|---|
+| 1. Validar el cuerpo | `index.ts` | Solo `POST /notify` (otra ruta → 404); `type` del enum; `requestId` con `^[A-Za-z0-9]{1,40}$` (evita inyectar rutas en la URL de Firestore). Se leen **solo** esos dos campos. |
+| 2. Verificar el ID token | `idToken.ts` | Cabecera `alg = RS256` y `kid` presente en las claves JWK de `securetoken@system.gserviceaccount.com` (en caché a nivel de módulo según `Cache-Control: max-age`); firma con `crypto.subtle.verify("RSASSA-PKCS1-v1_5", ...)`; claims con la función pura `checkClaims(payload, projectId, nowSec)`: `aud == projectId`, `iss == https://securetoken.google.com/{projectId}`, `exp > now`, `iat <= now + 60`, `sub` no vacío (= `uid`). |
+| 3. Releer la solicitud | `firestore.ts` | `GET https://firestore.googleapis.com/v1/projects/{id}/databases/(default)/documents/requests/{requestId}` con el **mismo ID token del usuario** como `Bearer`: aplica las reglas de Firestore (lectura permitida a usuarios autenticados) y la cuenta de servicio no necesita permisos sobre la base (D27). Nunca se confía en el cuerpo del pedido. |
+| 4. Decidir | `rules.ts` (pura) | `decideTarget(type, request, uid)` → `{ topic, data }` o `{ reject: 403 }`, según la tabla de §14b.2; `data` es exactamente `{ type, requestId, category }` para `NEW_REQUEST` y `{ type, requestId }` para los otros dos. |
+| 5. Token OAuth | `googleAuth.ts` | JWT `{ iss: client_email, scope: "https://www.googleapis.com/auth/firebase.messaging", aud: "https://oauth2.googleapis.com/token", iat, exp: iat + 3600 }` firmado con `crypto.subtle.sign` (clave PKCS#8 importada una vez); `POST` a `oauth2.googleapis.com/token` (`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`). Token en caché a nivel de módulo hasta `expires_in − 60 s` (~1 h). |
+| 6. Enviar | `fcm.ts` | `POST https://fcm.googleapis.com/v1/projects/{id}/messages:send` con `{ message: { topic, data, android: { priority: "HIGH", ttl: "86400s" } } }`. Responde 204 en cuanto FCM acepta el mensaje (no espera la entrega). |
+
+- **Configuración**: `wrangler.toml` con `[vars] FIREBASE_PROJECT_ID`; secreto `GOOGLE_SERVICE_ACCOUNT` (JSON completo) cargado con `wrangler secret put`; en local, `.dev.vars`. `.gitignore` de `worker/` excluye `.dev.vars`, `node_modules/` y `.wrangler/`. La cuenta de servicio es **dedicada**, con el rol mínimo *Firebase Cloud Messaging API Admin* (no la cuenta del Admin SDK) y la API "Firebase Cloud Messaging API" habilitada (sin facturación).
+- **Presupuesto de CPU (10 ms, plan gratuito)**: por pedido hay una verificación RS256 nativa y parseo de JSON; la firma del JWT y la descarga de claves ocurren como mucho una vez por hora por *isolate*. El tiempo de espera de red no cuenta como CPU. Se mide en el panel de Workers tras el primer despliegue (§19).
+- **Sin** CORS (lo llama la app, no un navegador), **sin** almacenamiento (KV, D1) y **sin** rate limiting propio (D18).
+
+### 14b.8 Secuencia de un evento (aceptación → aviso al cliente)
+
+```mermaid
+sequenceDiagram
+    actor P as Profesional
+    participant UC as AcceptRequestUseCase
+    participant D as NotifyingRepairRequestRepository
+    participant F as FirebaseRepairRequestRepository
+    participant N as HttpWorkerClient
+    participant W as Worker (Cloudflare)
+    participant FS as Firestore REST
+    participant G as Google OAuth
+    participant FCM as FCM HTTP v1
+    participant S as FixItMessagingService (cliente)
+    participant H as PushMessageHandler
+    actor C as Cliente
+    P->>UC: Aceptar trabajo
+    UC->>D: accept(r1, p1)
+    D->>F: get(r1) → OPEN (no es un reintento)
+    D->>F: accept(r1, p1)
+    F-->>D: Success(r1 ACCEPTED)
+    D--)N: scope.launch { withTimeoutOrNull(5 s) { send(idToken, REQUEST_ACCEPTED r1) } }
+    D-->>UC: Success (no espera el aviso)
+    N->>W: POST /notify (Bearer ID token) {type REQUEST_ACCEPTED, requestId r1}
+    W->>W: verifica firma y claims (JWKS en caché) → uid = p1
+    W->>FS: GET requests/r1 (Bearer ID token)
+    FS-->>W: status ACCEPTED, professionalId p1, clientId c1
+    W->>W: decideTarget → topic user_c1
+    opt token OAuth vencido (≈ 1 vez por hora)
+        W->>G: JWT RS256 (WebCrypto)
+        G-->>W: access_token
+    end
+    W->>FCM: messages:send {topic user_c1, data {type, requestId}}
+    FCM-->>W: 200 (aceptado)
+    W-->>N: 204 (la app no lo interpreta)
+    FCM--)S: mensaje de datos (alta prioridad)
+    S->>H: handle(data)
+    H->>H: currentUserId() = c1; get(c1); get(r1)
+    H->>H: shouldNotify(REQUEST_ACCEPTED, r1, c1) = true
+    S->>C: notificación del sistema con texto fijo (tag REQUEST_ACCEPTED_r1)
+    C->>S: toca el aviso → MainActivity → deepLinkDestination(REQUEST_ACCEPTED, CLIENT, r1) → NavigationState.open
+```
+
+Si cualquier paso del Worker falla, la aceptación ya fue exitosa y la pantalla del profesional no se entera (mejor esfuerzo).
 
 ## 15. Estrategia de testing
 
@@ -720,9 +1003,12 @@ Criterio de cobertura: cada escenario de los specs está cubierto **por un test 
 | `core/domain/src/test` | Reglas puras: 12 combinaciones de `RequestStateMachine`; Haversine (distancias conocidas con las tolerancias definidas en los specs, simetría, antimeridiano, puntos antípodas sin `NaN`); `Matching.isWithin` (frontera: 10.0 con radio 10 → `true`; 10.01 → `false`) y `roundKm`; `ContactRules`; `PhoneFormatter` (`whatsAppDigits` y `whatsAppUrl`, incluidos espacios o paréntesis antes del `+`); `Reputation.average` (13/3 → 4.3, 17/4 → 4.3, sin reseñas → `null`); `Validators` (orden de errores de §5.3, regex de email y normalización, teléfono con separadores, `coordinates`). Los 10 casos de uso: cada escenario de spec, incluidos el error de una observación (`Error(Network)`), la visibilidad de `ObserveRequestDetailUseCase` (`Unauthorized` / `NotFound`) y el chequeo con `get` en `AcceptRequestUseCase`. | JUnit4 + `runTest`; dobles de `testFixtures`: `TestAuthRepository`, `TestUserRepository` y `TestRepairRequestRepository` con listas configurables y **ganchos de error por operación** de un solo uso (`acceptError`, `completeError`, `updateProfileError`, `createError`, `cancelError`, `signInError`, `signUpError`, `observeError`): cada uno lo consume únicamente la **siguiente** llamada de su operación, así un test puede fallar solo `accept` y no `get`. `observeError` aplica a cualquier `observe*` de ese doble (lo consume la siguiente observación, sea cual sea). |
 | `core/data/src/test` | Fakes: 10 profesionales distintos aceptan a la vez → exactamente 1 `Success` y 9 `AlreadyTaken`; cancelar y completar con agregado; fechas iguales a `clock.now()` (`acceptedAt`, `cancelledAt`, `completedAt`); aceptar es idempotente: el mismo profesional que reintenta obtiene `Success` sin cambios y otro obtiene `AlreadyTaken`; email duplicado también con mayúsculas y espacios; seed coherente (todos los usuarios con teléfono; `ratingSum` y `reviewCount` de cada profesional = suma y cantidad de sus reseñas); "Falla parcial" con `failNextWrite` (ver abajo); Fase 2: `targetSize(...)` de `ImageCompressor` (4000x3000 → 1600x1200, 3000x4000 → 1200x1600, 800x600 sin cambios; relación extrema sin lado en 0). | `runTest` + `withContext(Dispatchers.Default) { List(10) { async { accept(...) } }.awaitAll() }`. |
 | `features/*/src/test` | ViewModels clave: Loading → Success/Error (incluido `Error(Network)` desde una observación, sin `.catch`), `isSubmitting`, `validationError`, eventos que se limpian, resultado de aceptar. `CompleteJobViewModel` carga el nombre del profesional por id. `ProRequestDetailViewModel`: "Aceptar trabajo" solo con `OPEN`; aviso de no disponible si no está `OPEN` y no es el asignado; contacto si es el asignado; diálogo de carrera perdida con un repositorio de prueba que devuelve `AlreadyTaken`. Los tests del detalle esperan el estado final con `first { ... }` porque puede haber una emisión transitoria (p. ej., `COMPLETED` con `review = null`) en Fake y en Firebase. | `MainDispatcherRule` + casos de uso reales con dobles de `testFixtures`. |
-| `core/data/src/test` (Fase 2) | `firebaseCall`: éxito → `Success`; excepción → `Error` mapeado; `DomainException` (también como causa) → su `error`; una operación que no termina → `Error(Network)` a los 15 s **de tiempo virtual**; cancelación del llamador → se propaga. `asResult()`: emite `Success` por elemento y `Error` mapeado si el flujo falla. | `runTest` con `advanceTimeBy` / `currentTime` (sin esperar 15 s reales); excepciones construidas a mano. |
-| `app/src/test` | `experienceFor` (`Loading` → `LOADING`, `SignedOut` → `AUTH`, `SignedIn` de cada rol → `CLIENT` / `PROFESSIONAL`) y `SessionViewModel` (expone la sesión de `TestAuthRepository`). `NavigationState`: cambiar de pestaña conserva historiales, reseleccionar vuelve a la raíz, "Atrás" en raíz no inicial selecciona la inicial, `goBackFrom` ignora claves que no están arriba, `navigate` ignora la clave si ya está arriba (doble toque), flujos de publicar, completar, aceptar y editar perfil, y la pila `AUTH` ("Atrás" en `SignInKey` devuelve `false`). Listas de pestañas: `clientTabs == [REQUESTS, CLIENT_PROFILE]` y `professionalTabs == [FEED, MY_JOBS, PRO_PROFILE]`. | `MainDispatcherRule` + JUnit con `MutableList<NavKey>` comunes, sin composición (ver §9 y §19). |
-| No automatizado | Compose UI (se usa `@Preview` + checklist manual) y Firebase de Fase 2 (checklist manual; opcional Emulator Suite). | — |
+| `core/data/src/test` (Fase 2) | `firebaseCall`: éxito → `Success`; excepción → `Error` mapeado; `DomainException` (también como causa) → su `error`; una operación que no termina → `Error(Network)` a los 15 s **de tiempo virtual**; cancelación del llamador → se propaga. `asResult()`: emite `Success` por elemento y `Error` mapeado si el flujo falla. Filas nuevas del mapeo (§13.4), escenario "Mapeo de fallas de la subida": `firebaseCall { uploader.upload(bytes) }` con un `PhotoUploader` de prueba que lanza `IOException` → `Network`; que nunca termina → `Network` a los 15 s de tiempo virtual; que lanza `CloudinaryUploadException` (400, 401, 500) o `IllegalStateException` → `Unknown`; nunca lanza hacia afuera. | `runTest` con `advanceTimeBy` / `currentTime` (sin esperar 15 s reales); excepciones construidas a mano. |
+| `core/data/src/test` (Fase 2, Cloudinary) | `buildUploadRequest`: `POST` a `https://api.cloudinary.com/v1_1/{cloud}/image/upload`, cuerpo multipart con exactamente las partes `file` (`image/jpeg`) y `upload_preset`. `parseUploadResponse`: 200 con `secure_url` → la URL; 200 sin `secure_url` → `CloudinaryUploadException(200)`; 400 con cuerpo de error → `CloudinaryUploadException(400)`; cuerpo que no es JSON → excepción. | JUnit puro sobre `Request`/`MultipartBody` de OkHttp (clases JVM); sin servidor HTTP de prueba (la conexión real se verifica en el checklist). |
+| `core/data/src/test` (Fase 4) | `NotifyingRepairRequestRepository`: `create` y `accept` exitosos → exactamente 1 pedido cada uno con el `requestId` y el ID token; `accept` idempotente del mismo profesional → ningún pedido; `cancel` de un `ACCEPTED` → 1 pedido `REQUEST_CANCELLED`; `cancel` de un `OPEN` → ninguno; un `Error` del repositorio (`AlreadyTaken`, `Unauthorized`, `failNextWrite`) → ninguno; un `WorkerClient` que lanza o devuelve error → el resultado es el mismo `Success`; uno que nunca responde → el resultado ya fue `Success` y el pedido se cancela a los 5 s **de tiempo virtual**; sin ID token → ningún pedido; `get`/`observe*`/`completeWithReview` delegan. `withPush` con URL vacía devuelve la misma instancia (Fases 1 a 3). `topicsFor` (cliente, profesional, sin sesión) y `topicChanges` (iniciar sesión, editar categorías, editar solo el radio → nada, cerrar sesión). `TopicSync` con un `TopicMessaging` que registra llamadas y la `session` de `TestAuthRepository` (ignora `Loading`; una falla de suscripción no detiene las demás). `shouldNotify` (`NEW_REQUEST`: dentro de radio, en el límite exacto, fuera de radio, categoría ya no vigente, no `OPEN`, visor cliente, sin sesión; aceptación y cancelación: visor correcto, visor ajeno, estado distinto). `PushMessageHandler` (sin sesión, `type` desconocido, `get` con `Error` → `null` sin lanzar). `buildNotifyRequest` (URL, `Authorization: Bearer`, JSON con exactamente `type` y `requestId`). | `runTest`; el `@ApplicationScope` se reemplaza por `backgroundScope` del test (tiempo virtual); dobles escritos a mano (`RecordingWorkerClient`, `FailingWorkerClient`, `HangingWorkerClient`, `FixedIdTokenProvider`, `RecordingTopicMessaging`) + dobles de `testFixtures` y `FakeDatabase` como repositorio real. |
+| `app/src/test` | `experienceFor` (`Loading` → `LOADING`, `SignedOut` → `AUTH`, `SignedIn` de cada rol → `CLIENT` / `PROFESSIONAL`) y `SessionViewModel` (expone la sesión de `TestAuthRepository`). `NavigationState`: cambiar de pestaña conserva historiales, reseleccionar vuelve a la raíz, "Atrás" en raíz no inicial selecciona la inicial, `goBackFrom` ignora claves que no están arriba, `navigate` ignora la clave si ya está arriba (doble toque), flujos de publicar, completar, aceptar y editar perfil, y la pila `AUTH` ("Atrás" en `SignInKey` devuelve `false`). Listas de pestañas: `clientTabs == [REQUESTS, CLIENT_PROFILE]` y `professionalTabs == [FEED, MY_JOBS, PRO_PROFILE]`. Fase 4: `deepLinkDestination` (los tres tipos con su rol → detalle esperado; rol que no corresponde o sin sesión → `null`) y `NavigationState.open` (pestaña correcta, pila reiniciada a la raíz con el detalle arriba, también si la pestaña ya estaba activa con historial; `null` → raíz de la pestaña inicial). | `MainDispatcherRule` + JUnit con `MutableList<NavKey>` comunes, sin composición (ver §9 y §19). |
+| `worker/test` (Fase 4) | `decideTarget` (`rules.ts`): cada evento con estado y llamador correctos → tema esperado y `data` con exactamente las claves de §14b.2 (`NEW_REQUEST` con `GAS` y `r1` → `{ type: "NEW_REQUEST", requestId: "r1", category: "GAS" }`); estado distinto, llamador ajeno o `professionalId` ausente → `403`; el tema sale de la solicitud leída aunque el cuerpo traiga otro. `checkClaims` (`idToken.ts`): `aud`/`iss` ajenos, vencido, `iat` futuro, `sub` vacío → rechazo. | `vitest` en Node (`npm test`), funciones puras; sin Miniflare ni `@cloudflare/vitest-pool-workers` (D23). La firma real, Firestore y FCM se verifican en el checklist. |
+| No automatizado | Compose UI (se usa `@Preview` + checklist manual), Firebase de Fase 2 (checklist manual; opcional Emulator Suite), la subida real a Cloudinary y la entrega real de FCM. | — |
 
 **Prueba de "Falla parcial"** (`core/data/src/test`, escenario Fase 1 de `job-completion`): DADO un trabajo `ACCEPTED` de c1 asignado a p1 (suma 9, 2 reseñas), CUANDO se llama `db.failNextWrite(DomainError.Network)` y luego `completeWithReview(...)`, ENTONCES devuelve `Error(Network)`, la solicitud sigue `ACCEPTED` sin `completedAt`, no existe la reseña y p1 sigue con suma 9 y 2 reseñas. Un segundo `completeWithReview` (el hook ya se consumió) tiene éxito. El hook lo consume **solo** una escritura que supera la validación: otro test verifica que un `signIn`, un `signOut` o una escritura rechazada por validación (p. ej., `Unauthorized`) no lo consumen. Como la escritura es una única actualización de `DbState`, no hay estado intermedio observable. El mismo hook se usa para `updateProfile` ("Fallo al guardar").
 
@@ -750,9 +1036,14 @@ Los escenarios con `[manual]` en el título se verifican a mano antes de cada en
 | Compuerta y cambio de usuario | Otro usuario tras cerrar sesión no ve datos del anterior; (Fase 2) Pantalla de registro estable durante la operación | 1, 2 |
 | Botón Atrás del sistema | Atrás en la raíz de la pestaña inicial | 1 |
 | Revisión de pantallas | Sin acción para cambiar el rol; Email y rol no editables; Sin acceso a pantallas del otro rol; Sin pantalla de chat; Pantalla raíz sin acción Atrás | 1 |
-| Firebase (consola o Emulator Suite) | Todos los escenarios `[Fase 2]` marcados `[manual]` (auth, perfiles, solicitudes, feed, finalización, ubicación por proximidad, subida de fotos); incluyen el comportamiento sin conexión y el timeout de 15 s | 2 |
+| Firebase (consola o Emulator Suite) | Todos los escenarios `[Fase 2]` marcados `[manual]` (auth, perfiles, solicitudes, feed, finalización, ubicación por proximidad); incluyen el comportamiento sin conexión y el timeout de 15 s. El proyecto está en el plan Spark y ninguna cuenta tiene tarjeta cargada | 2 |
+| Cloudinary | Preset creado como en §13.7 (captura de la consola); publicar con 3 fotos → aparecen en `fixit/requests` y se ven en el detalle; sin red → mensaje de red a los 15 s como máximo; `local.properties` sin las claves → error genérico (no se cuelga); un `curl` con un PDF al preset → rechazado; una solicitud escrita a mano con una URL ajena en `photoUrls` → rechazada por `validPhotos` (consola o Emulator) | 2 |
 | Compresión | Calidad visual de la compresión, incluida la orientación EXIF: una foto vertical tomada con la cámara se ve derecha en el detalle (el cálculo del tamaño es un test JVM) | 2 |
 | Hardware | Permisos de ubicación, GPS, galería (selector único y múltiple) y cámara | 3 |
+| Push: eventos | Con dos dispositivos o emuladores con Google Play: aceptar → el cliente recibe el aviso; publicar → solo lo reciben los profesionales de la categoría dentro del radio (probar uno fuera de radio y uno de otra categoría); cancelar un `ACCEPTED` → lo recibe el profesional asignado; cancelar un `OPEN` → nadie lo recibe | 4 |
+| Push: presentación | Aviso visible con la app en primer plano, en segundo plano y cerrada; un reintento de aceptación no duplica el aviso; tocar cada aviso abre el detalle del rol correcto (también con la app cerrada); permiso denegado → la app funciona sin avisos | 4 |
+| Push: sesión | Tras cerrar sesión no llegan avisos de esa cuenta; cerrar la app no desuscribe; editar categorías cambia qué avisos de nuevas solicitudes llegan; otro usuario en el mismo dispositivo no ve avisos del anterior | 4 |
+| Push: Worker | Worker detenido o URL inválida → crear, aceptar y cancelar funcionan igual; `curl` sin token, con token vencido o con un evento que no corresponde → 401/403; tiempo de CPU por pedido < 10 ms en el panel de Workers; búsqueda de `private_key` en el repositorio y en el APK (`unzip` + búsqueda) sin resultados | 4 |
 
 ## 16. Decisiones (ADR)
 
@@ -775,13 +1066,27 @@ Los escenarios con `[manual]` en el título se verifican a mano antes de cada en
 | D15 | Dos detalles de solicitud (cliente y profesional). | Un detalle compartido. | Las features no pueden compartir pantallas; lo común (fotos, estado, contacto) está en `:core:ui`. |
 | D16 | Fotos de Fase 3 en la UI con contratos `ActivityResult`. | Adaptadores de media inyectados con Hilt. | Los contratos necesitan una Activity; un adaptador no simplifica nada. |
 | D17 | Feed en Firestore por `status` + geohash; categoría y distancia exacta en el dominio. | `whereIn(category)` + geohash. | Índice simple y filtro ya testeado. Costo: algunas lecturas extra. |
-| D18 | Debilidades aceptadas: teléfono legible por usuarios autenticados y agregado de reputación permisivo (`ratingSum` y `reviewCount` escribibles a través de la cláusula del agregado). | Subcolección privada; Cloud Function (plan Blaze). | Decidido en la propuesta (alcance académico). |
+| D18 | Debilidades aceptadas: (1) teléfono legible por usuarios autenticados; (2) agregado de reputación permisivo (`ratingSum` y `reviewCount` escribibles a través de la cláusula del agregado); (3) el nombre del preset de Cloudinary se extrae del APK y cualquiera puede subir imágenes a la cuenta (mitigado por el preset: carpeta fija, solo `jpg`, tamaño máximo, transformación de entrada); (4) URLs de fotos públicas para quien las tenga; (5) fotos huérfanas: las de solicitudes canceladas o de una creación fallida quedan en Cloudinary (borrar exige la API firmada; ya no hay limpieza del dueño); (6) no se puede probar en reglas que la foto la subió el mismo cliente (`validPhotos` solo exige nuestra cuenta); (7) Worker sin rate limiting propio (lo acotan el ID token y la relectura de Firestore); (8) temas FCM suscribibles por cualquier app con el `google-services.json` (los mensajes no llevan datos personales ni coordenadas y el dispositivo decide con la sesión). | Subcolección privada; Cloud Function o Cloud Storage (plan Blaze, viola la restricción de no usar tarjeta); API firmada de Cloudinary (exige un servidor con el secreto); rate limiting con KV. | Decidido en la propuesta (alcance académico y sin tarjeta). |
 | D19 | Los casos de uso toman de la sesión solo el id (`currentUserId()`) y verifican rol, categoría y dueño con `get` (lectura fresca). | Usar el `User` guardado en la sesión (`currentUser()`). | Evita decidir con un rol o unas categorías desactualizados. Costo: una lectura extra por operación. |
 | D20 | La compuerta envuelve el shell de cada rol en `key(userId) { ... }`; los ViewModels leen el id con `AuthRepository.currentUserId()`. | Conservar los ViewModels de un usuario al iniciar sesión otro. | Al cambiar de usuario se descartan todas las pilas y los `ViewModelStore` de las entradas; ningún dato del usuario anterior sobrevive. Costo: recomponer todo el shell al cambiar de usuario (poco frecuente). Respaldo si `key(userId)` no vacía los `ViewModelStore` de las entradas de Navigation 3: reiniciar todas las pilas a su raíz (`resetToRoot` en cada pestaña) **antes** de `signOut()` y, como último recurso, recrear la `Activity`. Se verifica en §19. |
+| D21 | **Fotos con un `POST` multipart de OkHttp** (`okhttp-coroutines`, `executeAsync()`) a `image/upload` con preset sin firma; armado del pedido y lectura de la respuesta como funciones puras (§13.7). | SDK `cloudinary-android` (`MediaManager` + callbacks envueltos en `suspendCancellableCoroutine`); Cloud Storage for Firebase (exige Blaze). | Un solo concepto, `suspend` cancelable que respeta el timeout de 15 s, sin estado global y probado en la JVM. Costo: ~40 líneas propias y sin reintentos automáticos. La propuesta menciona "SDK de Cloudinary"; ver §18. |
+| D22 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET` y `PUSH_WORKER_URL` en `local.properties` → `BuildConfig` de `:core:data` → `NetworkModule`. | `gradle.properties` versionado; constantes en el código; Remote Config. | No quedan publicados en el repositorio; un valor vacío desactiva la función sin romper la compilación de Fase 1. Costo: cada integrante copia las claves a su `local.properties` (documentado en el checklist). |
+| D23 | **Push con temas FCM enviados por un Cloudflare Worker en TypeScript** (`worker/`, plan gratuito); pruebas mínimas: `vitest` sobre funciones puras (`rules.ts`, `checkClaims`). | Cloud Functions (Blaze); enviar desde el dispositivo (expondría la cuenta de servicio en el APK); tokens de dispositivo guardados en Firestore (más datos y reglas); Worker en JavaScript sin tipos; pruebas con Miniflare / `vitest-pool-workers`. | Sin tarjeta, la cuenta de servicio solo vive como secreto del Worker y los temas evitan guardar tokens. TypeScript lo compila `wrangler` sin configuración extra y detecta errores de tipos a quien no conoce el runtime. Costo: un segundo lenguaje y un despliegue aparte. |
+| D24 | **Decorador** `NotifyingRepairRequestRepository` (delegación `by`) creado por `withPush(...)` en un `@Provides` de `RepositoryModule`; el pedido al Worker se lanza en un `@ApplicationScope` sin esperarlo y se descarta a los 5 s; la aceptación idempotente se detecta con una lectura previa (`get`). | Llamar al Worker desde los casos de uso o los ViewModels; decorar `FirebaseRepairRequestRepository` por herencia; esperar el aviso con un timeout corto; cambiar `accept` para que informe si fue idempotente (tocaría `:core:domain`). | Cero cambios en `:core:domain` y `:features:*`, cubre crear, aceptar y cancelar en un solo lugar y el resultado nunca depende del Worker. Costo: un `CoroutineScope` de aplicación nuevo (no es un dispatcher; D13 se mantiene), una lectura extra por aceptación y un aviso duplicado posible solo con dos toques simultáneos (se reemplaza por `tag`). |
+| D25 | **Mensajes solo de datos** (alta prioridad) y **decisión en el dispositivo**: `PushMessageHandler` lee la solicitud y el usuario con la sesión actual y la función pura `shouldNotify` decide reutilizando `Matching` del dominio; el texto visible es fijo; la notificación la publica siempre `onMessageReceived` (primer y segundo plano). | Mensajes con bloque `notification` (en segundo plano los muestra el sistema sin filtrar); filtrar la distancia en el Worker (exigiría leer perfiles y enviar a cada profesional); poner coordenadas en el mensaje. | Sin datos personales en los temas, filtro de radio con la regla ya probada y protección ante suscripciones viejas. Costo: una lectura de Firestore por mensaje recibido y riesgo de que Android reduzca la prioridad de mensajes de alta prioridad que no terminan en aviso (§19). |
+| D26 | **`TopicSync` reactivo** a `AuthRepository.session`: `topicChanges(previous, desired)` decide suscripciones; editar categorías se refleja porque `session` reemite el perfil. | Decorar `AuthRepository` y `UserRepository`; `deleteToken()` al cerrar sesión; guardar los temas en preferencias. | Cubre iniciar sesión, cerrar sesión y editar categorías sin tocar repositorios ni pantallas; sin estado persistido (cada arranque resuscribe lo deseado). Costo: un colector de por vida en la aplicación. |
+| D27 | Worker: verifica el ID token (JWKS en caché, WebCrypto), **relee Firestore con el mismo ID token** y usa la cuenta de servicio dedicada solo con el alcance de FCM (token OAuth en caché ~1 h). | Confiar en el cuerpo del pedido; leer Firestore con la cuenta de servicio (más permisos); librerías JWT de npm (más CPU y peso). | Mínimo privilegio y dentro de los 10 ms de CPU. Costo: código propio de JWT (~80 líneas) que hay que revisar con cuidado. |
+| D28 | **Enlace profundo** por extras del `Intent` (`type`, `requestId`) a `MainActivity` (`singleTop`); el destino lo resuelve la función pura `deepLinkDestination(type, rol, requestId)` con el rol vigente y se aplica con `NavigationState.open` dentro del `key(userId)` del shell (rol que no corresponde → pestaña inicial; sin sesión → autenticación). | Deep links por URI de Navigation 3; abrir una Activity aparte para el detalle. | Reutiliza `NavigationState` (mismas guardas y tests JVM) sin `<intent-filter>` público. Costo: estado pendiente en `MainActivity` y verificar el orden con la compuerta (§19). |
 
 ## 17. Migración / rollout
 
-No hay datos previos. Fase 1 → 2: crear proyecto Firebase, `google-services.json`, desplegar reglas e índices y cambiar `RepositoryModule`. Los Fakes no se borran. Fase 2 → 3: cambiar los `@Binds` de ubicación y `PhotoPickerButtons`. Antes de la primera tarea de apply: `git init`.
+No hay datos previos. Antes de la primera tarea de apply: `git init`.
+
+| Paso | Qué hacer | Rollback |
+|---|---|---|
+| Fase 1 → 2 | Crear el proyecto Firebase **en plan Spark** (sin tarjeta), `google-services.json`, desplegar `firestore.rules` (reemplazando `<CLOUD_NAME>`) e índices; crear la cuenta gratuita de Cloudinary y el preset de §13.7; completar `local.properties`; cambiar los `@Binds` de `RepositoryModule`. | Revertir `RepositoryModule.kt` (los Fakes no se borran). Las fotos ya subidas quedan en Cloudinary; las reglas están versionadas. |
+| Fase 2 → 3 | Cambiar los `@Binds` de ubicación y `PhotoPickerButtons`. | Revertir esos `@Binds` y los cambios de UI. |
+| Fase 3 → 4 | Habilitar la API de FCM; crear la cuenta de servicio dedicada (rol *Firebase Cloud Messaging API Admin*) y su clave JSON; `cd worker && npm install && npx wrangler login && npx wrangler secret put GOOGLE_SERVICE_ACCOUNT && npx wrangler deploy`; borrar la clave JSON local; poner `PUSH_WORKER_URL` en `local.properties`; reemplazar el `@Binds` de solicitudes por el `@Provides` del decorador; agregar servicio, permiso y canal en `:app`. | Restaurar el `@Binds` (vuelve el repositorio sin avisos) y quitar el servicio del manifest; o, más rápido, dejar `PUSH_WORKER_URL` vacío. Luego `npx wrangler delete` y revocar la clave de la cuenta de servicio en Google Cloud. |
 
 ## 18. Alineación con propuesta, configuración y specs
 
@@ -798,6 +1103,16 @@ Las diferencias detectadas al escribir este diseño se resolvieron con decisione
 
 Los nombres de error se traducen sin cambiar los specs: `Validation.EmptyDescription` ↔ `Validation(ValidationError.EMPTY_DESCRIPTION)`.
 
+**Pendiente de alinear tras la actualización del 2026-10-08** (este diseño no edita otros artefactos):
+
+| Artefacto | Diferencia | Acción sugerida |
+|---|---|---|
+| `proposal.md` (Enfoque por fases, Fase 2) | Dice "SDK de Cloudinary" y "SDK de Cloudinary en `:core:data`"; el diseño elige OkHttp (D21). | Reemplazar por "`POST` HTTP con OkHttp al endpoint de subida (preset sin firma)" y `okhttp` + `okhttp-coroutines` + `kotlinx-serialization-json` en `:core:data`. |
+| `openspec/config.yaml` (`rules.design`) | La regla de dispatchers no menciona el `@ApplicationScope CoroutineScope` de Fase 4 (D24, D26). | Agregar: "un único `@ApplicationScope CoroutineScope` (sin dispatcher inyectado) solo para el decorador de avisos y `TopicSync`". |
+| `specs/media` | Escenarios de Storage (rutas `requestPhotos/{uid}/...`, `storage.rules`, limpieza de fotos) quedan sin soporte. | Escenarios de Cloudinary: subida exitosa, sin red (15 s), preset rechaza formato `[manual]`, URL ajena rechazada por reglas `[manual]`, fotos huérfanas como limitación. |
+| `specs/notifications` | Alineado con el spec (payload `type`/`requestId`[/`category`], `NEW_REQUEST`, 5 s, idempotencia, `topicChanges`, destino puro por (tipo, rol, `requestId`)). Diferencias menores: (a) el spec no fija los valores de `type` para aceptación y cancelación: el diseño usa `REQUEST_ACCEPTED` y `REQUEST_CANCELLED`; (b) "Aceptación rechazada" nombra `AlreadyAccepted`, pero el error del dominio es `AlreadyTaken`; (c) los escenarios "Contenido del mensaje…" no llevan `[manual]` y el payload lo arma el Worker en TypeScript: el diseño los cubre con `vitest` (`rules.ts`), que no es un test JVM. | Fijar (a), corregir (b) y, para (c), aceptar `vitest` como cobertura automática o marcarlos `[manual]`. |
+| `specs/profiles`, `specs/auth` | Las suscripciones al editar categorías y al cerrar sesión las resuelve `TopicSync` sin cambiar esas capacidades. | Pueden referenciar `notifications` en lugar de agregar requisitos propios. |
+
 ## 19. Preguntas abiertas (verificar al armar el proyecto)
 
 - [ ] **Retención de ViewModels por entrada con historial por pestaña**: comparar con el código de la cátedra que, al cambiar de pestaña y volver, los ViewModels y el estado guardable de la pestaña no visible se conservan (p. ej., si `NavDisplay` recibe solo la pila activa o las entradas decoradas de todas las pestañas). Si se pierden, la pantalla vuelve a cargar sus datos (aceptable) pero un formulario a medio completar se perdería.
@@ -807,3 +1122,12 @@ Los nombres de error se traducen sin cambiar los specs: `Validation.EmptyDescrip
 - [ ] **ViewModels descartados al cambiar de usuario**: verificar que, con `key(userId)` en la compuerta (D20), tras cerrar sesión e iniciar con otro usuario ninguna entrada conserva el ViewModel ni el estado del anterior (cubre el escenario `[manual]` "Otro usuario tras cerrar sesión no ve datos del anterior").
 - [ ] **`NavBackStack` como `MutableList<NavKey>`**: verificar que `NavBackStack` de Navigation 3 se puede construir y usar en tests JVM como una lista mutable; si no, `NavigationState` recibe `MutableList<NavKey>` y `rememberNavigationState` adapta las pilas.
 - [ ] Verificar el comportamiento de las escrituras de Firestore sin conexión (Fase 2): `withTimeout` deja de esperar pero no cancela una escritura ya encolada, que podría sincronizarse más tarde. Si ocurre, usar `runTransaction` también para `create` y `updateProfile` (las transacciones no se encolan sin conexión).
+- [ ] **`okhttp-coroutines` / `executeAsync()`** (Fase 2): verificar el artefacto y la versión estable de OkHttp 5 y que cancela el `Call` al cancelarse la corrutina. Alternativa: `suspendCancellableCoroutine` + `enqueue` con `invokeOnCancellation { call.cancel() }`.
+- [ ] **Opciones del preset de Cloudinary** (Fase 2): confirmar en la consola que existen *asset folder* fija, *allowed formats*, transformación de entrada y si hay un campo de tamaño máximo por preset. Si no lo hay, rige el límite de la cuenta gratuita y la compresión de la app.
+- [ ] **Regex de `validPhotos`** (Fase 2): confirmar con el Emulator Suite o el simulador de reglas que `matches` acepta la `secure_url` real (con versión `v123...` y carpeta) y rechaza otros dominios.
+- [ ] **CPU del Worker (10 ms)** (Fase 4): medir en el panel la verificación RS256 + validación del ID token con el token OAuth y las claves de Google en caché, y también el primer pedido de un *isolate* nuevo (firma del JWT). Si se excede, cachear también la `CryptoKey` importada de cada `kid`.
+- [ ] **Firestore REST con el ID token del usuario** (Fase 4): confirmar que la lectura desde el Worker con `Authorization: Bearer <ID token>` aplica las reglas y funciona. Alternativa: leer con la cuenta de servicio agregando el alcance `datastore` (más privilegio).
+- [ ] **Operaciones de temas sin conexión** (Fase 4): verificar si `subscribeToTopic` / `unsubscribeFromTopic` quedan encolados y se reintentan, o si fallan. En ambos casos el diseño se sostiene (resuscripción en cada arranque y decisión en el dispositivo), pero define qué se anota en el checklist.
+- [ ] **Prioridad de mensajes de datos** (Fase 4): Android puede bajar la prioridad de mensajes de alta prioridad que no terminan en una notificación (p. ej., solicitudes fuera de radio). Observar en las pruebas; si ocurre, se acepta como limitación (cambiarlo exigiría enviar por profesional).
+- [ ] **Trabajo dentro de `onMessageReceived`** (Fase 4): verificar con la app cerrada que Hilt inyecta el servicio, que `FirebaseAuth` restaura la sesión y que las dos lecturas de Firestore entran en el tiempo que concede FCM. Alternativa: encolar un `OneTimeWorkRequest` de WorkManager.
+- [ ] **Enlace profundo y compuerta** (Fase 4): verificar que el enlace se aplica después de que la sesión sale de `LOADING` y dentro del `key(userId)` correcto, tanto con la app cerrada (`onCreate`) como abierta (`onNewIntent`), y que una rotación no lo reaplica.
