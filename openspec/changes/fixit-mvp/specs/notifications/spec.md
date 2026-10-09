@@ -8,7 +8,7 @@
 >
 > Temas de FCM: `user_{uid}` (avisos a una persona) y `category_{CATEGORY}` (nuevas solicitudes de una categoría).
 >
-> Convención de verificación: cada escenario está cubierto por un test JVM (lógica pura y decorador en `:core:data` con dobles escritos a mano) o por un ítem del checklist manual. Los escenarios cuyo título termina en `[manual]` se verifican a mano (ver `design.md` §15). Las verificaciones del código del Worker (TypeScript, fuera de Gradle) y la entrega real de FCM se verifican como `[manual]` contra el Worker desplegado o en `wrangler dev`.
+> Convención de verificación: cada escenario está cubierto por (a) un test JVM para la lógica de Android (decorador y lógica pura en `:core:data`, `:app`, con dobles escritos a mano), (b) un test `vitest` en `worker/` para la lógica que vive solo en el Worker (contenido, prioridad y vigencia del payload, verificaciones de cada evento, caché de claves), o (c) un ítem del checklist manual. Los escenarios cuyo título termina en `[manual]` se verifican a mano (ver `design.md` §15): la firma real del ID token, la lectura REST de Firestore, el envío y la entrega real de FCM y la presentación en el dispositivo. Los escenarios de "Verificaciones del Worker" llevan `[manual]` por ejercitar el Worker desplegado (o `wrangler dev`) y, además, su lógica tiene tests `vitest`.
 
 ## ADDED Requirements
 
@@ -40,6 +40,11 @@ El conjunto de temas a los que debe estar suscrito un dispositivo DEBE ser una f
 - Al editar sus categorías, el profesional DEBE suscribirse a los temas de las categorías agregadas y desuscribirse de los de las categorías quitadas, sin tocar `user_{uid}` ni los temas que se mantienen.
 - Al cerrar sesión, el dispositivo DEBE desuscribirse de todos los temas (`user_{uid}` y todos los `category_*`) de esa cuenta.
 - Cerrar o matar la app NO DEBE desuscribir ningún tema.
+- Al cerrar sesión, la app DEBE retirar de la bandeja del sistema los avisos que siguen visibles, para que no los vea la persona que inicie sesión después en el mismo dispositivo. Esta retirada DEBE ocurrir de inmediato al cerrar sesión, sin esperar a que terminen operaciones de suscripción pendientes.
+- El dispositivo DEBE registrar de forma persistente el conjunto de temas **aplicado con éxito**. Al arrancar y con cada cambio de sesión, DEBE reconciliarlo con el conjunto deseado (vacío sin sesión): una operación que falló (por ejemplo, sin conexión) DEBE reintentarse en la siguiente emisión de sesión que cambie el usuario o sus categorías (las que solo cambian el nombre o la reputación no cuentan) o, a más tardar, en el siguiente arranque, y NO DEBEN quedar suscripciones de una cuenta anterior.
+- Los temas cuya suscripción quedó sin confirmar (falló, venció el tiempo o se canceló) DEBEN registrarse de forma persistente como **posiblemente suscritos**; al cerrar sesión el dispositivo DEBE desuscribirse de los temas aplicados y de los posiblemente suscritos.
+- Las operaciones sobre los temas DEBEN aplicarse de forma serializada, y un cambio de sesión nuevo (por ejemplo, cerrar sesión) NO DEBE quedar en cola detrás de operaciones lentas: interrumpe las que están en curso.
+- Cuando FCM entrega un token nuevo, el dispositivo DEBE descartar lo que tenía registrado como suscrito (incluso si la app termina antes de reconciliar) y suscribirse de nuevo a todo el conjunto deseado en la siguiente emisión de sesión que no sea de determinación (`Loading`); NO DEBE suscribirse mientras la sesión está en determinación.
 - Un fallo al suscribirse o desuscribirse NO DEBE hacer fallar iniciar sesión, cerrar sesión ni guardar el perfil.
 
 #### Escenario: Temas de un cliente
@@ -87,15 +92,50 @@ El conjunto de temas a los que debe estar suscrito un dispositivo DEBE ser una f
 - DADO una cuenta que cerró sesión en un dispositivo
 - CUANDO ocurre un evento que la alcanzaría (por ejemplo, una nueva solicitud de su categoría)
 - ENTONCES ese dispositivo no muestra ningún aviso
+- Y la bandeja del sistema no conserva avisos anteriores de esa cuenta
 
 #### Escenario: Falla de suscripción no bloquea la operación
 - DADO un suscriptor de prueba que falla al suscribirse
 - CUANDO la persona inicia sesión o guarda sus categorías
 - ENTONCES la operación termina con éxito y la falla no llega a la capa de presentación
 
+#### Escenario: Operación fallida se reintenta en la siguiente emisión de sesión
+- DADO un suscriptor de prueba que falla al suscribirse a `category_GAS` durante el inicio de sesión de un profesional con categorías `{GAS, PLUMBING}`
+- CUANDO el suscriptor se recupera y la sesión vuelve a emitir con un cambio relevante (por ejemplo, la persona guarda sus categorías)
+- ENTONCES se suscribe a `category_GAS`
+- Y no repite las operaciones que ya habían tenido éxito
+
+#### Escenario: Desuscripción fallida al cerrar sesión se repara al arrancar
+- DADO un profesional suscrito a `user_p1` y `category_GAS` cuyo cierre de sesión falló al desuscribirse (suscriptor de prueba sin conexión), con el estado de temas persistido de prueba
+- CUANDO la app arranca de nuevo sin sesión
+- ENTONCES se desuscribe de `user_p1` y `category_GAS`
+
+#### Escenario: Cerrar sesión retira los avisos de la bandeja
+- DADO avisos de la cuenta visibles en la bandeja (un gestor de avisos de prueba)
+- CUANDO la sesión pasa a sin sesión
+- ENTONCES se cancelan todos los avisos de la app
+
+#### Escenario: Token nuevo con la sesión en determinación
+- DADO un profesional `p1` con categorías `{GAS}`, los temas `user_p1` y `category_GAS` ya aplicados y la sesión en determinación (`Loading`)
+- CUANDO FCM entrega un token nuevo
+- ENTONCES no se realiza ninguna suscripción mientras la sesión sigue en determinación
+- Y cuando la sesión pasa a `SignedIn(p1)` el suscriptor de prueba recibe la suscripción a `user_p1` y `category_GAS`, aunque ya figuraran como aplicados antes del token
+
+#### Escenario: Cerrar sesión con operaciones pendientes cancela la bandeja de inmediato
+- DADO un profesional con operaciones de suscripción en curso que no terminan (suscriptor de prueba bloqueado) y un gestor de avisos de prueba
+- CUANDO la sesión pasa a sin sesión
+- ENTONCES se cancelan todos los avisos de la bandeja sin esperar a que las operaciones pendientes terminen
+- Y después se desuscribe de los temas aplicados y de los posiblemente suscritos
+
+#### Escenario: Suscripción con tiempo agotado se desuscribe al cerrar sesión
+- DADO un suscriptor de prueba cuya suscripción a `category_GAS` no termina (tiempo agotado, en tiempo virtual) y un profesional que inicia sesión con categorías `{GAS}`
+- CUANDO se agota el tiempo de la operación y luego el profesional cierra sesión
+- ENTONCES `category_GAS` queda registrada de forma persistente como posiblemente suscrita (no como aplicada)
+- Y al cerrar sesión el suscriptor recibe la desuscripción de `category_GAS` además de la de los temas aplicados
+
 ### Requirement: Aviso de solicitud aceptada [Fase 4]
 
-Cuando un profesional acepta una solicitud, el cliente dueño DEBE recibir un aviso en su tema `user_{clientId}`. Tras una aceptación exitosa, la app DEBE pedir al Worker el envío incluyendo el ID token de Firebase y el `requestId`. El aviso DEBE enviarse una sola vez por aceptación efectiva. Una aceptación idempotente del mismo profesional (ver `professional-feed`) NO DEBE generar un segundo aviso.
+Cuando un profesional acepta una solicitud, el cliente dueño DEBE recibir un aviso en su tema `user_{clientId}`. Tras una aceptación exitosa, la app DEBE pedir al Worker el envío incluyendo el ID token de Firebase y el `requestId`. El dispositivo del cliente DEBE mostrar como máximo un aviso visible por aceptación efectiva: la app solicita el envío una vez por aceptación, y si dos toques simultáneos del mismo profesional generan dos pedidos, el segundo aviso reemplaza al primero en la bandeja (misma etiqueta y sin volver a sonar). Una aceptación idempotente del mismo profesional (ver `professional-feed`) NO DEBE generar un segundo pedido, salvo que la lectura previa con la que se detecta se agote o falle (ver "Avisos de mejor esfuerzo"): en ese caso se trata como una aceptación nueva y el pedido duplicado se resuelve en el dispositivo por reemplazo del aviso.
 
 #### Escenario: El cliente recibe el aviso al aceptar [manual]
 - DADO un cliente con una solicitud `OPEN` y su dispositivo con sesión iniciada
@@ -117,9 +157,15 @@ Cuando un profesional acepta una solicitud, el cliente dueño DEBE recibir un av
 - CUANDO el profesional A la acepta de nuevo y la operación es idempotente
 - ENTONCES el cliente del Worker no recibe un nuevo pedido
 
+#### Escenario: Aviso duplicado se reemplaza [manual]
+- DADO un aviso de solicitud aceptada visible en la bandeja del cliente
+- CUANDO llega un segundo aviso de la misma aceptación (por ejemplo, por dos toques simultáneos en "Aceptar" del profesional)
+- ENTONCES la bandeja muestra un solo aviso, que reemplaza al anterior
+- Y el segundo no vuelve a sonar
+
 ### Requirement: Aviso de nueva solicitud [Fase 4]
 
-Cuando un cliente publica una solicitud, el Worker DEBE enviar un mensaje de datos (sin bloque de notificación visible) al tema `category_{CATEGORY}` de la categoría de la solicitud. Tras una creación exitosa, la app DEBE pedir al Worker el envío incluyendo el ID token y el `requestId`. El dispositivo del profesional DEBE decidir si muestra el aviso aplicando el filtro de distancia (ver "Filtro de distancia en el dispositivo"). Un cliente NO DEBE recibir avisos de nuevas solicitudes.
+Cuando un cliente publica una solicitud, el Worker DEBE enviar un mensaje de datos (sin bloque de notificación visible) al tema `category_{CATEGORY}` de la categoría de la solicitud. Tras una creación exitosa, la app DEBE pedir al Worker el envío incluyendo el ID token y el `requestId`. El mensaje de nueva solicitud DEBE enviarse con prioridad normal y vigencia (TTL) de 1 hora, porque la mayoría de los dispositivos lo descarta por distancia y un aviso con más de 1 hora ya no es útil; los mensajes de aceptación y de cancelación DEBEN enviarse con prioridad alta y vigencia de 24 horas. El dispositivo del profesional DEBE decidir si muestra el aviso aplicando el filtro de distancia (ver "Filtro de distancia en el dispositivo"). Un cliente NO DEBE recibir avisos de nuevas solicitudes.
 
 #### Escenario: Crear solicita el envío una vez
 - DADO un decorador del repositorio de solicitudes con un cliente del Worker de prueba
@@ -130,6 +176,13 @@ Cuando un cliente publica una solicitud, el Worker DEBE enviar un mensaje de dat
 - DADO un repositorio cuya creación falla con un error
 - CUANDO un cliente intenta publicar
 - ENTONCES el cliente del Worker no recibe ningún pedido
+
+#### Escenario: Prioridad y vigencia por tipo de evento
+- DADO los mensajes construidos para nueva solicitud, aceptación y cancelación
+- CUANDO se inspecciona su configuración de entrega
+- ENTONCES el de nueva solicitud tiene prioridad normal y vigencia de `3600s`
+- Y los de aceptación y de cancelación tienen prioridad alta y vigencia de `86400s`
+- Y ninguno incluye bloque de notificación
 
 #### Escenario: Solo los profesionales de la categoría reciben el aviso [manual]
 - DADO un profesional de `PLUMBING` y otro de `GAS`, ambos con la solicitud dentro de su radio
@@ -175,7 +228,7 @@ El Worker NO DEBE confiar en el cuerpo del pedido más allá del tipo de evento 
 | Solicitud aceptada | `ACCEPTED` con `professionalId` | ese `professionalId` | tema `user_{clientId}` |
 | Cancelación de un `ACCEPTED` | `CANCELLED` con `professionalId` | cliente dueño (`clientId`) | tema `user_{professionalId}` |
 
-El tema de destino y la categoría DEBEN salir de lo leído en Firestore, nunca del cuerpo del pedido. Si una condición no se cumple, el Worker NO DEBE enviar nada y DEBE responder con un error 4xx. El Worker DEBE responder sin esperar la entrega de FCM más allá de la aceptación del mensaje.
+El tema de destino y la categoría DEBEN salir de lo leído en Firestore, nunca del cuerpo del pedido. Además, el evento DEBE ser reciente (protección ante la repetición de pedidos con un ID token que sigue vigente): la marca de tiempo del servidor que corresponde al evento (`createdAt` para nueva solicitud, `acceptedAt` para aceptación y `cancelledAt` para cancelación) NO DEBE tener más de 2 minutos de antigüedad ni estar más de 60 segundos en el futuro (desfase de relojes tolerado), y si falta el Worker DEBE tratarla como vencida. Las reglas de Firestore DEBEN fijar esas marcas a la hora del servidor, de modo que un cliente no pueda escribir una fecha propia. Si una condición no se cumple, el Worker NO DEBE enviar nada y DEBE responder con un error 4xx. El Worker DEBE responder sin esperar la entrega de FCM más allá de la aceptación del mensaje.
 
 #### Escenario: Token inválido o ausente [manual]
 - DADO un pedido sin ID token, con un token vencido o con un token de otro proyecto
@@ -222,6 +275,13 @@ El tema de destino y la categoría DEBEN salir de lo leído en Firestore, nunca 
 - CUANDO un token distinto del cliente dueño pide el aviso de cancelación
 - ENTONCES el Worker no envía ningún mensaje
 
+#### Escenario: Evento fuera de la ventana de vigencia
+- DADO una solicitud `ACCEPTED` cuya marca `acceptedAt` es de hace más de 2 minutos, ausente o más de 60 segundos en el futuro, y un token válido del profesional asignado
+- CUANDO se evalúa el pedido de aviso de aceptación
+- ENTONCES el Worker lo rechaza con un error 4xx y no envía ningún mensaje
+- Y lo mismo ocurre con `createdAt` para nueva solicitud y con `cancelledAt` para cancelación
+- Y un evento de hace menos de 2 minutos, o con una marca futura dentro del desfase tolerado, se acepta
+
 #### Escenario: El destino sale de Firestore, no del pedido [manual]
 - DADO un pedido válido que incluye en su cuerpo un tema o una categoría distintos de los de la solicitud
 - CUANDO el Worker lo procesa
@@ -249,7 +309,7 @@ Los mensajes enviados a temas NO DEBEN contener datos personales ni coordenadas:
 
 ### Requirement: Filtro de distancia en el dispositivo [Fase 4]
 
-Al recibir el mensaje de datos de nueva solicitud, el dispositivo del profesional DEBE leer la solicitud en Firestore con la sesión del usuario y mostrar el aviso solo si se cumplen todas estas condiciones: hay sesión de `PROFESSIONAL`; la solicitud está `OPEN`; su categoría está entre las categorías vigentes del profesional; y la distancia Haversine entre el punto base del profesional y la ubicación de la solicitud cumple `Matching.isWithin(distanceKm, radiusKm)` (límite inclusivo, igual que el feed, ver `professional-feed`). Si la lectura falla o la solicitud no tiene ubicación, el aviso NO DEBE mostrarse. El filtro NO DEBE enviar la ubicación del profesional a ningún servicio.
+Al recibir el mensaje de datos de nueva solicitud, el dispositivo del profesional DEBE leer la solicitud en Firestore con la sesión del usuario y mostrar el aviso solo si se cumplen todas estas condiciones: hay sesión de `PROFESSIONAL`; la solicitud está `OPEN`; su categoría está entre las categorías vigentes del profesional; y la distancia Haversine entre el punto base del profesional y la ubicación de la solicitud cumple `Matching.isWithin(distanceKm, radiusKm)` (límite inclusivo, igual que el feed, ver `professional-feed`). Como prefiltro barato, si el mensaje de nueva solicitud trae una categoría que no figura entre las categorías vigentes del profesional según su sesión, el dispositivo NO DEBE leer nada de Firestore y NO DEBE mostrar el aviso. Si la lectura falla o la solicitud no tiene ubicación, el aviso NO DEBE mostrarse. El filtro NO DEBE enviar la ubicación del profesional a ningún servicio.
 
 #### Escenario: Solicitud dentro del radio
 - DADO un profesional de `PLUMBING` con radio 10 km y una solicitud `OPEN` de `PLUMBING` a 4 km de su punto base
@@ -270,6 +330,7 @@ Al recibir el mensaje de datos de nueva solicitud, el dispositivo del profesiona
 - DADO un profesional que quitó `GAS` de sus categorías y un mensaje de datos de categoría `GAS`
 - CUANDO llega el mensaje
 - ENTONCES no se muestra el aviso
+- Y no se lee ni la solicitud ni el usuario en Firestore
 
 #### Escenario: Solicitud que ya no está OPEN
 - DADO un mensaje de datos de una solicitud que al leerse está `ACCEPTED` o `CANCELLED`
@@ -288,7 +349,7 @@ Al recibir el mensaje de datos de nueva solicitud, el dispositivo del profesiona
 
 ### Requirement: Avisos visibles en primer plano [Fase 4]
 
-Los avisos DEBEN mostrarse como notificación del sistema también cuando la app está en primer plano, generada desde `onMessageReceived`, en un canal de notificaciones de importancia alta creado por la app. Con la app en segundo plano o cerrada, los avisos de aceptación y de cancelación DEBEN mostrarse igualmente.
+Los avisos DEBEN mostrarse como notificación del sistema también cuando la app está en primer plano, generada desde `onMessageReceived`, en un canal de notificaciones de importancia alta creado por la app. Con la app en segundo plano o cerrada (deslizada desde recientes; no aplica a una app detenida a la fuerza), los avisos de aceptación y de cancelación (prioridad alta) DEBEN mostrarse igualmente. El aviso de nueva solicitud (prioridad normal) DEBE mostrarse con la app en primer plano y DEBERÍA mostrarse con la app en segundo plano o cerrada, pero puede demorar según las restricciones de ahorro de batería del sistema; no se garantiza su entrega inmediata.
 
 #### Escenario: Aviso con la app abierta [manual]
 - DADO la app en primer plano con sesión iniciada y el permiso concedido
@@ -298,10 +359,10 @@ Los avisos DEBEN mostrarse como notificación del sistema también cuando la app
 #### Escenario: Aviso con la app en segundo plano [manual]
 - DADO la app en segundo plano con el permiso concedido
 - CUANDO llega un aviso de su rol
-- ENTONCES aparece una notificación del sistema
+- ENTONCES aparece una notificación del sistema (el aviso de nueva solicitud puede demorar por su prioridad normal)
 
 #### Escenario: Aviso con la app cerrada [manual]
-- DADO la app cerrada sin haber cerrado sesión
+- DADO la app cerrada (deslizada desde recientes, no detenida a la fuerza) sin haber cerrado sesión
 - CUANDO llega un aviso de aceptación o de cancelación
 - ENTONCES aparece una notificación del sistema
 
@@ -341,7 +402,7 @@ Al tocar un aviso, la app DEBE abrir el detalle de la solicitud correspondiente 
 
 ### Requirement: Avisos de mejor esfuerzo [Fase 4]
 
-Los avisos son de mejor esfuerzo. Si el Worker no responde, devuelve un error o la red falla, la creación, la aceptación o la cancelación DEBEN considerarse exitosas, con el mismo resultado y el mismo estado final que sin avisos, y el fallo NO DEBE llegar a la capa de presentación ni mostrarse como error. El pedido al Worker NO DEBE bloquear el resultado de la operación por más de 5 segundos; si se agota, el pedido se descarta sin reintentos. Si el Worker no está configurado (Fases 1 a 3), el comportamiento DEBE ser idéntico al de un repositorio sin avisos.
+Los avisos son de mejor esfuerzo. Si el Worker no responde, devuelve un error o la red falla, la creación, la aceptación o la cancelación DEBEN considerarse exitosas, con el mismo resultado y el mismo estado final que sin avisos, y el fallo NO DEBE llegar a la capa de presentación ni mostrarse como error. El pedido al Worker NO DEBE bloquear el resultado de la operación por más de 5 segundos; si se agota, el pedido se descarta sin reintentos. La lectura previa con la que el decorador detecta una aceptación idempotente NO DEBE retrasar la aceptación más de 2 segundos; si se agota o falla, se trata como una aceptación nueva. Si el Worker no está configurado (Fases 1 a 3), el comportamiento DEBE ser idéntico al de un repositorio sin avisos.
 
 #### Escenario: Falla del Worker al crear
 - DADO un cliente del Worker de prueba que devuelve un error
@@ -362,6 +423,12 @@ Los avisos son de mejor esfuerzo. Si el Worker no responde, devuelve un error o 
 - DADO un cliente del Worker de prueba que nunca responde y un reloj virtual
 - CUANDO se completa una creación y pasan más de 5 segundos
 - ENTONCES el pedido se descarta y el resultado de la operación ya fue `Success`
+
+#### Escenario: Lectura previa lenta no bloquea la aceptación
+- DADO un decorador cuyo repositorio real tarda más de 2 segundos (tiempo virtual) en responder la lectura previa de la solicitud
+- CUANDO un profesional acepta una solicitud `OPEN` con éxito
+- ENTONCES la aceptación termina con `Success` habiendo esperado como máximo 2 segundos por esa lectura
+- Y el cliente del Worker recibe exactamente 1 pedido de aceptación
 
 #### Escenario: Sin Worker configurado
 - DADO un repositorio de solicitudes sin cliente del Worker (Fases 1 a 3)

@@ -266,7 +266,7 @@ El sistema NO DEBE limitar la cantidad de solicitudes `OPEN` por cliente.
 
 ### Requirement: Solicitudes persistentes entre dispositivos [Fase 2]
 
-Con el backend de Fase 2, las solicitudes DEBEN persistir y verse desde cualquier dispositivo en el que el dueño inicie sesión, y los profesionales DEBEN verlas en tiempo real. Si la creación falla por falta de conectividad, o si la escritura o la subida de fotos no termina en 15 segundos, DEBE informarse `Network`, NO DEBE quedar una solicitud a medio crear y el formulario DEBE conservar lo cargado.
+Con el backend de Fase 2, las solicitudes DEBEN persistir y verse desde cualquier dispositivo en el que el dueño inicie sesión, y los profesionales DEBEN verlas en tiempo real. Si la creación falla por falta de conectividad, o si la escritura no termina en 15 segundos o la subida de una foto no termina en 30 segundos, DEBE informarse `Network`, NO DEBE quedar una solicitud a medio crear y el formulario DEBE conservar lo cargado.
 
 #### Escenario: Solicitud visible en otro dispositivo [manual]
 - DADO una solicitud publicada por un cliente desde un dispositivo
@@ -276,6 +276,6 @@ Con el backend de Fase 2, las solicitudes DEBEN persistir y verse desde cualquie
 #### Escenario: Fallo de red al publicar [manual]
 - DADO un dispositivo sin conexión
 - CUANDO el cliente publica una solicitud válida
-- ENTONCES el resultado es `Network`, como máximo a los 15 segundos
+- ENTONCES el resultado es `Network`, como máximo a los 30 segundos (límite de la subida de la primera foto)
 - Y no se crea ninguna solicitud ni queda una a medio crear
 - Y el formulario conserva lo cargado para reintentar

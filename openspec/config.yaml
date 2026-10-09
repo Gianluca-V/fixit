@@ -50,7 +50,7 @@ rules:
     - "Tag every requirement with its phase: [Fase 1], [Fase 2], [Fase 3] or [Fase 4]. A Phase 1 requirement remains in force in later phases unless stated otherwise."
     - "Domains follow the draft layout: auth, profiles, repair-requests, professional-feed, job-completion, contact, location, media, navigation; plus notifications ([Fase 4])."
     - "Delta specs use ADDED / MODIFIED / REMOVED / RENAMED sections per the OpenSpec convention."
-    - "Every scenario MUST be covered either by a JVM test named `given X when Y then Z` or by a manual-checklist item. Exception ([Fase 4]): scenarios implemented only in the Cloudflare Worker (`worker/`, TypeScript) MAY be covered by a vitest test instead of a JVM test. Scenarios that are purely visual, Android-intent, rotation, Firebase-console or hardware MUST carry [manual] at the end of their title and are verified by hand (design.md section 15)."
+    - "Every scenario MUST be covered either by a JVM test named `given X when Y then Z` or by a manual-checklist item. Exception ([Fase 4]): scenarios implemented only in the Cloudflare Worker (`worker/`, TypeScript) MAY be covered by a vitest test instead of a JVM test. Scenarios that are purely visual, Android-intent, rotation, Firebase-console, hardware or deployed-service checks (curl against the deployed Worker) MUST carry [manual] at the end of their title and are verified by hand (design.md section 15)."
   design:
     - "Write in neutral professional Spanish; code snippets and identifiers in English."
     - "Respect the strict dependency rule: :core:domain MUST NOT depend on Android, Firebase, Hilt or Compose; :features:* MUST NOT depend on :core:data nor on each other; navigation is resolved in :app via callbacks."

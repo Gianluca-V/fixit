@@ -54,7 +54,7 @@
 | `notifications` | **Nueva, [Fase 4]**: permiso de notificaciones; suscripción a `user_{uid}` y `category_*` al iniciar sesión, resuscripción al editar categorías y desuscripción total al cerrar sesión; tres eventos (aceptación, nueva solicitud, cancelación de un `ACCEPTED`) enviados por el Worker; filtro de distancia en el dispositivo; aviso visible también en primer plano; al tocarlo se abre el detalle según el rol. |
 
 ### Modificadas (Modified Capabilities)
-- Ninguna en `openspec/specs/` (está vacío). Dentro de este cambio, los specs ya escritos de `media` (Storage → Cloudinary) y `profiles` / `auth` (suscripciones al editar categorías y al cerrar sesión) quedan pendientes de revisión.
+- Ninguna en `openspec/specs/` (está vacío). Dentro de este cambio, los specs de `media` (Storage → Cloudinary) y `profiles` / `auth` (suscripciones al editar categorías y al cerrar sesión, que referencian `notifications`) ya fueron revisados y actualizados.
 
 ## Enfoque por fases
 
@@ -91,20 +91,20 @@ Se usa la carpeta `worker/` porque tiene otro runtime (JS/TS con `wrangler`), ot
 | Riesgo | Prob. | Mitigación |
 |---|---|---|
 | Sin experiencia previa en Android + APIs recientes (Navigation 3, AGP 9) con pocos ejemplos | Alta | Replicar el repositorio de la cátedra; andamiaje primero; verificar versiones al implementar. |
-| Cambio muy grande (~160 tareas) | Alta | PRs encadenados; cerrar cada fase antes de empezar la siguiente. La Fase 4 es opcional. |
+| Cambio muy grande (~237 tareas) | Alta | PRs encadenados; cerrar cada fase antes de empezar la siguiente. La Fase 4 es opcional. |
 | El Fake no reproduce Firestore (latencia, errores, transacciones) | Media | Checklist manual de Fase 2 sobre Firebase (opcional: Firebase Emulator Suite). |
 | Privacidad en Fase 2: teléfono y dirección exacta legibles por cualquier usuario autenticado; agregado de reputación manipulable | Media | Aceptado en el alcance académico. Una mejora futura es `users/{uid}/private` o mover el agregado al Worker; Cloud Functions queda descartado. |
 | Editar el perfil en Fase 2 podría permitir modificar campos protegidos | Media | Las reglas solo permiten cambiar los campos editables (`email` y `role` bloqueados); `ratingSum` y `reviewCount` siguen escribibles (debilidad aceptada, D18). |
 | Cambian los planes gratuitos o sus límites (Cloudinary ~25 créditos/mes; Worker 100.000 pedidos/día y 10 ms de CPU) | Media | Fotos comprimidas antes de subir; presupuesto de uso de un TP. El Worker cachea el token OAuth de Google. El avance se verifica en el panel de cada servicio. |
-| Fase 4: la firma RS256 o la validación del ID token superan los 10 ms de CPU | Baja | Usar WebCrypto nativo, cachear el token de acceso y las claves públicas de Google, y medirlo en el primer despliegue. |
-| Fase 4: Android limita mensajes en segundo plano (Doze, permiso denegado en Android 13+) | Media | Mensajes de alta prioridad. Si el permiso se deniega, la app funciona igual, sin avisos. |
+| Fase 4: la firma RS256 o la validación del ID token superan los 10 ms de CPU, sobre todo en la ruta fría (*isolate* nuevo, sin cachés en memoria) | Media | Usar WebCrypto nativo, medir primero la ruta fría en el primer despliegue y, si excede, plan B escalonado: importar cada clave una vez y mantener el token de acceso y las claves públicas de Google en memoria; comprobar si la *Cache API* (`caches.default`) persiste en `*.workers.dev` (la documentación de Cloudflare solo lo afirma para dominios personalizados y no hay dominio propio); si no, Workers KV del plan gratuito (sin tarjeta); si nada alcanza, aceptar el costo de la ruta fría (el aviso es de mejor esfuerzo). |
+| Fase 4: Android limita mensajes en segundo plano (Doze, permiso denegado en Android 13+) | Media | Aceptación y cancelación con prioridad alta; la nueva solicitud con prioridad normal y TTL de 1 h (puede demorar en segundo plano). Si el permiso se deniega, la app funciona igual, sin avisos. |
 | Fase 4: la creación de claves de cuenta de servicio está bloqueada por política | Baja | Un proyecto personal (sin organización) no la bloquea; se verifica al configurar. |
 
 ### Debilidades aceptadas
-- **Preset de Cloudinary**: el nombre del preset se puede extraer del APK, así que cualquiera puede subir imágenes a la cuenta. Se mitiga con los límites del preset: carpeta fija, solo formatos de imagen, tamaño máximo y transformación de entrada.
+- **Preset de Cloudinary**: el nombre del preset se puede extraer del APK, así que cualquiera puede subir imágenes a la cuenta. Se mitiga con los límites del preset: carpeta fija, solo formatos de imagen y transformación de entrada; el tamaño máximo lo acota el límite de la cuenta gratuita y el preset solo si la consola ofrece ese campo.
 - **URLs públicas**: cualquiera con la URL ve la foto; no hay reglas de lectura por usuario.
 - **Fotos huérfanas**: borrar requiere la API firmada. Las fotos de solicitudes canceladas o de una creación fallida quedan en Cloudinary.
-- **Worker**: el abuso se limita porque se valida el ID token y se relee Firestore; no hay rate limiting propio.
+- **Worker**: el abuso se limita porque se valida el ID token, se relee Firestore y el evento debe ser reciente (ventana de 2 min; las reglas de Firestore fijan las marcas de tiempo a la hora del servidor y el Worker rechaza las marcas futuras); dentro de esa ventana un token válido puede repetir un evento y no hay rate limiting propio. Si Google rota sus claves, un aviso puede rechazarse con 401 hasta 60 s y no se reintenta.
 - **Temas FCM**: cualquier app con el `google-services.json` puede suscribirse a un tema. Por eso los mensajes no llevan datos personales ni coordenadas: solo `requestId` y categoría. Para calcular la distancia, el dispositivo lee la ubicación de la solicitud en Firestore con la sesión del usuario.
 
 ## Plan de rollback

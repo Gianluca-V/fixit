@@ -52,9 +52,9 @@ El formulario DEBE mostrar miniaturas de las fotos agregadas y el detalle DEBE m
 
 ### Requirement: Subida de fotos a Cloudinary [Fase 2]
 
-Con el backend de Fase 2, las fotos DEBEN subirse a Cloudinary antes de que la solicitud quede publicada, mediante una subida sin firma (*unsigned*) con un *upload preset* configurado en Cloudinary; la app NO DEBE contener ninguna clave secreta de Cloudinary. Cada imagen DEBE rotarse según su orientación EXIF y comprimirse a JPEG con lado mayor de hasta 1600 px y calidad 80 antes de subirse; el cálculo del tamaño de destino es una función pura (`targetSize(width, height, maxSide = 1600)`) que no amplía las imágenes pequeñas. La solicitud DEBE guardar en Firestore únicamente las URLs de entrega de las fotos (`photoUrls`), nunca los bytes. Si falla la subida de alguna foto o la escritura posterior de la solicitud, la solicitud NO DEBE crearse y el resultado DEBE ser un error. Una subida que no termine en 15 segundos DEBE informar `Network`; una falla de red DEBE mapearse a `Network` y cualquier otra falla del servicio de imágenes DEBE mapearse a `Unknown`.
+Con el backend de Fase 2, las fotos DEBEN subirse a Cloudinary antes de que la solicitud quede publicada, mediante una subida sin firma (*unsigned*) con un *upload preset* configurado en Cloudinary; la app NO DEBE contener ninguna clave secreta de Cloudinary. Cada imagen DEBE decodificarse con un submuestreo acotado (nunca a tamaño completo, para no agotar la memoria con fotos de 12 MP o más), rotarse según su orientación EXIF y comprimirse a JPEG con lado mayor de hasta 1600 px y calidad 80 antes de subirse; el cálculo del tamaño de destino es una función pura (`targetSize(width, height, maxSide = 1600)`) que no amplía las imágenes pequeñas, y el cálculo del submuestreo es otra función pura (`sampleSizeFor(width, height, maxSide = 1600)`) que devuelve la mayor potencia de dos que mantiene el lado mayor decodificado en `maxSide` o más. La solicitud DEBE guardar en Firestore únicamente las URLs de entrega de las fotos (`photoUrls`), nunca los bytes. Si falla la subida de alguna foto o la escritura posterior de la solicitud, la solicitud NO DEBE crearse y el resultado DEBE ser un error. Una subida que no termine en 30 segundos DEBE informar `Network` (las escrituras a Firestore mantienen el límite de 15 segundos); una falla de red DEBE mapearse a `Network` y cualquier otra falla del servicio de imágenes DEBE mapearse a `Unknown`.
 
-La app NO DEBE intentar borrar fotos ya subidas (el borrado exige la API firmada de Cloudinary). Las fotos subidas de una creación fallida o de una solicitud cancelada permanecen en Cloudinary (debilidad aceptada). El preset DEBE limitar la carpeta de destino, los formatos de imagen permitidos y el tamaño máximo.
+La app NO DEBE intentar borrar fotos ya subidas (el borrado exige la API firmada de Cloudinary). Las fotos subidas de una creación fallida o de una solicitud cancelada permanecen en Cloudinary (debilidad aceptada). El preset DEBE fijar la carpeta de destino, limitar los formatos de imagen permitidos (solo `jpg`) y aplicar una transformación de entrada que reduzca la imagen. El tamaño máximo por archivo DEBERÍA limitarse en el preset solo si la consola de Cloudinary lo ofrece; si no, rigen el límite de la cuenta gratuita y la transformación de entrada, y la compresión de la app garantiza el tamaño habitual.
 
 #### Escenario: Subida exitosa [manual]
 - DADO una solicitud con 2 fotos
@@ -71,14 +71,21 @@ La app NO DEBE intentar borrar fotos ya subidas (el borrado exige la API firmada
 - CUANDO se calcula el tamaño de destino con `targetSize(width, height, maxSide = 1600)`
 - ENTONCES resultan 1600 x 1200, 1200 x 1600 y 800 x 600 (sin ampliar)
 
+#### Escenario: Cálculo del submuestreo de decodificación
+- DADO una foto de 4000 x 3000 px, otra de 12000 x 9000 px y otra de 800 x 600 px
+- CUANDO se calcula el submuestreo con `sampleSizeFor(width, height, maxSide = 1600)`
+- ENTONCES resultan 2, 4 y 1 respectivamente
+- Y dimensiones inválidas (menores o iguales que 0) resultan en 1
+
 #### Escenario: Calidad visual de la compresión [manual]
 - DADO una foto de 4000 x 3000 px
 - CUANDO se sube
 - ENTONCES la imagen subida es JPEG de calidad 80, su lado mayor es de 1600 px o menos y se ve nítida en el detalle
 - Y una foto vertical tomada con la cámara se ve derecha (no rotada)
+- Y una foto de 12 MP o más se procesa y se sube sin que la app se cierre por falta de memoria
 
 #### Escenario: Mapeo de fallas de la subida
-- DADO un servicio de imágenes de prueba que falla por red, por tiempo agotado (más de 15 segundos en tiempo virtual) o por otro motivo
+- DADO un servicio de imágenes de prueba que falla por red, por tiempo agotado (más de 30 segundos en tiempo virtual) o por otro motivo
 - CUANDO se intenta subir una foto
 - ENTONCES el resultado es `Network`, `Network` y `Unknown` respectivamente, sin lanzar excepciones
 
@@ -98,7 +105,8 @@ La app NO DEBE intentar borrar fotos ya subidas (el borrado exige la API firmada
 - DADO el APK de Fase 2 y el *upload preset* configurado en Cloudinary
 - CUANDO se revisan el código, los recursos y la configuración del preset
 - ENTONCES no hay API secret de Cloudinary en el repositorio ni en el APK
-- Y el preset limita carpeta, formatos de imagen y tamaño máximo
+- Y el preset fija la carpeta, limita los formatos a `jpg` y aplica la transformación de entrada
+- Y el tamaño máximo queda limitado por el preset si la consola lo ofrece o, en caso contrario, por el límite de la cuenta gratuita
 
 #### Escenario: Cuentas sin tarjeta [manual]
 - DADO el proyecto Firebase y la cuenta de Cloudinary usados en Fase 2
