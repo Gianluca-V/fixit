@@ -24,4 +24,5 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testFixturesApi(libs.kotlinx.coroutines.test)
+    testFixturesApi(libs.junit)
 }
