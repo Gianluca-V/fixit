@@ -14,6 +14,23 @@ La app ya arranca con todos los módulos y todas las pantallas como **placeholde
 3. Ejecutar `:app` en un emulador. Pantalla de inicio: botones "Entrar como Ana / Bruno (cliente)" y "Entrar como Carlos / Diana (profesional)". Las cuentas y datos de ejemplo están en `design.md` §12 (contraseña `test1234`).
 4. Cada pantalla pendiente muestra "Pantalla pendiente de implementar (tarea X.Y.Z)": esa es la tarea de `tasks.md` que la reemplaza.
 
+## Dónde está todo
+
+Todo lo necesario está versionado en el repositorio; no hace falta ninguna herramienta extra. El proyecto sigue *Spec-Driven Development*: primero se especifica, después se implementa.
+
+| Pregunta | Archivo |
+|---|---|
+| ¿Qué tarea hago y en qué orden? | `openspec/changes/fixit-mvp/tasks.md`: tareas numeradas, cada par RED (test) → GREEN (implementación), con los escenarios que cubre cada test |
+| ¿Qué tiene que hacer exactamente la pantalla? | `openspec/changes/fixit-mvp/specs/<dominio>/spec.md`: requisitos y escenarios DADO / CUANDO / ENTONCES. Cada escenario es un criterio de aceptación y suele ser un test |
+| ¿Cómo se construye? | `openspec/changes/fixit-mvp/design.md`: §8 patrón de pantalla (Route + Screen + ViewModel + UiState), §9 pantallas por rol y navegación, §7 casos de uso, §15 estrategia de tests |
+| ¿Por qué se decidió así? | `design.md` §16 (decisiones D1–D28) y `proposal.md` (alcance) |
+| Reglas del proyecto | `openspec/config.yaml` (sección `rules`) |
+| Estado del cambio y temas abiertos | `openspec/changes/fixit-mvp/state.yaml` |
+
+Las etiquetas de `tasks.md` indican el spec: `[auth]` auth, `[prof]` profiles, `[rr]` repair-requests, `[feed]` professional-feed, `[jc]` job-completion, `[contact]` contact, `[loc]` location, `[media]` media, `[nav]` navigation. Ejemplo: la tarea 1.9.1 (`FeedViewModelTest`) menciona `[feed] Nueva solicitud aparece`; ese test se escribe a partir del escenario "Nueva solicitud aparece" de `specs/professional-feed/spec.md`.
+
+Si se usa un asistente de IA, alcanza con indicarle estos archivos y la tarea a implementar.
+
 ## Quién hace qué
 
 | | Módulos | Tareas (`tasks.md`) | Pantallas |
@@ -30,7 +47,7 @@ Notas:
 ## Ramas
 
 - **Una rama por unidad de trabajo**, con Conventional Commits en inglés y sin atribución de IA. Ejemplos: `feat/u6-auth`, `feat/u7-client`, `feat/u8-professional`.
-- Crear la rama desde `main` una vez que `feat/u9a-app-shell` esté integrada. Mientras no lo esté, crearla desde la punta de `feat/u9a-app-shell`.
+- Crear la rama desde `main` (el shell ya está integrado) y mantenerla al día con `main` antes de integrarla.
 - Commits chicos por unidad de comportamiento (ViewModel + su pantalla + sus tests). Si una rama pasa de unas 400 líneas, dividirla por pantalla.
 - Marcar la tarea `[x]` en `openspec/changes/fixit-mvp/tasks.md` en el mismo commit que la completa.
 
