@@ -162,8 +162,8 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 1.7 `:features:auth`
 
-- [ ] 1.7.1 RED `signin/SignInViewModelTest` (`MainDispatcherRule` + `SignInUseCase` real + `TestAuthRepository`): `[auth]` Envío en curso; Error de validación junto al campo; Mensaje mostrado una sola vez; Credenciales incorrectas.
-- [ ] 1.7.2 GREEN `signin/SignInViewModel.kt` + `SignInScreen.kt` (Route/Screen/`@Preview`).
+- [x] 1.7.1 RED `signin/SignInViewModelTest` (`MainDispatcherRule` + `SignInUseCase` real + `TestAuthRepository`): `[auth]` Envío en curso; Error de validación junto al campo; Mensaje mostrado una sola vez; Credenciales incorrectas.
+- [x] 1.7.2 GREEN `signin/SignInViewModel.kt` + `SignInScreen.kt` (Route/Screen/`@Preview`).
 - [ ] 1.7.3 RED `signup/SignUpViewModelTest`: `[auth]` Envío en curso; Error de validación junto al campo; Mensaje mostrado una sola vez; Email ya registrado; rol obligatorio; campos de profesional solo para `PROFESSIONAL`.
 - [ ] 1.7.4 GREEN `signup/SignUpViewModel.kt` + `SignUpScreen.kt` (sin acción para cambiar rol tras el registro).
 

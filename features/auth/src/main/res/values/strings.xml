@@ -4,9 +4,8 @@
     <string name="auth_sign_up_title">Crear cuenta</string>
     <string name="auth_go_to_sign_up">Crear cuenta</string>
 
-    <!-- TEMPORARY quick sign-in buttons (task 1.7.2 replaces them with the real form) -->
-    <string name="auth_demo_sign_in_ana">Entrar como Ana (cliente)</string>
-    <string name="auth_demo_sign_in_bruno">Entrar como Bruno (cliente)</string>
-    <string name="auth_demo_sign_in_carlos">Entrar como Carlos (profesional)</string>
-    <string name="auth_demo_sign_in_diana">Entrar como Diana (profesional)</string>
+    <!-- Sign-in form -->
+    <string name="auth_field_email">Correo electrónico</string>
+    <string name="auth_field_password">Contraseña</string>
+    <string name="auth_sign_in_submit">Ingresar</string>
 </resources>
