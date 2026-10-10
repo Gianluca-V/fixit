@@ -2,6 +2,7 @@ package ar.edu.unaj.fixit.core.domain.rules
 
 import ar.edu.unaj.fixit.core.domain.model.GeoPoint
 import ar.edu.unaj.fixit.core.domain.model.Limits
+import ar.edu.unaj.fixit.core.domain.model.NewRequest
 import ar.edu.unaj.fixit.core.domain.model.ProfileForm
 import ar.edu.unaj.fixit.core.domain.model.SignUpForm
 import ar.edu.unaj.fixit.core.domain.model.UserRole
@@ -52,6 +53,25 @@ object Validators {
             }
         }
         return null
+    }
+
+    fun request(input: NewRequest): ValidationError? {
+        if (input.category == null) return ValidationError.CATEGORY_REQUIRED
+        val description = input.description.trim()
+        if (description.isEmpty()) return ValidationError.EMPTY_DESCRIPTION
+        if (description.length < Limits.DESCRIPTION_MIN) return ValidationError.DESCRIPTION_TOO_SHORT
+        if (description.length > Limits.DESCRIPTION_MAX) return ValidationError.DESCRIPTION_TOO_LONG
+        if (input.photoUris.size < Limits.PHOTOS_MIN) return ValidationError.PHOTOS_REQUIRED
+        if (input.photoUris.size > Limits.PHOTOS_MAX) return ValidationError.TOO_MANY_PHOTOS
+        val place = input.place
+        if (place == null || place.address.isBlank()) return ValidationError.LOCATION_REQUIRED
+        return coordinates(place.point)
+    }
+
+    fun review(rating: Int, comment: String?): ValidationError? = when {
+        rating !in Limits.RATING_MIN..Limits.RATING_MAX -> ValidationError.INVALID_RATING
+        comment != null && comment.trim().length > Limits.COMMENT_MAX -> ValidationError.COMMENT_TOO_LONG
+        else -> null
     }
 
     fun coordinates(point: GeoPoint): ValidationError? =

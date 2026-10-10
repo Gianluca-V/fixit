@@ -1,6 +1,7 @@
 package ar.edu.unaj.fixit.core.domain.rules
 
 import ar.edu.unaj.fixit.core.domain.model.GeoPoint
+import ar.edu.unaj.fixit.core.domain.model.NewRequest
 import ar.edu.unaj.fixit.core.domain.model.Place
 import ar.edu.unaj.fixit.core.domain.model.ProfileForm
 import ar.edu.unaj.fixit.core.domain.model.ServiceCategory
@@ -384,6 +385,174 @@ class ValidatorsTest {
             ),
             order,
         )
+    }
+
+    // endregion
+
+    // region (c) request and review
+
+    private fun newRequest(
+        category: ServiceCategory? = ServiceCategory.PLUMBING,
+        description: String = "Pipe leaking under the sink",
+        photoUris: List<String> = listOf("photo-1"),
+        place: Place? = validBase,
+    ) = NewRequest(category = category, description = description, photoUris = photoUris, place = place)
+
+    @Test
+    fun `given a complete request when validating then there is no error`() {
+        assertNull(Validators.request(newRequest()))
+    }
+
+    @Test
+    fun `given no category when validating a request then the result is category required`() {
+        assertEquals(ValidationError.CATEGORY_REQUIRED, Validators.request(newRequest(category = null)))
+    }
+
+    @Test
+    fun `given a blank description when validating a request then the result is empty description`() {
+        assertEquals(ValidationError.EMPTY_DESCRIPTION, Validators.request(newRequest(description = "   ")))
+    }
+
+    @Test
+    fun `given a description of 9 characters when validating a request then the result is too short`() {
+        assertEquals(ValidationError.DESCRIPTION_TOO_SHORT, Validators.request(newRequest(description = "a".repeat(9))))
+    }
+
+    @Test
+    fun `given a description of 501 characters when validating a request then the result is too long`() {
+        assertEquals(ValidationError.DESCRIPTION_TOO_LONG, Validators.request(newRequest(description = "a".repeat(501))))
+    }
+
+    @Test
+    fun `given a description whose trimmed length is 9 when validating a request then padding does not count`() {
+        assertEquals(
+            ValidationError.DESCRIPTION_TOO_SHORT,
+            Validators.request(newRequest(description = "   " + "a".repeat(9) + "   ")),
+        )
+    }
+
+    @Test
+    fun `given descriptions of exactly 10 and 500 characters with 1 and 3 photos when validating a request then all are accepted`() {
+        listOf(10, 500).forEach { length ->
+            listOf(1, 3).forEach { photos ->
+                val request = newRequest(description = "a".repeat(length), photoUris = List(photos) { "photo-$it" })
+                assertNull("$length chars and $photos photos must be valid", Validators.request(request))
+            }
+        }
+    }
+
+    @Test
+    fun `given 0 photos when validating a request then the result is photos required`() {
+        assertEquals(ValidationError.PHOTOS_REQUIRED, Validators.request(newRequest(photoUris = emptyList())))
+    }
+
+    @Test
+    fun `given 4 photos when validating a request then the result is too many photos`() {
+        assertEquals(
+            ValidationError.TOO_MANY_PHOTOS,
+            Validators.request(newRequest(photoUris = List(4) { "photo-$it" })),
+        )
+    }
+
+    @Test
+    fun `given no place when validating a request then the result is location required`() {
+        assertEquals(ValidationError.LOCATION_REQUIRED, Validators.request(newRequest(place = null)))
+    }
+
+    @Test
+    fun `given an empty address when validating a request then the result is location required`() {
+        assertEquals(
+            ValidationError.LOCATION_REQUIRED,
+            Validators.request(newRequest(place = Place(GeoPoint(-34.8, -58.2), "  "))),
+        )
+    }
+
+    @Test
+    fun `given coordinates out of range with an address when validating a request then the result is invalid coordinates`() {
+        listOf(GeoPoint(91.0, 0.0), GeoPoint(0.0, 181.0)).forEach { point ->
+            assertEquals(
+                "$point must be invalid",
+                ValidationError.INVALID_COORDINATES,
+                Validators.request(newRequest(place = Place(point, "Calle 123, Quilmes"))),
+            )
+        }
+    }
+
+    @Test
+    fun `given no category and an empty description when validating a request then only the category error is reported`() {
+        assertEquals(
+            ValidationError.CATEGORY_REQUIRED,
+            Validators.request(newRequest(category = null, description = "")),
+        )
+    }
+
+    @Test
+    fun `given a request wrong everywhere when fixing one field at a time then errors follow the documented order`() {
+        var input = NewRequest(category = null, description = "", photoUris = emptyList(), place = null)
+        val order = mutableListOf<ValidationError?>()
+
+        order += Validators.request(input)
+        input = input.copy(category = ServiceCategory.GAS)
+        order += Validators.request(input)
+        input = input.copy(description = "short")
+        order += Validators.request(input)
+        input = input.copy(description = "a".repeat(501))
+        order += Validators.request(input)
+        input = input.copy(description = "a".repeat(20))
+        order += Validators.request(input)
+        input = input.copy(photoUris = List(4) { "photo-$it" })
+        order += Validators.request(input)
+        input = input.copy(photoUris = listOf("photo-1"))
+        order += Validators.request(input)
+        input = input.copy(place = Place(GeoPoint(91.0, 0.0), "Somewhere"))
+        order += Validators.request(input)
+        input = input.copy(place = validBase)
+        order += Validators.request(input)
+
+        assertEquals(
+            listOf(
+                ValidationError.CATEGORY_REQUIRED,
+                ValidationError.EMPTY_DESCRIPTION,
+                ValidationError.DESCRIPTION_TOO_SHORT,
+                ValidationError.DESCRIPTION_TOO_LONG,
+                ValidationError.PHOTOS_REQUIRED,
+                ValidationError.TOO_MANY_PHOTOS,
+                ValidationError.LOCATION_REQUIRED,
+                ValidationError.INVALID_COORDINATES,
+                null,
+            ),
+            order,
+        )
+    }
+
+    @Test
+    fun `given ratings of 0 and 6 when validating a review then the result is invalid rating`() {
+        listOf(0, 6, -1).forEach { rating ->
+            assertEquals("$rating must be invalid", ValidationError.INVALID_RATING, Validators.review(rating, null))
+        }
+    }
+
+    @Test
+    fun `given ratings of exactly 1 and 5 and a comment of exactly 300 characters when validating a review then all are accepted`() {
+        assertNull(Validators.review(1, null))
+        assertNull(Validators.review(5, null))
+        assertNull(Validators.review(3, "a".repeat(300)))
+    }
+
+    @Test
+    fun `given a comment of 301 characters when validating a review then the result is comment too long`() {
+        assertEquals(ValidationError.COMMENT_TOO_LONG, Validators.review(4, "a".repeat(301)))
+    }
+
+    @Test
+    fun `given a blank comment or one padded beyond 300 characters when validating a review then only the trimmed text counts`() {
+        assertNull(Validators.review(4, "   "))
+        assertNull(Validators.review(4, "  " + "a".repeat(300) + "  "))
+    }
+
+    @Test
+    fun `given an invalid rating and a too long comment when validating a review then only the rating error is reported`() {
+        assertEquals(ValidationError.INVALID_RATING, Validators.review(0, "a".repeat(301)))
     }
 
     // endregion
