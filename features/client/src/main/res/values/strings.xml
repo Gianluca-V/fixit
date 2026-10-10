@@ -48,7 +48,4 @@
     <string name="client_profile_edit">Editar perfil</string>
     <string name="client_role_client">Cliente</string>
     <string name="client_role_professional">Profesional</string>
-
-    <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
-    <string name="client_placeholder_saved">Simular cambios guardados</string>
 </resources>
