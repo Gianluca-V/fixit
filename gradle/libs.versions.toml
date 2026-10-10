@@ -3,7 +3,7 @@ agp = "9.2.1"
 kotlin = "2.4.20"
 ksp = "2.3.12"
 hilt = "2.60.1"
-hiltNavigationCompose = "1.4.0"
+androidxHilt = "1.4.0"
 coreKtx = "1.19.1"
 activityCompose = "1.13.0"
 composeBom = "2026.09.00"
@@ -26,10 +26,14 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
-androidx-lifecycle-viewmodel-navigation3 = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
+# Pinned by spike 1.2.3 (see design.md section 19):
+#  - rememberViewModelStoreNavEntryDecorator -> androidx.lifecycle:lifecycle-viewmodel-navigation3 (lifecycle version)
+#  - hiltViewModel() -> androidx.hilt:hilt-lifecycle-viewmodel-compose (package androidx.hilt.lifecycle.viewmodel.compose);
+#    hilt-navigation-compose 1.4.0 only forwards to it and drags in the Navigation 2 artifact, so it is not used.
+androidx-lifecycle-viewmodel-navigation3 ={ group = "androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
 androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
 androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
-androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-hilt-lifecycle-viewmodel-compose = { group = "androidx.hilt", name = "hilt-lifecycle-viewmodel-compose", version.ref = "androidxHilt" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
