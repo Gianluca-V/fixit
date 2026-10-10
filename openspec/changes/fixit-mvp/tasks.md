@@ -86,18 +86,18 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 ### 1.3 Dominio puro (`:core:domain`)
 
 - [x] 1.3.1 Crear tipos sin comportamiento: `model/*` (User, RepairRequest, Review, enums, GeoPoint, Place, SessionState, forms, FeedItem, Contact, RequestDetail, `Limits`), `result/AppResult`, `DomainError`, `ValidationError`/`FormField`, y las interfaces `repository/*` (+ `Clock`) en `core/domain/src/main/kotlin/ar/edu/unaj/fixit/core/domain/`.
-- [ ] 1.3.2 RED `rules/RequestStateMachineTest`: las 12 combinaciones. Cubre `[rr]` Transiciones válidas; Transiciones inválidas desde estados no terminales; Estados terminales rechazan toda acción; Estados terminales; `[feed]` Segundo en aceptar (ACCEPTED+ACCEPT → AlreadyTaken).
-- [ ] 1.3.3 GREEN `rules/RequestStateMachine.kt`.
-- [ ] 1.3.4 RED `rules/HaversineTest`: `[loc]` Mismo punto; Distancia conocida; Simetría; Cruce del antimeridiano; Un grado de latitud; puntos antípodas sin `NaN`.
-- [ ] 1.3.5 GREEN `rules/Haversine.kt` (radio 6371.0088; `a.coerceIn(0.0, 1.0)`).
-- [ ] 1.3.6 RED `rules/MatchingTest`: `[feed]` Coincide; Categoría distinta; Fuera de radio; Solicitud no abierta; Exactamente en el radio (10.0/10 → true; 10.01/10 → false); `[loc]` Redondeo de la distancia a 0.1 km (`roundKm`).
-- [ ] 1.3.7 GREEN `rules/Matching.kt` (`isWithin`, `roundKm`, `distanceIfMatches`).
-- [ ] 1.3.8 RED `rules/ReputationTest`: `[prof]` Promedio con un decimal (13/3 → 4.3, 17/4 → 4.3); Redondeo en el punto medio; Sin reseñas (`null`).
-- [ ] 1.3.9 GREEN `rules/Reputation.kt` (`Reputation.average(): BigDecimal?`, HALF_UP).
-- [ ] 1.3.10 RED `rules/PhoneFormatterTest`: `[contact]` Número local argentino; Número internacional; Número ya normalizado; Teléfono con espacios y paréntesis antes del `+`; Número que ya empieza con 54 sin `+`; Enlace de WhatsApp (`https://wa.me/...` sin `?text`).
-- [ ] 1.3.11 GREEN `rules/PhoneFormatter.kt` (`whatsAppDigits`, `whatsAppUrl`).
-- [ ] 1.3.12 RED `rules/ContactRulesTest`: `[contact]` El cliente obtiene el contacto del profesional; El profesional obtiene el contacto del cliente; Trabajo completado; Solicitud abierta; Solicitud cancelada después de ser aceptada; Tercero (todos los no autorizados → `Unauthorized`).
-- [ ] 1.3.13 GREEN `rules/ContactRules.kt`.
+- [x] 1.3.2 RED `rules/RequestStateMachineTest`: las 12 combinaciones. Cubre `[rr]` Transiciones válidas; Transiciones inválidas desde estados no terminales; Estados terminales rechazan toda acción; Estados terminales; `[feed]` Segundo en aceptar (ACCEPTED+ACCEPT → AlreadyTaken).
+- [x] 1.3.3 GREEN `rules/RequestStateMachine.kt`.
+- [x] 1.3.4 RED `rules/HaversineTest`: `[loc]` Mismo punto; Distancia conocida; Simetría; Cruce del antimeridiano; Un grado de latitud; puntos antípodas sin `NaN`.
+- [x] 1.3.5 GREEN `rules/Haversine.kt` (radio 6371.0088; `a.coerceIn(0.0, 1.0)`).
+- [x] 1.3.6 RED `rules/MatchingTest`: `[feed]` Coincide; Categoría distinta; Fuera de radio; Solicitud no abierta; Exactamente en el radio (10.0/10 → true; 10.01/10 → false); `[loc]` Redondeo de la distancia a 0.1 km (`roundKm`).
+- [x] 1.3.7 GREEN `rules/Matching.kt` (`isWithin`, `roundKm`, `distanceIfMatches`).
+- [x] 1.3.8 RED `rules/ReputationTest`: `[prof]` Promedio con un decimal (13/3 → 4.3, 17/4 → 4.3); Redondeo en el punto medio; Sin reseñas (`null`).
+- [x] 1.3.9 GREEN `rules/Reputation.kt` (`Reputation.average(): BigDecimal?`, HALF_UP).
+- [x] 1.3.10 RED `rules/PhoneFormatterTest`: `[contact]` Número local argentino; Número internacional; Número ya normalizado; Teléfono con espacios y paréntesis antes del `+`; Número que ya empieza con 54 sin `+`; Enlace de WhatsApp (`https://wa.me/...` sin `?text`).
+- [x] 1.3.11 GREEN `rules/PhoneFormatter.kt` (`whatsAppDigits`, `whatsAppUrl`).
+- [x] 1.3.12 RED `rules/ContactRulesTest`: `[contact]` El cliente obtiene el contacto del profesional; El profesional obtiene el contacto del cliente; Trabajo completado; Solicitud abierta; Solicitud cancelada después de ser aceptada; Tercero (todos los no autorizados → `Unauthorized`).
+- [x] 1.3.13 GREEN `rules/ContactRules.kt`.
 - [ ] 1.3.14 RED `rules/ValidatorsTest` (a): `normalizeEmail` (trim + lowercase), regex de email, `signIn`, `coordinates` (NaN inválido). Cubre `[loc]` Latitud fuera de rango; Límites exactos válidos; `[auth]` Email vacío; Contraseña vacía.
 - [ ] 1.3.15 GREEN `rules/Validators.kt` parte (a): `normalizeEmail`, `signIn`, `coordinates`.
 - [ ] 1.3.16 RED `rules/ValidatorsTest` (b) `signUp`/`profile`: `[auth]` Teléfono inválido; Teléfono con separadores válidos; Contraseña demasiado corta; Nombre fuera de rango; Límites exactos válidos; Profesional sin categorías; sin punto base; Punto base con coordenadas inválidas; Radio fuera de rango; Se informa solo el primer error; `[prof]` Nombre inválido; Teléfono inválido; Sin categorías; Radio fuera de rango.
