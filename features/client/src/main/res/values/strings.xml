@@ -12,8 +12,19 @@
     <string name="client_my_requests_empty">Aún no hay solicitudes publicadas.</string>
     <string name="client_request_created_on">Publicada el %1$s</string>
 
+    <!-- Create request -->
+    <string name="client_create_category">Categoría</string>
+    <string name="client_create_description">Descripción del problema</string>
+    <string name="client_create_description_counter">%1$d/%2$d</string>
+    <string name="client_create_photos">Fotos</string>
+    <string name="client_create_location">Ubicación</string>
+    <string name="client_create_use_location">Usar mi ubicación</string>
+    <string name="client_create_address">Dirección</string>
+    <string name="client_create_no_coordinates">Use «Usar mi ubicación» para obtener las coordenadas.</string>
+    <string name="client_create_has_coordinates">Coordenadas obtenidas. La dirección se puede corregir.</string>
+    <string name="client_create_submit">Publicar</string>
+
     <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
-    <string name="client_placeholder_created">Simular solicitud creada</string>
     <string name="client_placeholder_complete">Completar y calificar</string>
     <string name="client_placeholder_completed">Simular trabajo calificado</string>
     <string name="client_placeholder_edit_profile">Editar perfil</string>
