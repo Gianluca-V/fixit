@@ -24,8 +24,18 @@
     <string name="client_create_has_coordinates">Coordenadas obtenidas. La dirección se puede corregir.</string>
     <string name="client_create_submit">Publicar</string>
 
+    <!-- Request detail -->
+    <string name="client_detail_waiting">Esperando que un profesional acepte</string>
+    <string name="client_detail_cancelled">Solicitud cancelada</string>
+    <string name="client_detail_review">Su reseña</string>
+    <string name="client_detail_complete">Marcar como completado</string>
+    <string name="client_detail_cancel">Cancelar solicitud</string>
+    <string name="client_detail_cancel_title">¿Cancelar la solicitud?</string>
+    <string name="client_detail_cancel_text">Los profesionales dejarán de verla y no se puede deshacer.</string>
+    <string name="client_detail_cancel_confirm">Sí, cancelar</string>
+    <string name="client_detail_cancel_dismiss">Volver</string>
+
     <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
-    <string name="client_placeholder_complete">Completar y calificar</string>
     <string name="client_placeholder_completed">Simular trabajo calificado</string>
     <string name="client_placeholder_edit_profile">Editar perfil</string>
     <string name="client_placeholder_saved">Simular cambios guardados</string>
