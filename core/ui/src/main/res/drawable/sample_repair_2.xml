@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sample photo for Phase 1 (placeholder artwork, no real picture). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="240dp"
+    android:viewportWidth="320"
+    android:viewportHeight="240">
+    <path android:fillColor="#FFC8E6C9" android:pathData="M0,0h320v240h-320z" />
+    <path android:fillColor="#FF2E7D32" android:pathData="M60,200h200v-90l-100,-70l-100,70z" />
+    <path android:fillColor="#FFC8E6C9" android:pathData="M140,200h40v-60h-40z" />
+</vector>
