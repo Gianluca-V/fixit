@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="client_my_requests_title">Mis solicitudes</string>
+    <string name="client_create_request_title">Nueva solicitud</string>
+    <string name="client_request_detail_title">Detalle de la solicitud</string>
+    <string name="client_complete_job_title">Completar y calificar</string>
+    <string name="client_profile_title">Perfil</string>
+    <string name="client_edit_profile_title">Editar perfil</string>
+
+    <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
+    <string name="client_placeholder_new_request">Nueva solicitud</string>
+    <string name="client_placeholder_open_request">Abrir solicitud de ejemplo</string>
+    <string name="client_placeholder_created">Simular solicitud creada</string>
+    <string name="client_placeholder_complete">Completar y calificar</string>
+    <string name="client_placeholder_completed">Simular trabajo calificado</string>
+    <string name="client_placeholder_edit_profile">Editar perfil</string>
+    <string name="client_placeholder_saved">Simular cambios guardados</string>
+</resources>
