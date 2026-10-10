@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pro_feed_title">Feed</string>
+    <string name="pro_request_detail_title">Detalle de la solicitud</string>
+    <string name="pro_my_jobs_title">Mis trabajos</string>
+    <string name="pro_profile_title">Perfil</string>
+    <string name="pro_edit_profile_title">Editar perfil</string>
+
+    <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
+    <string name="pro_placeholder_open_request">Abrir solicitud de ejemplo</string>
+    <string name="pro_placeholder_accept">Simular aceptación</string>
+    <string name="pro_placeholder_edit_profile">Editar perfil</string>
+    <string name="pro_placeholder_saved">Simular cambios guardados</string>
+</resources>
