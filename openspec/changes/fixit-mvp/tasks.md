@@ -98,13 +98,13 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 - [x] 1.3.11 GREEN `rules/PhoneFormatter.kt` (`whatsAppDigits`, `whatsAppUrl`).
 - [x] 1.3.12 RED `rules/ContactRulesTest`: `[contact]` El cliente obtiene el contacto del profesional; El profesional obtiene el contacto del cliente; Trabajo completado; Solicitud abierta; Solicitud cancelada después de ser aceptada; Tercero (todos los no autorizados → `Unauthorized`).
 - [x] 1.3.13 GREEN `rules/ContactRules.kt`.
-- [ ] 1.3.14 RED `rules/ValidatorsTest` (a): `normalizeEmail` (trim + lowercase), regex de email, `signIn`, `coordinates` (NaN inválido). Cubre `[loc]` Latitud fuera de rango; Límites exactos válidos; `[auth]` Email vacío; Contraseña vacía.
-- [ ] 1.3.15 GREEN `rules/Validators.kt` parte (a): `normalizeEmail`, `signIn`, `coordinates`.
-- [ ] 1.3.16 RED `rules/ValidatorsTest` (b) `signUp`/`profile`: `[auth]` Teléfono inválido; Teléfono con separadores válidos; Contraseña demasiado corta; Nombre fuera de rango; Límites exactos válidos; Profesional sin categorías; sin punto base; Punto base con coordenadas inválidas; Radio fuera de rango; Se informa solo el primer error; `[prof]` Nombre inválido; Teléfono inválido; Sin categorías; Radio fuera de rango.
-- [ ] 1.3.17 GREEN `Validators.signUp` y `Validators.profile` (orden de §5.3, regex de teléfono con separadores).
-- [ ] 1.3.18 RED `rules/ValidatorsTest` (c) `request`/`review`: `[rr]` Descripción vacía; Descripción fuera de rango; Límites exactos válidos; Cantidad de fotos inválida; Sin ubicación; Coordenadas fuera de rango; Se informa solo el primer error; `[jc]` Calificación fuera de rango; Límites exactos válidos; Comentario demasiado largo.
-- [ ] 1.3.19 GREEN `Validators.request` y `Validators.review`.
-- [ ] 1.3.20 REFACTOR: extraer helpers privados de `Validators`, revisar nombres de tests, ejecutar `./gradlew :core:domain:test`.
+- [x] 1.3.14 RED `rules/ValidatorsTest` (a): `normalizeEmail` (trim + lowercase), regex de email, `signIn`, `coordinates` (NaN inválido). Cubre `[loc]` Latitud fuera de rango; Límites exactos válidos; `[auth]` Email vacío; Contraseña vacía.
+- [x] 1.3.15 GREEN `rules/Validators.kt` parte (a): `normalizeEmail`, `signIn`, `coordinates`.
+- [x] 1.3.16 RED `rules/ValidatorsTest` (b) `signUp`/`profile`: `[auth]` Teléfono inválido; Teléfono con separadores válidos; Contraseña demasiado corta; Nombre fuera de rango; Límites exactos válidos; Profesional sin categorías; sin punto base; Punto base con coordenadas inválidas; Radio fuera de rango; Se informa solo el primer error; `[prof]` Nombre inválido; Teléfono inválido; Sin categorías; Radio fuera de rango.
+- [x] 1.3.17 GREEN `Validators.signUp` y `Validators.profile` (orden de §5.3, regex de teléfono con separadores).
+- [x] 1.3.18 RED `rules/ValidatorsTest` (c) `request`/`review`: `[rr]` Descripción vacía; Descripción fuera de rango; Límites exactos válidos; Cantidad de fotos inválida; Sin ubicación; Coordenadas fuera de rango; Se informa solo el primer error; `[jc]` Calificación fuera de rango; Límites exactos válidos; Comentario demasiado largo.
+- [x] 1.3.19 GREEN `Validators.request` y `Validators.review`.
+- [x] 1.3.20 REFACTOR: extraer helpers privados de `Validators`, revisar nombres de tests, ejecutar `./gradlew :core:domain:test`.
 
 ### 1.4 Dobles de prueba y casos de uso (`:core:domain`)
 
