@@ -14,12 +14,11 @@ class UpdateProfileUseCase @Inject constructor(
     private val userRepository: UserRepository,
 ) {
     suspend operator fun invoke(form: ProfileForm): AppResult<User> {
-        val userId = authRepository.currentUserId() ?: return AppResult.Error(DomainError.Unauthorized)
-        val user = when (val current = userRepository.get(userId)) {
+        val user = when (val current = readCurrentUser(authRepository, userRepository)) {
             is AppResult.Error -> return current
             is AppResult.Success -> current.data
         }
         Validators.profile(user.role, form)?.let { return AppResult.Error(DomainError.Validation(it)) }
-        return userRepository.updateProfile(userId, form.forPersistence(user.role))
+        return userRepository.updateProfile(user.id, form.forPersistence(user.role))
     }
 }
