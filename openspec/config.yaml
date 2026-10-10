@@ -9,22 +9,22 @@ context: |
   Architecture (planned): Clean Architecture, multi-module Gradle (:app, :core:domain [pure Kotlin/JVM], :core:data, :core:ui, :features:auth|client|professional); MVVM/UDF with sealed UiState + StateFlow.
   Phases: 1 = Fake in-memory repos + full UI (TP2 delivery); 2 = Firebase Auth + Firestore (Spark plan) + Cloudinary unsigned upload preset for photos, via Hilt bindings only; 3 = hardware (GPS, camera, photo picker); 4 (optional) = push notifications via FCM, sent by a Cloudflare Worker (worker/ folder, outside Gradle; FCM service account only as a Worker secret).
   Hard constraint: the project MUST NOT require a credit card. No Cloud Storage for Firebase, no Cloud Functions, no Blaze plan (decided 2026-10-08).
-  Testing (planned): JUnit4 + kotlinx-coroutines-test, hand-written fakes, NO mocking library. Strict TDD. `./gradlew test` is not runnable yet (no Gradle project).
+  Testing (planned): JUnit4 + kotlinx-coroutines-test, hand-written fakes, NO mocking library. Strict TDD. `./gradlew test` is runnable (run Gradle with JAVA_HOME pointing to Android Studio JBR 21; see README).
   Style: code identifiers/packages/comments in English (base package ar.edu.unaj.fixit); UI strings in neutral Spanish via strings.xml; Conventional Commits.
   Drafts: openspec/drafts/ holds pre-SDD material (project.md, design.md, tasks.md, specs/*). It is READ-ONLY input; promote content via the SDD pipeline, never edit in place.
-  State: git repository initialized; no source code yet.
+  State: Gradle multi-module skeleton scaffolded (U1); domain types in progress.
 
-# Strict TDD (user's global setting). Test runner is planned but not runnable until the Gradle project is scaffolded.
+# Strict TDD (user's global setting). Test runner is available since U1 (Gradle project scaffolded).
 strict_tdd: true
 
 testing:
-  status: planned          # flip to "available" once the Gradle project exists and `./gradlew test` runs
+  status: available        # `./gradlew test` runs (Gradle project scaffolded in U1, 2026-10-10)
   runner:
     command: "./gradlew test"
     framework: "JUnit4 + kotlinx-coroutines-test (hand-written fakes, no mocking library)"
-    runnable_now: false
+    runnable_now: true
   layers:
-    unit: { available: false, planned: true, tool: "JUnit4 + kotlinx-coroutines-test (JVM, :core:domain first)" }
+    unit: { available: true, planned: true, tool: "JUnit4 + kotlinx-coroutines-test (JVM, :core:domain first)" }
     integration: { available: false, planned: false, tool: null }
     e2e: { available: false, planned: false, tool: null }
   coverage: { available: false, command: null }
@@ -67,7 +67,7 @@ rules:
     - "Include the review workload forecast guard lines (400-line budget) as required by the shared SDD protocol."
   apply:
     tdd: true
-    test_command: "./gradlew test"   # not runnable until the Gradle project exists (Phase 1, task 1.0)
+    test_command: "./gradlew test"
     guidelines:
     - "Follow the Strict TDD cycle: write the failing test first, then the minimal implementation, then refactor."
     - "Code and comments in English; UI text only via strings.xml in neutral Spanish (no hardcoded visible strings)."

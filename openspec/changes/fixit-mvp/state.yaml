@@ -3,15 +3,15 @@ change: fixit-mvp
 project: tp2
 artifact_store: hybrid
 created: 2026-10-06
-updated: 2026-10-08   # judgment-day rounds 1-3 (fix iteration 3) fixes applied (see resolved)
-scope_note: "Specs only for now: user explicitly requested no source code yet."
+updated: 2026-10-10   # apply started: U1 (1.1.x) done, Gradle project scaffolded
+scope_note: "Apply started 2026-10-10 by explicit user request; first run scoped to project + modules + base domain types (DTOs are Phase 2)."
 phases:
   explore: skipped        # drafts in openspec/drafts/ used as source material
   proposal: done          # updated 2026-10-08: no-credit-card constraint, Cloudinary (Phase 2), push via FCM + Cloudflare Worker (Phase 4)
   spec: done              # updated 2026-10-08: media -> Cloudinary, new notifications capability [Fase 4], auth/profiles reference notifications
   design: done            # updated 2026-10-08: Cloudinary via OkHttp multipart + unsigned preset (D21, D22), storage.rules removed, Phase 4 push section 14b (D23-D28), D18 weaknesses extended
   tasks: done             # updated 2026-10-08: Phase 2 Storage tasks replaced by Cloudinary, new Phase 4 (Worker + Android push), judgment-day rounds 1-2 fixes: 237 tasks
-  apply: pending          # must NOT start until the user explicitly asks (specs only for now)
+  apply: in_progress      # U1 (tasks 1.1.1-1.1.12) done on feat/u1-scaffolding; U2 (1.3.1) on feat/u2-domain-types
   verify: pending
   archive: pending
 artifacts:
@@ -30,8 +30,9 @@ artifacts:
     total_tasks: 237   # phase 1: 125, phase 2: 37 (was 27), phase 3: 9, phase 4: 66 (new); 26 work units (U1-U26)
     scenarios: "310 scenarios / 87 requirements (220 automated, 90 manual); phase 1: 196, phase 2: 29, phase 3: 13, phase 4: 72"
 delivery_strategy: ask-on-risk
-chain_strategy: pending            # decision needed before apply (400-line budget risk: High); earlier recommendation: stacked-to-main
-next_recommended: [apply]          # apply stays BLOCKED until the user explicitly asks AND chain_strategy is decided
+test_runner: "available since 2026-10-10: `./gradlew test` is runnable (Gradle 9.7.1, AGP 9.2.1, Kotlin 2.4.20); run it with JAVA_HOME pointing to Android Studio JBR 21 (system java is JDK 8)"
+chain_strategy: stacked-to-main   # decided by the user 2026-10-10: one branch per work unit (feat/uN-...), merged to main in order; local repo, no remote
+next_recommended: [apply]          # continue with 1.2 spikes and 1.3.2+ (U2 branch is the stack tip)
 # Verification items from design.md section 19 (to resolve when the Gradle project is scaffolded).
 open_items:
   - "Verify ViewModel retention per navigation entry with per-tab history: compare with the professor's code that, after switching tab and coming back, the ViewModels and saveable state of the non-visible tab are kept (design 19, ViewModel retention item)"

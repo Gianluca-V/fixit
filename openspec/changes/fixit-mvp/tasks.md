@@ -63,18 +63,18 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 1.1 Andamiaje Gradle (antes de cualquier tarea TDD)
 
-- [ ] 1.1.1 Documentar prerrequisitos en `README.md`: JDK 17 o 21 (la máquina tiene JDK 8 en PATH: usar el JBR de Android Studio vía `org.gradle.java.home` en `~/.gradle/gradle.properties`, no versionado); Android SDK Platform 37 y build-tools instalados con SDK Manager; `local.properties` (`sdk.dir`) ignorado por git.
-- [ ] 1.1.2 Generar el wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`) con la versión compatible con AGP 9.2.1 (comparar con `mauromarod/unaj-am`) y crear `.gitignore` (`build/`, `.gradle/`, `local.properties`, `.idea/`).
-- [ ] 1.1.3 Crear `gradle/libs.versions.toml`: Kotlin 2.4.20, AGP 9.2.1, KSP, Hilt, Compose BOM 2026.09.00, Material 3, navigation3 1.2.0, lifecycle 2.11.0, Coil 3.6.3, coroutines (core/android/test), kotlinx-serialization, javax.inject, JUnit4. Confirmar la última versión estable al implementar (diseño §2).
-- [ ] 1.1.4 Crear `settings.gradle.kts` (7 `include`: `:app`, `:core:domain`, `:core:data`, `:core:ui`, `:features:auth`, `:features:client`, `:features:professional`; repositorios) y `build.gradle.kts` raíz (plugins con `apply false`).
-- [ ] 1.1.5 Crear `core/domain/build.gradle.kts`: `kotlin-jvm` + `java-test-fixtures`; `api(coroutines-core)`, `javax.inject`; tests: JUnit4 + `kotlinx-coroutines-test` (también como `testFixturesApi`). Sin Android, Hilt, Compose ni Firebase.
-- [ ] 1.1.6 Crear `core/data/build.gradle.kts` (Android library, Hilt, KSP, `kotlinx-coroutines-android`, depende de `:core:domain`; `testImplementation(testFixtures(project(":core:domain")))`) con `namespace` `ar.edu.unaj.fixit.core.data`, compile/target 37, minSdk 26.
-- [ ] 1.1.7 Crear `core/ui/build.gradle.kts` (Android library, Compose, Material 3, Coil 3; depende de `:core:domain`) y `AndroidManifest.xml` mínimo.
-- [ ] 1.1.8 Crear `features/{auth,client,professional}/build.gradle.kts` (Android library, Compose, Hilt, KSP, `lifecycle-runtime-compose`, `hilt-navigation-compose` o artefacto equivalente de la cátedra; dependen de `:core:domain` y `:core:ui`, nunca de `:core:data` ni entre sí).
-- [ ] 1.1.9 Crear `app/build.gradle.kts` (application, Compose, Hilt, KSP, Kotlin Serialization, Navigation 3, `lifecycle-viewmodel-navigation3`; depende de todos los módulos) y `AndroidManifest.xml` mínimo con `FixItApplication`/`MainActivity` vacíos.
-- [ ] 1.1.10 RED: crear `core/domain/src/test/kotlin/ar/edu/unaj/fixit/core/domain/SmokeTest.kt` con un test que falla; ejecutar `./gradlew :core:domain:test` y comprobar que corre y reporta el fallo.
-- [ ] 1.1.11 GREEN: corregir el smoke test, ejecutar `./gradlew test` y `./gradlew assembleDebug` (todos los módulos compilan) y comprobar que importar `android.*` en `:core:domain` no compila (regla de dependencia); luego borrar `SmokeTest.kt`.
-- [ ] 1.1.12 Actualizar `openspec/config.yaml` (`testing.status: available`, `runner.runnable_now: true`, `layers.unit.available: true`) y registrar en `state.yaml` que `./gradlew test` ya es ejecutable.
+- [x] 1.1.1 Documentar prerrequisitos en `README.md`: JDK 17 o 21 (la máquina tiene JDK 8 en PATH: usar el JBR de Android Studio vía `org.gradle.java.home` en `~/.gradle/gradle.properties`, no versionado); Android SDK Platform 37 y build-tools instalados con SDK Manager; `local.properties` (`sdk.dir`) ignorado por git.
+- [x] 1.1.2 Generar el wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`) con la versión compatible con AGP 9.2.1 (comparar con `mauromarod/unaj-am`) y crear `.gitignore` (`build/`, `.gradle/`, `local.properties`, `.idea/`).
+- [x] 1.1.3 Crear `gradle/libs.versions.toml`: Kotlin 2.4.20, AGP 9.2.1, KSP, Hilt, Compose BOM 2026.09.00, Material 3, navigation3 1.2.0, lifecycle 2.11.0, Coil 3.6.3, coroutines (core/android/test), kotlinx-serialization, javax.inject, JUnit4. Confirmar la última versión estable al implementar (diseño §2).
+- [x] 1.1.4 Crear `settings.gradle.kts` (7 `include`: `:app`, `:core:domain`, `:core:data`, `:core:ui`, `:features:auth`, `:features:client`, `:features:professional`; repositorios) y `build.gradle.kts` raíz (plugins con `apply false`).
+- [x] 1.1.5 Crear `core/domain/build.gradle.kts`: `kotlin-jvm` + `java-test-fixtures`; `api(coroutines-core)`, `javax.inject`; tests: JUnit4 + `kotlinx-coroutines-test` (también como `testFixturesApi`). Sin Android, Hilt, Compose ni Firebase.
+- [x] 1.1.6 Crear `core/data/build.gradle.kts` (Android library, Hilt, KSP, `kotlinx-coroutines-android`, depende de `:core:domain`; `testImplementation(testFixtures(project(":core:domain")))`) con `namespace` `ar.edu.unaj.fixit.core.data`, compile/target 37, minSdk 26.
+- [x] 1.1.7 Crear `core/ui/build.gradle.kts` (Android library, Compose, Material 3, Coil 3; depende de `:core:domain`) y `AndroidManifest.xml` mínimo.
+- [x] 1.1.8 Crear `features/{auth,client,professional}/build.gradle.kts` (Android library, Compose, Hilt, KSP, `lifecycle-runtime-compose`, `hilt-navigation-compose` o artefacto equivalente de la cátedra; dependen de `:core:domain` y `:core:ui`, nunca de `:core:data` ni entre sí).
+- [x] 1.1.9 Crear `app/build.gradle.kts` (application, Compose, Hilt, KSP, Kotlin Serialization, Navigation 3, `lifecycle-viewmodel-navigation3`; depende de todos los módulos) y `AndroidManifest.xml` mínimo con `FixItApplication`/`MainActivity` vacíos.
+- [x] 1.1.10 RED: crear `core/domain/src/test/kotlin/ar/edu/unaj/fixit/core/domain/SmokeTest.kt` con un test que falla; ejecutar `./gradlew :core:domain:test` y comprobar que corre y reporta el fallo.
+- [x] 1.1.11 GREEN: corregir el smoke test, ejecutar `./gradlew test` y `./gradlew assembleDebug` (todos los módulos compilan) y comprobar que importar `android.*` en `:core:domain` no compila (regla de dependencia); luego borrar `SmokeTest.kt`.
+- [x] 1.1.12 Actualizar `openspec/config.yaml` (`testing.status: available`, `runner.runnable_now: true`, `layers.unit.available: true`) y registrar en `state.yaml` que `./gradlew test` ya es ejecutable.
 
 ### 1.2 Spikes de verificación (§19, antes de depender de ellos)
 
