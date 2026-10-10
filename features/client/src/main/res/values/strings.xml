@@ -7,9 +7,12 @@
     <string name="client_profile_title">Perfil</string>
     <string name="client_edit_profile_title">Editar perfil</string>
 
+    <!-- My requests -->
+    <string name="client_new_request">Nueva solicitud</string>
+    <string name="client_my_requests_empty">Aún no hay solicitudes publicadas.</string>
+    <string name="client_request_created_on">Publicada el %1$s</string>
+
     <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
-    <string name="client_placeholder_new_request">Nueva solicitud</string>
-    <string name="client_placeholder_open_request">Abrir solicitud de ejemplo</string>
     <string name="client_placeholder_created">Simular solicitud creada</string>
     <string name="client_placeholder_complete">Completar y calificar</string>
     <string name="client_placeholder_completed">Simular trabajo calificado</string>
