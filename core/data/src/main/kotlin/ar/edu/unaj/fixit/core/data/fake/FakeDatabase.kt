@@ -7,6 +7,8 @@ import ar.edu.unaj.fixit.core.domain.repository.Clock
 import ar.edu.unaj.fixit.core.domain.result.AppResult
 import ar.edu.unaj.fixit.core.domain.result.DomainError
 import java.util.concurrent.atomic.AtomicLong
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +44,12 @@ sealed interface WriteDecision<out T> {
  * or not at all. Signing in and out only touch `currentUserId` through an atomic `update` and take
  * no lock. Dates come from the injected [Clock].
  */
-class FakeDatabase(private val clock: Clock, initial: DbState = DbState.EMPTY) {
+@Singleton
+class FakeDatabase(private val clock: Clock, initial: DbState) {
+    /** The app database: seeded sample data relative to the current time. */
+    @Inject
+    constructor(clock: Clock) : this(clock, SeedData.initialState(clock.now()))
+
     private val mutableState = MutableStateFlow(initial)
     private val mutex = Mutex()
     private val idCounter = AtomicLong()
