@@ -7,6 +7,7 @@ import ar.edu.unaj.fixit.core.domain.result.AppResult
 import ar.edu.unaj.fixit.core.domain.result.DomainError
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /**
@@ -36,7 +37,7 @@ class TestUserRepository(initial: List<User> = emptyList()) : UserRepository {
     override suspend fun get(userId: String): AppResult<User> = find(userId)
 
     override fun observe(userId: String): Flow<AppResult<User>> {
-        ::observeError.take()?.let { return kotlinx.coroutines.flow.flowOf(AppResult.Error(it)) }
+        ::observeError.take()?.let { return flowOf(AppResult.Error(it)) }
         return users.map { find(userId) }
     }
 

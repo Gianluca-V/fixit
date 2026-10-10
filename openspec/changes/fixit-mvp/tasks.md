@@ -108,28 +108,28 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 1.4 Dobles de prueba y casos de uso (`:core:domain`)
 
-- [ ] 1.4.1 Crear `core/domain/src/testFixtures/`: `TestAuthRepository` (su `session` está respaldada por un `MutableStateFlow<SessionState>` que el test controla, p. ej. con `setSession(...)`), `TestUserRepository`, `TestRepairRequestRepository` (listas configurables + ganchos de un solo uso `acceptError`, `completeError`, `updateProfileError`, `createError`, `cancelError`, `signInError`, `signUpError`, `observeError`), `TestLocation`, `MainDispatcherRule`.
-- [ ] 1.4.2 RED `usecase/SignInUseCaseTest`: `[auth]` Credenciales correctas; Credenciales incorrectas; Email vacío; Contraseña vacía; email normalizado antes de `signIn`.
-- [ ] 1.4.3 GREEN `usecase/SignInUseCase.kt`.
-- [ ] 1.4.4 RED `usecase/SignUpUseCaseTest`: `[auth]` Registro exitoso de cliente; Registro exitoso de profesional; Email ya registrado; Email con mayúsculas y espacios; Rol persistido; orden de validación incluidas coordenadas; valores recortados (`trim`).
-- [ ] 1.4.5 GREEN `usecase/SignUpUseCase.kt`.
-- [ ] 1.4.6 RED `usecase/UpdateProfileUseCaseTest`: `[prof]` Edición exitosa; Nombre inválido; Teléfono inválido; Edición exitosa de la zona de trabajo; Sin categorías; Radio fuera de rango; Actualizar el punto base.
-- [ ] 1.4.7 GREEN `usecase/UpdateProfileUseCase.kt`.
-- [ ] 1.4.8 RED `usecase/GetCurrentPlaceUseCaseTest`: `[loc]` Dirección no resoluble (`address = ""`); Falla simulada de ubicación (`LocationUnavailable`); Usar mi ubicación en Fase 1.
-- [ ] 1.4.9 GREEN `usecase/GetCurrentPlaceUseCase.kt`.
-- [ ] 1.4.10 RED `usecase/CreateRequestUseCaseTest`: `[rr]` Creación exitosa; Un profesional no puede crear; Publicar sin profesionales cercanos; Solicitud antigua sigue abierta; Múltiples abiertas; validación en orden y descripción recortada.
-- [ ] 1.4.11 GREEN `usecase/CreateRequestUseCase.kt`.
-- [ ] 1.4.12 RED `usecase/CancelRequestUseCaseTest`: `[rr]` Cancelar una solicitud abierta; Cancelar una solicitud aceptada; Cancelar no afecta la reputación; Cancelar una solicitud ajena; Estados terminales; La autorización precede a la transición.
-- [ ] 1.4.13 GREEN `usecase/CancelRequestUseCase.kt`.
-- [ ] 1.4.14 RED `usecase/ObserveFeedUseCaseTest`: `[feed]` Nueva solicitud aparece; Solicitud aceptada por otro desaparece; Solicitud cancelada desaparece; Error al cargar el feed (`Error(Network)`); Se agrega una categoría; Se reduce el radio; Los trabajos aceptados no se ven afectados; `distinctUntilChanged` (cambio de nombre/reputación no reinicia).
-- [ ] 1.4.15 GREEN `usecase/ObserveFeedUseCase.kt` (`distinctUntilChanged` antes de `flatMapLatest`; orden `createdAt` desc).
-- [ ] 1.4.16 RED `usecase/AcceptRequestUseCaseTest`: `[feed]` Aceptación exitosa; Segundo en aceptar; Aceptar de nuevo el mismo trabajo; Aceptar una solicitud cancelada; Categoría no habilitada; Cliente intenta aceptar; Sin verificación de distancia al aceptar; `[rr]` La autorización precede a la transición.
-- [ ] 1.4.17 GREEN `usecase/AcceptRequestUseCase.kt`.
-- [ ] 1.4.18 RED `usecase/ObserveRequestDetailUseCaseTest` (usar `first { ... }` por emisión transitoria): `[rr]` Solicitud inexistente; Cambio en vivo a ACCEPTED; Solicitud de otro cliente; Detalle de una solicitud cancelada tras ser aceptada; `[prof]` Detalle con profesional asignado; Profesional ve una solicitud abierta (`contact = null`); `[feed]` Detalle desde el feed; Solicitud tomada por otro profesional; Solicitud cancelada que no era propia; Solicitud propia aceptada; `[contact]` La cancelación oculta el contacto en vivo.
-- [ ] 1.4.19 GREEN `usecase/ObserveRequestDetailUseCase.kt` (`viewerIsAssignee`, distancia `roundKm`, `Unauthorized` → `contact = null`).
-- [ ] 1.4.20 RED `usecase/CompleteJobUseCaseTest`: `[jc]` Completar con reseña; Comentario omitido; Calificación fuera de rango; Comentario demasiado largo; Otro usuario intenta completar; Completar una solicitud abierta/ya completada/cancelada (`InvalidTransition` vía doble); comentario recortado, vacío → `null`.
-- [ ] 1.4.21 GREEN `usecase/CompleteJobUseCase.kt`.
-- [ ] 1.4.22 REFACTOR y verificar: ejecutar `./gradlew :core:domain:test`; repetir el spike 1.2.2 con los casos de uso reales inyectados en un ViewModel (fábricas de Dagger); anotar resultado y actualizar el respaldo si hace falta.
+- [x] 1.4.1 Crear `core/domain/src/testFixtures/`: `TestAuthRepository` (su `session` está respaldada por un `MutableStateFlow<SessionState>` que el test controla, p. ej. con `setSession(...)`), `TestUserRepository`, `TestRepairRequestRepository` (listas configurables + ganchos de un solo uso `acceptError`, `completeError`, `updateProfileError`, `createError`, `cancelError`, `signInError`, `signUpError`, `observeError`), `TestLocation`, `MainDispatcherRule`.
+- [x] 1.4.2 RED `usecase/SignInUseCaseTest`: `[auth]` Credenciales correctas; Credenciales incorrectas; Email vacío; Contraseña vacía; email normalizado antes de `signIn`.
+- [x] 1.4.3 GREEN `usecase/SignInUseCase.kt`.
+- [x] 1.4.4 RED `usecase/SignUpUseCaseTest`: `[auth]` Registro exitoso de cliente; Registro exitoso de profesional; Email ya registrado; Email con mayúsculas y espacios; Rol persistido; orden de validación incluidas coordenadas; valores recortados (`trim`).
+- [x] 1.4.5 GREEN `usecase/SignUpUseCase.kt`.
+- [x] 1.4.6 RED `usecase/UpdateProfileUseCaseTest`: `[prof]` Edición exitosa; Nombre inválido; Teléfono inválido; Edición exitosa de la zona de trabajo; Sin categorías; Radio fuera de rango; Actualizar el punto base.
+- [x] 1.4.7 GREEN `usecase/UpdateProfileUseCase.kt`.
+- [x] 1.4.8 RED `usecase/GetCurrentPlaceUseCaseTest`: `[loc]` Dirección no resoluble (`address = ""`); Falla simulada de ubicación (`LocationUnavailable`); Usar mi ubicación en Fase 1.
+- [x] 1.4.9 GREEN `usecase/GetCurrentPlaceUseCase.kt`.
+- [x] 1.4.10 RED `usecase/CreateRequestUseCaseTest`: `[rr]` Creación exitosa; Un profesional no puede crear; Publicar sin profesionales cercanos; Solicitud antigua sigue abierta; Múltiples abiertas; validación en orden y descripción recortada.
+- [x] 1.4.11 GREEN `usecase/CreateRequestUseCase.kt`.
+- [x] 1.4.12 RED `usecase/CancelRequestUseCaseTest`: `[rr]` Cancelar una solicitud abierta; Cancelar una solicitud aceptada; Cancelar no afecta la reputación; Cancelar una solicitud ajena; Estados terminales; La autorización precede a la transición.
+- [x] 1.4.13 GREEN `usecase/CancelRequestUseCase.kt`.
+- [x] 1.4.14 RED `usecase/ObserveFeedUseCaseTest`: `[feed]` Nueva solicitud aparece; Solicitud aceptada por otro desaparece; Solicitud cancelada desaparece; Error al cargar el feed (`Error(Network)`); Se agrega una categoría; Se reduce el radio; Los trabajos aceptados no se ven afectados; `distinctUntilChanged` (cambio de nombre/reputación no reinicia).
+- [x] 1.4.15 GREEN `usecase/ObserveFeedUseCase.kt` (`distinctUntilChanged` antes de `flatMapLatest`; orden `createdAt` desc).
+- [x] 1.4.16 RED `usecase/AcceptRequestUseCaseTest`: `[feed]` Aceptación exitosa; Segundo en aceptar; Aceptar de nuevo el mismo trabajo; Aceptar una solicitud cancelada; Categoría no habilitada; Cliente intenta aceptar; Sin verificación de distancia al aceptar; `[rr]` La autorización precede a la transición.
+- [x] 1.4.17 GREEN `usecase/AcceptRequestUseCase.kt`.
+- [x] 1.4.18 RED `usecase/ObserveRequestDetailUseCaseTest` (usar `first { ... }` por emisión transitoria): `[rr]` Solicitud inexistente; Cambio en vivo a ACCEPTED; Solicitud de otro cliente; Detalle de una solicitud cancelada tras ser aceptada; `[prof]` Detalle con profesional asignado; Profesional ve una solicitud abierta (`contact = null`); `[feed]` Detalle desde el feed; Solicitud tomada por otro profesional; Solicitud cancelada que no era propia; Solicitud propia aceptada; `[contact]` La cancelación oculta el contacto en vivo.
+- [x] 1.4.19 GREEN `usecase/ObserveRequestDetailUseCase.kt` (`viewerIsAssignee`, distancia `roundKm`, `Unauthorized` → `contact = null`).
+- [x] 1.4.20 RED `usecase/CompleteJobUseCaseTest`: `[jc]` Completar con reseña; Comentario omitido; Calificación fuera de rango; Comentario demasiado largo; Otro usuario intenta completar; Completar una solicitud abierta/ya completada/cancelada (`InvalidTransition` vía doble); comentario recortado, vacío → `null`.
+- [x] 1.4.21 GREEN `usecase/CompleteJobUseCase.kt`.
+- [x] 1.4.22 REFACTOR y verificar: ejecutar `./gradlew :core:domain:test`; repetir el spike 1.2.2 con los casos de uso reales inyectados en un ViewModel (fábricas de Dagger); anotar resultado y actualizar el respaldo si hace falta. Resultado 2026-10-10: resuelto, sin respaldo; los 10 casos de uso reales se inyectaron en un `@HiltViewModel` descartable de `:features:auth` y `:app:assembleDebug` generó el componente de Hilt con `new XxxUseCase(...)` para los 10 (las fábricas de Dagger se generan en el componente, no en `:core:domain`). Sin `RepositoryModule` (llega en 1.5.15) el grafo solo falla por los 5 repositorios sin binding (`MissingBinding`), por lo que el spike usó un módulo descartable con `@Provides` ficticios en `:app`. Clase y módulo descartables borrados. `./gradlew :core:domain:test`: 233 tests en verde (101 de reglas + 132 de casos de uso).
 
 ### 1.5 Datos Fake y DI (`:core:data`)
 
