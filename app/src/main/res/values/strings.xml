@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FixIt</string>
+
+    <!-- Bottom bar tabs (TopLevelDestination) -->
+    <string name="tab_requests">Solicitudes</string>
+    <string name="tab_profile">Perfil</string>
+    <string name="tab_feed">Feed</string>
+    <string name="tab_my_jobs">Mis trabajos</string>
+    <string name="tab_auth">Iniciar sesión</string>
 </resources>
