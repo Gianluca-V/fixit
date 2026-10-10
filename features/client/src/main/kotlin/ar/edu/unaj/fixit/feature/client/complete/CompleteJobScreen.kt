@@ -1,50 +1,164 @@
 package ar.edu.unaj.fixit.feature.client.complete
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import ar.edu.unaj.fixit.core.ui.components.PlaceholderScreen
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ar.edu.unaj.fixit.core.domain.model.Limits
+import ar.edu.unaj.fixit.core.domain.result.FormField
+import ar.edu.unaj.fixit.core.ui.components.ErrorContent
+import ar.edu.unaj.fixit.core.ui.components.LoadingContent
+import ar.edu.unaj.fixit.core.ui.components.RatingBar
+import ar.edu.unaj.fixit.core.ui.text.asMessage
 import ar.edu.unaj.fixit.core.ui.theme.FixItTheme
 import ar.edu.unaj.fixit.feature.client.R
+import ar.edu.unaj.fixit.feature.client.common.FieldErrorText
+import ar.edu.unaj.fixit.feature.client.common.MessageScaffold
 
-/**
- * "Completar y calificar" for [requestId]. `:app` resolves onCompleted to goBackFrom(CompleteJobKey).
- * TODO(task 1.8.7/1.8.8): add CompleteJobViewModel (tests first; loads the detail with
- * ObserveRequestDetailUseCase) and the real rating form.
- */
+/** "Completar y calificar" for [requestId]. `:app` resolves onCompleted to goBackFrom(CompleteJobKey). */
 @Composable
 fun CompleteJobRoute(
     requestId: String,
     onBack: () -> Unit,
     onCompleted: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: CompleteJobViewModel = hiltViewModel(),
 ) {
-    CompleteJobScreen(requestId = requestId, onBack = onBack, onCompleted = onCompleted, modifier = modifier)
+    LaunchedEffect(requestId) { viewModel.load(requestId) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(uiState.completed) {
+        if (uiState.completed) {
+            onCompleted()
+            viewModel.onNavigated()
+        }
+    }
+    CompleteJobScreen(
+        uiState = uiState,
+        onBack = onBack,
+        onRatingChange = viewModel::onRatingChange,
+        onCommentChange = viewModel::onCommentChange,
+        onSubmit = viewModel::onSubmit,
+        onRetry = viewModel::onRetry,
+        onMessageShown = viewModel::onMessageShown,
+        modifier = modifier,
+    )
 }
 
 @Composable
 fun CompleteJobScreen(
-    requestId: String,
+    uiState: CompleteJobUiState,
     onBack: () -> Unit,
-    onCompleted: () -> Unit,
+    onRatingChange: (Int) -> Unit,
+    onCommentChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onRetry: () -> Unit,
+    onMessageShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    PlaceholderScreen(
+    MessageScaffold(
         title = stringResource(R.string.client_complete_job_title),
-        taskRef = "1.8.8",
+        message = uiState.message,
+        onMessageShown = onMessageShown,
         modifier = modifier,
         onBack = onBack,
+    ) { padding ->
+        val contentModifier = Modifier.padding(padding)
+        val loadError = uiState.loadError
+        when {
+            loadError != null -> ErrorContent(error = loadError, modifier = contentModifier, onRetry = onRetry)
+            uiState.isLoading -> LoadingContent(contentModifier)
+            else -> RatingForm(
+                uiState = uiState,
+                onRatingChange = onRatingChange,
+                onCommentChange = onCommentChange,
+                onSubmit = onSubmit,
+                modifier = contentModifier,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RatingForm(
+    uiState: CompleteJobUiState,
+    onRatingChange: (Int) -> Unit,
+    onCommentChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val enabled = !uiState.isSubmitting
+    val commentError = uiState.validationError?.takeIf { it.field == FormField.COMMENT }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(requestId)
-        Button(onClick = onCompleted) { Text(stringResource(R.string.client_placeholder_completed)) }
+        uiState.professionalName?.let {
+            Text(stringResource(R.string.client_complete_professional, it), style = MaterialTheme.typography.titleMedium)
+        }
+        Text(stringResource(R.string.client_complete_rating), style = MaterialTheme.typography.labelLarge)
+        RatingBar(rating = uiState.rating, onRatingChange = if (enabled) onRatingChange else null)
+        FieldErrorText(uiState.validationError?.takeIf { it.field == FormField.RATING })
+
+        OutlinedTextField(
+            value = uiState.comment,
+            onValueChange = onCommentChange,
+            label = { Text(stringResource(R.string.client_complete_comment)) },
+            isError = commentError != null,
+            supportingText = {
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    Text(commentError?.asMessage().orEmpty(), modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.client_complete_comment_counter, uiState.comment.length, Limits.COMMENT_MAX))
+                }
+            },
+            enabled = enabled,
+            minLines = 3,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Button(onClick = onSubmit, enabled = uiState.canSubmit, modifier = Modifier.fillMaxWidth()) {
+            if (uiState.isSubmitting) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text(stringResource(R.string.client_complete_submit))
+            }
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun CompleteJobScreenPreview() {
-    FixItTheme { CompleteJobScreen(requestId = "r1", onBack = {}, onCompleted = {}) }
+    FixItTheme {
+        CompleteJobScreen(
+            uiState = CompleteJobUiState(isLoading = false, professionalName = "Carlos Gómez", rating = 4, comment = "Muy prolijo"),
+            onBack = {},
+            onRatingChange = {},
+            onCommentChange = {},
+            onSubmit = {},
+            onRetry = {},
+            onMessageShown = {},
+        )
+    }
 }

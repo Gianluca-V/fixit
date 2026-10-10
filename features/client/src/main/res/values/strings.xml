@@ -35,8 +35,14 @@
     <string name="client_detail_cancel_confirm">Sí, cancelar</string>
     <string name="client_detail_cancel_dismiss">Volver</string>
 
+    <!-- Complete job -->
+    <string name="client_complete_professional">Profesional: %1$s</string>
+    <string name="client_complete_rating">¿Cómo calificaría el trabajo?</string>
+    <string name="client_complete_comment">Comentario (opcional)</string>
+    <string name="client_complete_comment_counter">%1$d/%2$d</string>
+    <string name="client_complete_submit">Confirmar</string>
+
     <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
-    <string name="client_placeholder_completed">Simular trabajo calificado</string>
     <string name="client_placeholder_edit_profile">Editar perfil</string>
     <string name="client_placeholder_saved">Simular cambios guardados</string>
 </resources>

@@ -175,8 +175,8 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 - [x] 1.8.4 GREEN `create/CreateRequestViewModel.kt` + `CreateRequestScreen.kt`.
 - [x] 1.8.5 RED `detail/ClientRequestDetailViewModelTest` (`first { ... }`): `[rr]` Solicitud inexistente; Solicitud de otro cliente; Cambio en vivo a ACCEPTED; Detalle de una solicitud cancelada tras ser aceptada; Cancelar una solicitud abierta/aceptada; `[prof]` Detalle con profesional asignado; `[contact]` La cancelación oculta el contacto en vivo; `[media]` Las fotos llegan al detalle; `onRetry` pone `Loading`; `load` idempotente.
 - [x] 1.8.6 GREEN `detail/ClientRequestDetailViewModel.kt` + `ClientRequestDetailScreen.kt` (estado OPEN "Esperando que un profesional acepte"; `ContactCard` en ACCEPTED/COMPLETED).
-- [ ] 1.8.7 RED `complete/CompleteJobViewModelTest`: `[jc]` Nombre del profesional; Botón deshabilitado sin estrellas; Selección de estrellas; Error durante el envío; Confirmación exitosa; `loadError`.
-- [ ] 1.8.8 GREEN `complete/CompleteJobViewModel.kt` + `CompleteJobScreen.kt` (carga el detalle con `ObserveRequestDetailUseCase`).
+- [x] 1.8.7 RED `complete/CompleteJobViewModelTest`: `[jc]` Nombre del profesional; Botón deshabilitado sin estrellas; Selección de estrellas; Error durante el envío; Confirmación exitosa; `loadError`.
+- [x] 1.8.8 GREEN `complete/CompleteJobViewModel.kt` + `CompleteJobScreen.kt` (carga el detalle con `ObserveRequestDetailUseCase`).
 - [ ] 1.8.9 RED `profile/ClientProfileViewModelTest`: Loading → Success/Error desde `UserRepository.observe`; `[auth]` Cerrar sesión (`signOut()`).
 - [ ] 1.8.10 GREEN `profile/ClientProfileViewModel.kt` + `ClientProfileScreen.kt`.
 - [ ] 1.8.11 RED `profile/ClientEditProfileViewModelTest`: `[prof]` Valores precargados; Edición exitosa; Nombre inválido; Teléfono inválido; Fallo al guardar; `saved` consumido por `onNavigated`.
