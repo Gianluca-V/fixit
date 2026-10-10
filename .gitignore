@@ -1,0 +1,22 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ: per-machine configuration
+.idea/
+*.iml
+
+# Local configuration (SDK path, keys)
+local.properties
+*.jks
+*.keystore
+
+# Android NDK / generated
+/captures
+.externalNativeBuild
+.cxx
+
+# OS
+.DS_Store
