@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown by Coil when a photo cannot be loaded. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <path android:fillColor="#FFE0E0E0" android:pathData="M0,0h96v96h-96z" />
+    <path android:fillColor="#FF9E9E9E" android:pathData="M20,68l16,-20l12,14l8,-10l20,16z" />
+    <path android:fillColor="#FF9E9E9E" android:pathData="M66,30m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+</vector>

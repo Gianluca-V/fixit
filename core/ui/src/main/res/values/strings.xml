@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Shared strings (neutral Spanish). Feature-specific strings live in each feature's own strings.xml.
+  This file is a merge hotspot: add new entries at the end of the matching section.
+-->
+<resources>
+    <!-- Common -->
+    <string name="common_loading">Cargando…</string>
+    <string name="common_retry">Reintentar</string>
+    <string name="common_back">Atrás</string>
+    <string name="common_accept">Aceptar</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_save">Guardar</string>
+
+    <!-- Domain errors (DomainError.asMessage) -->
+    <string name="error_invalid_credentials">El correo o la contraseña son incorrectos.</string>
+    <string name="error_email_already_in_use">Ya existe una cuenta con ese correo.</string>
+    <string name="error_unauthorized">No tiene permiso para realizar esta acción.</string>
+    <string name="error_not_found">No se encontró lo que busca.</string>
+    <string name="error_already_taken">Otro profesional ya aceptó esta solicitud.</string>
+    <string name="error_invalid_transition">Esta acción ya no está disponible para la solicitud.</string>
+    <string name="error_location_unavailable">No se pudo obtener la ubicación. Ingrese la dirección manualmente.</string>
+    <string name="error_network">No hay conexión o el servicio no responde. Intente nuevamente.</string>
+    <!-- Also shown when an authentication account has no profile (design 13.5). -->
+    <string name="error_unknown">Ocurrió un error inesperado. Si el problema continúa, cree la cuenta nuevamente.</string>
+
+    <!-- Validation errors (ValidationError.asMessage) -->
+    <string name="validation_invalid_email">Ingrese un correo válido.</string>
+    <string name="validation_empty_password">Ingrese la contraseña.</string>
+    <string name="validation_weak_password">La contraseña debe tener al menos 6 caracteres.</string>
+    <string name="validation_invalid_name">El nombre debe tener entre 2 y 60 caracteres.</string>
+    <string name="validation_invalid_phone">Ingrese un teléfono válido (entre 8 y 15 dígitos).</string>
+    <string name="validation_role_required">Elija si es cliente o profesional.</string>
+    <string name="validation_categories_required">Elija al menos una categoría.</string>
+    <string name="validation_base_location_required">Defina su punto base.</string>
+    <string name="validation_invalid_radius">El radio debe estar entre 1 y 50 km.</string>
+    <string name="validation_invalid_coordinates">La ubicación no es válida.</string>
+    <string name="validation_category_required">Elija una categoría.</string>
+    <string name="validation_empty_description">Escriba una descripción.</string>
+    <string name="validation_description_too_short">La descripción debe tener al menos 10 caracteres.</string>
+    <string name="validation_description_too_long">La descripción no puede superar los 500 caracteres.</string>
+    <string name="validation_photos_required">Agregue al menos una foto.</string>
+    <string name="validation_too_many_photos">Puede agregar hasta 3 fotos.</string>
+    <string name="validation_location_required">Indique la ubicación del trabajo.</string>
+    <string name="validation_invalid_rating">Elija una calificación de 1 a 5 estrellas.</string>
+    <string name="validation_comment_too_long">El comentario no puede superar los 300 caracteres.</string>
+
+    <!-- Service categories (ServiceCategory.label) -->
+    <string name="category_electricity">Electricidad</string>
+    <string name="category_plumbing">Plomería</string>
+    <string name="category_gas">Gas</string>
+    <string name="category_carpentry">Carpintería</string>
+    <string name="category_painting">Pintura</string>
+    <string name="category_locksmith">Cerrajería</string>
+    <string name="category_masonry">Albañilería</string>
+    <string name="category_other">Otros</string>
+
+    <!-- Request status (RequestStatus.label) -->
+    <string name="status_open">Abierta</string>
+    <string name="status_accepted">Aceptada</string>
+    <string name="status_completed">Completada</string>
+    <string name="status_cancelled">Cancelada</string>
+
+    <!-- Photos -->
+    <string name="photo_add_sample">Agregar foto de ejemplo</string>
+    <string name="photo_count">%1$d de %2$d fotos</string>
+    <string name="photo_content_description">Foto %1$d de %2$d de la solicitud</string>
+    <string name="photo_remove">Quitar foto %1$d</string>
+    <string name="photo_load_error">No se pudo cargar la foto</string>
+
+    <!-- Rating -->
+    <string name="rating_star">Calificar con %1$d de 5 estrellas</string>
+    <string name="rating_value">Calificación: %1$d de 5 estrellas</string>
+
+    <!-- Contact -->
+    <string name="contact_title">Contacto</string>
+    <string name="contact_call">Llamar</string>
+    <string name="contact_whatsapp">WhatsApp</string>
+    <string name="contact_no_app">No hay una aplicación disponible para esta acción.</string>
+
+    <!-- Reputation -->
+    <string name="reputation_none">Sin reseñas</string>
+    <string name="reputation_average">%1$s de 5</string>
+    <plurals name="reputation_reviews">
+        <item quantity="one">%1$d reseña</item>
+        <item quantity="other">%1$d reseñas</item>
+    </plurals>
+
+    <!-- Profile form -->
+    <string name="profile_field_name">Nombre</string>
+    <string name="profile_field_phone">Teléfono</string>
+    <string name="profile_field_categories">Categorías de trabajo</string>
+    <string name="profile_field_base">Punto base</string>
+    <string name="profile_field_base_empty">Sin punto base definido</string>
+    <string name="profile_field_radius">Radio de trabajo (km)</string>
+    <string name="profile_use_location">Usar mi ubicación</string>
+</resources>
