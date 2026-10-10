@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_sign_in_title">Iniciar sesión</string>
+    <string name="auth_sign_up_title">Crear cuenta</string>
+    <string name="auth_go_to_sign_up">Crear cuenta</string>
+
+    <!-- TEMPORARY quick sign-in buttons (task 1.7.2 replaces them with the real form) -->
+    <string name="auth_demo_sign_in_ana">Entrar como Ana (cliente)</string>
+    <string name="auth_demo_sign_in_bruno">Entrar como Bruno (cliente)</string>
+    <string name="auth_demo_sign_in_carlos">Entrar como Carlos (profesional)</string>
+    <string name="auth_demo_sign_in_diana">Entrar como Diana (profesional)</string>
+</resources>
