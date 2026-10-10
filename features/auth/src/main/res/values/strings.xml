@@ -8,4 +8,11 @@
     <string name="auth_field_email">Correo electrónico</string>
     <string name="auth_field_password">Contraseña</string>
     <string name="auth_sign_in_submit">Ingresar</string>
+
+    <!-- Sign-up form -->
+    <string name="auth_sign_up_submit">Crear cuenta</string>
+    <string name="auth_role_label">Tipo de cuenta</string>
+    <string name="auth_role_fixed_hint">No se puede cambiar después del registro.</string>
+    <string name="auth_role_client">Cliente</string>
+    <string name="auth_role_professional">Profesional</string>
 </resources>
