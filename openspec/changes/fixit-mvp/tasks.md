@@ -177,8 +177,8 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 - [x] 1.8.6 GREEN `detail/ClientRequestDetailViewModel.kt` + `ClientRequestDetailScreen.kt` (estado OPEN "Esperando que un profesional acepte"; `ContactCard` en ACCEPTED/COMPLETED).
 - [x] 1.8.7 RED `complete/CompleteJobViewModelTest`: `[jc]` Nombre del profesional; Botón deshabilitado sin estrellas; Selección de estrellas; Error durante el envío; Confirmación exitosa; `loadError`.
 - [x] 1.8.8 GREEN `complete/CompleteJobViewModel.kt` + `CompleteJobScreen.kt` (carga el detalle con `ObserveRequestDetailUseCase`).
-- [ ] 1.8.9 RED `profile/ClientProfileViewModelTest`: Loading → Success/Error desde `UserRepository.observe`; `[auth]` Cerrar sesión (`signOut()`).
-- [ ] 1.8.10 GREEN `profile/ClientProfileViewModel.kt` + `ClientProfileScreen.kt`.
+- [x] 1.8.9 RED `profile/ClientProfileViewModelTest`: Loading → Success/Error desde `UserRepository.observe`; `[auth]` Cerrar sesión (`signOut()`).
+- [x] 1.8.10 GREEN `profile/ClientProfileViewModel.kt` + `ClientProfileScreen.kt`.
 - [ ] 1.8.11 RED `profile/ClientEditProfileViewModelTest`: `[prof]` Valores precargados; Edición exitosa; Nombre inválido; Teléfono inválido; Fallo al guardar; `saved` consumido por `onNavigated`.
 - [ ] 1.8.12 GREEN `profile/ClientEditProfileViewModel.kt` + `ClientEditProfileScreen.kt` (email y rol de solo lectura).
 
