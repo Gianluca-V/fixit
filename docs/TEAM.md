@@ -11,7 +11,7 @@ La app ya arranca con todos los módulos y todas las pantallas como **placeholde
    JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" ./gradlew assembleDebug
    ```
    En Android Studio: abrir la carpeta raíz y elegir ese JDK en *Settings > Build > Gradle > Gradle JDK*.
-3. Ejecutar `:app` en un emulador. Pantalla de inicio: botones "Entrar como Ana / Bruno (cliente)" y "Entrar como Carlos / Diana (profesional)". Las cuentas y datos de ejemplo están en `design.md` §12 (contraseña `test1234`).
+3. Ejecutar `:app` en un emulador. Pantalla de inicio: formulario de inicio de sesión; entrar con una cuenta de ejemplo (Ana o Bruno como cliente, Carlos o Diana como profesional). Las cuentas y datos de ejemplo están en `design.md` §12 (contraseña `test1234`).
 4. Cada pantalla pendiente muestra "Pantalla pendiente de implementar (tarea X.Y.Z)": esa es la tarea de `tasks.md` que la reemplaza.
 
 ## Dónde está todo
