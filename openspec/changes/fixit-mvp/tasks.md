@@ -85,7 +85,7 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 1.3 Dominio puro (`:core:domain`)
 
-- [ ] 1.3.1 Crear tipos sin comportamiento: `model/*` (User, RepairRequest, Review, enums, GeoPoint, Place, SessionState, forms, FeedItem, Contact, RequestDetail, `Limits`), `result/AppResult`, `DomainError`, `ValidationError`/`FormField`, y las interfaces `repository/*` (+ `Clock`) en `core/domain/src/main/kotlin/ar/edu/unaj/fixit/core/domain/`.
+- [x] 1.3.1 Crear tipos sin comportamiento: `model/*` (User, RepairRequest, Review, enums, GeoPoint, Place, SessionState, forms, FeedItem, Contact, RequestDetail, `Limits`), `result/AppResult`, `DomainError`, `ValidationError`/`FormField`, y las interfaces `repository/*` (+ `Clock`) en `core/domain/src/main/kotlin/ar/edu/unaj/fixit/core/domain/`.
 - [ ] 1.3.2 RED `rules/RequestStateMachineTest`: las 12 combinaciones. Cubre `[rr]` Transiciones válidas; Transiciones inválidas desde estados no terminales; Estados terminales rechazan toda acción; Estados terminales; `[feed]` Segundo en aceptar (ACCEPTED+ACCEPT → AlreadyTaken).
 - [ ] 1.3.3 GREEN `rules/RequestStateMachine.kt`.
 - [ ] 1.3.4 RED `rules/HaversineTest`: `[loc]` Mismo punto; Distancia conocida; Simetría; Cruce del antimeridiano; Un grado de latitud; puntos antípodas sin `NaN`.
