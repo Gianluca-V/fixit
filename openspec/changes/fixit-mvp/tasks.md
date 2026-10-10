@@ -154,11 +154,11 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 > Sin tests JVM (diseño §15: Compose se cubre con `@Preview` + checklist manual).
 
-- [ ] 1.6.1 Crear `theme/FixItTheme.kt` (Material 3) y `res/values/strings.xml` base en español neutro.
-- [ ] 1.6.2 Crear `text/DomainErrorMessages.kt` (`DomainError.asMessage()` con un único `when`, incluido el mensaje de cuenta sin perfil) y `ServiceCategory.label()`, con sus strings.
-- [ ] 1.6.3 Crear `components/`: `LoadingContent`, `ErrorContent`, `StatusBadge`, `CategoryChips` (+ `@Preview`).
-- [ ] 1.6.4 Crear `components/`: `PhotoThumbnails`, `PhotoPager`, `PhotoPickerButtons` (Fase 1: "Agregar foto de ejemplo") y `res/drawable/sample_repair_1..3`; `contentDescription` accesible y placeholder de error de Coil.
-- [ ] 1.6.5 Crear `components/`: `RatingBar`, `ContactCard` (Llamar `ACTION_DIAL`, WhatsApp `ACTION_VIEW`, `try/catch ActivityNotFoundException`), `ReputationText` (idioma del dispositivo, `minimumFractionDigits = 1`), `ProfileFormFields` + `ProfileFormState`.
+- [x] 1.6.1 Crear `theme/FixItTheme.kt` (Material 3) y `res/values/strings.xml` base en español neutro.
+- [x] 1.6.2 Crear `text/DomainErrorMessages.kt` (`DomainError.asMessage()` con un único `when`, incluido el mensaje de cuenta sin perfil) y `ServiceCategory.label()`, con sus strings.
+- [x] 1.6.3 Crear `components/`: `LoadingContent`, `ErrorContent`, `StatusBadge`, `CategoryChips` (+ `@Preview`).
+- [x] 1.6.4 Crear `components/`: `PhotoThumbnails`, `PhotoPager`, `PhotoPickerButtons` (Fase 1: "Agregar foto de ejemplo") y `res/drawable/sample_repair_1..3`; `contentDescription` accesible y placeholder de error de Coil.
+- [x] 1.6.5 Crear `components/`: `RatingBar`, `ContactCard` (Llamar `ACTION_DIAL`, WhatsApp `ACTION_VIEW`, `try/catch ActivityNotFoundException`), `ReputationText` (idioma del dispositivo, `minimumFractionDigits = 1`), `ProfileFormFields` + `ProfileFormState`.
 
 ### 1.7 `:features:auth`
 
