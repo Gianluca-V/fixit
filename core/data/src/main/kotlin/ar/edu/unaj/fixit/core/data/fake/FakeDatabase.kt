@@ -9,9 +9,12 @@ import ar.edu.unaj.fixit.core.domain.result.DomainError
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -70,6 +73,9 @@ class FakeDatabase(private val clock: Clock, initial: DbState) {
 
     /** Unique id; the underscore keeps generated ids apart from the seeded ones (c1, p1, r1...). */
     fun newId(prefix: String): String = "${prefix}_${idCounter.incrementAndGet()}"
+
+    /** A view of the state that only emits when the selected part changes (a change elsewhere is invisible). */
+    fun <T> observe(select: (DbState) -> T): Flow<T> = state.map(select).distinctUntilChanged()
 
     fun signIn(userId: String) {
         mutableState.update { it.copy(currentUserId = userId) }

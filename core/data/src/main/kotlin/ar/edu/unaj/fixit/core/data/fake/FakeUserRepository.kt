@@ -7,16 +7,13 @@ import ar.edu.unaj.fixit.core.domain.result.AppResult
 import ar.edu.unaj.fixit.core.domain.result.DomainError
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 
 class FakeUserRepository @Inject constructor(
     private val db: FakeDatabase,
 ) : UserRepository {
     override suspend fun get(userId: String): AppResult<User> = db.state.value.findUser(userId)
 
-    override fun observe(userId: String): Flow<AppResult<User>> =
-        db.state.map { it.findUser(userId) }.distinctUntilChanged()
+    override fun observe(userId: String): Flow<AppResult<User>> = db.observe { it.findUser(userId) }
 
     /** Updates name, phone and, for a professional, categories, base and radius; never email, role or reputation. */
     override suspend fun updateProfile(userId: String, form: ProfileForm): AppResult<User> =

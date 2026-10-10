@@ -12,8 +12,6 @@ import ar.edu.unaj.fixit.core.domain.result.ValidationError
 import ar.edu.unaj.fixit.core.domain.rules.Validators
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 
 /**
  * Phase 1 authentication over [FakeDatabase]. Emails are normalized when stored and when compared
@@ -24,13 +22,11 @@ class FakeAuthRepository @Inject constructor(
     private val db: FakeDatabase,
 ) : AuthRepository {
     /** Never fails and never emits Loading in Phase 1. */
-    override val session: Flow<SessionState> = db.state
-        .map { state ->
-            state.users.firstOrNull { it.id == state.currentUserId }
-                ?.let<User, SessionState> { SessionState.SignedIn(it) }
-                ?: SessionState.SignedOut
-        }
-        .distinctUntilChanged()
+    override val session: Flow<SessionState> = db.observe { state ->
+        state.users.firstOrNull { it.id == state.currentUserId }
+            ?.let<User, SessionState> { SessionState.SignedIn(it) }
+            ?: SessionState.SignedOut
+    }
 
     override fun currentUserId(): String? = db.state.value.currentUserId
 

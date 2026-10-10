@@ -14,8 +14,6 @@ import ar.edu.unaj.fixit.core.domain.result.ValidationError
 import ar.edu.unaj.fixit.core.domain.rules.RequestStateMachine
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 
 class FakeRepairRequestRepository @Inject constructor(
     private val db: FakeDatabase,
@@ -43,48 +41,37 @@ class FakeRepairRequestRepository @Inject constructor(
     override suspend fun get(requestId: String): AppResult<RepairRequest> = db.state.value.findRequest(requestId)
 
     override fun observe(requestId: String): Flow<AppResult<RepairRequest>> =
-        db.state.map { it.findRequest(requestId) }.distinctUntilChanged()
+        db.observe { it.findRequest(requestId) }
 
     override fun observeByClient(clientId: String): Flow<AppResult<List<RepairRequest>>> =
-        db.state
-            .map { state ->
-                AppResult.Success(state.requests.filter { it.clientId == clientId }.sortedByDescending { it.createdAt })
-            }
-            .distinctUntilChanged()
+        db.observe { state ->
+            AppResult.Success(state.requests.filter { it.clientId == clientId }.sortedByDescending { it.createdAt })
+        }
 
     /** Everything assigned to the professional, including jobs cancelled after being accepted. */
     override fun observeByProfessional(professionalId: String): Flow<AppResult<List<RepairRequest>>> =
-        db.state
-            .map { state ->
-                AppResult.Success(
-                    state.requests.filter { it.professionalId == professionalId }.sortedByDescending { it.acceptedAt ?: 0L },
-                )
-            }
-            .distinctUntilChanged()
+        db.observe { state ->
+            AppResult.Success(
+                state.requests.filter { it.professionalId == professionalId }.sortedByDescending { it.acceptedAt ?: 0L },
+            )
+        }
 
     /** Every OPEN request is a candidate: the exact category and distance filter belongs to the domain. */
     override fun observeOpenNear(center: GeoPoint, radiusKm: Int): Flow<AppResult<List<RepairRequest>>> =
-        db.state
-            .map { state -> AppResult.Success(state.requests.filter { it.status == RequestStatus.OPEN }) }
-            .distinctUntilChanged()
+        db.observe { state -> AppResult.Success(state.requests.filter { it.status == RequestStatus.OPEN }) }
 
     override fun observeReview(requestId: String): Flow<AppResult<Review?>> =
-        db.state
-            .map { state -> AppResult.Success(state.reviews.firstOrNull { it.requestId == requestId }) }
-            .distinctUntilChanged()
+        db.observe { state -> AppResult.Success(state.reviews.firstOrNull { it.requestId == requestId }) }
 
     /** Idempotent for the same professional: checked BEFORE the state machine. */
     override suspend fun accept(requestId: String, professionalId: String): AppResult<RepairRequest> =
         db.write { old, now ->
-            val request = old.requests.firstOrNull { it.id == requestId }
-                ?: return@write WriteDecision.Reject(DomainError.NotFound)
-            if (request.status == RequestStatus.ACCEPTED && request.professionalId == professionalId) {
-                return@write WriteDecision.Commit(old, request)
-            }
-            when (val next = RequestStateMachine.transition(request.status, RequestAction.ACCEPT)) {
-                is AppResult.Error -> WriteDecision.Reject(next.error)
-                is AppResult.Success -> {
-                    val accepted = request.copy(status = next.data, professionalId = professionalId, acceptedAt = now)
+            old.withRequest(requestId) { request ->
+                if (request.status == RequestStatus.ACCEPTED && request.professionalId == professionalId) {
+                    return@withRequest WriteDecision.Commit(old, request)
+                }
+                transition(request, RequestAction.ACCEPT) { next ->
+                    val accepted = request.copy(status = next, professionalId = professionalId, acceptedAt = now)
                     WriteDecision.Commit(old.replacing(accepted), accepted)
                 }
             }
@@ -93,12 +80,9 @@ class FakeRepairRequestRepository @Inject constructor(
     /** The professional assigned by a previous accept is kept, so the job still shows in "My jobs". */
     override suspend fun cancel(requestId: String): AppResult<RepairRequest> =
         db.write { old, now ->
-            val request = old.requests.firstOrNull { it.id == requestId }
-                ?: return@write WriteDecision.Reject(DomainError.NotFound)
-            when (val next = RequestStateMachine.transition(request.status, RequestAction.CANCEL)) {
-                is AppResult.Error -> WriteDecision.Reject(next.error)
-                is AppResult.Success -> {
-                    val cancelled = request.copy(status = next.data, cancelledAt = now)
+            old.withRequest(requestId) { request ->
+                transition(request, RequestAction.CANCEL) { next ->
+                    val cancelled = request.copy(status = next, cancelledAt = now)
                     WriteDecision.Commit(old.replacing(cancelled), cancelled)
                 }
             }
@@ -107,34 +91,48 @@ class FakeRepairRequestRepository @Inject constructor(
     /** One update of the whole state: request, review and the professional's reputation change together. */
     override suspend fun completeWithReview(requestId: String, rating: Int, comment: String?): AppResult<Review> =
         db.write { old, now ->
-            val request = old.requests.firstOrNull { it.id == requestId }
-                ?: return@write WriteDecision.Reject(DomainError.NotFound)
-            val completedStatus = when (val next = RequestStateMachine.transition(request.status, RequestAction.COMPLETE)) {
-                is AppResult.Error -> return@write WriteDecision.Reject(next.error)
-                is AppResult.Success -> next.data
-            }
-            val professionalId = request.professionalId
-                ?: return@write WriteDecision.Reject(DomainError.Unknown)
-            val info = old.users.firstOrNull { it.id == professionalId }?.professional
-                ?: return@write WriteDecision.Reject(DomainError.NotFound)
+            old.withRequest(requestId) { request ->
+                transition(request, RequestAction.COMPLETE) { next ->
+                    val professionalId = request.professionalId
+                        ?: return@transition WriteDecision.Reject(DomainError.Unknown)
+                    val info = old.users.firstOrNull { it.id == professionalId }?.professional
+                        ?: return@transition WriteDecision.Reject(DomainError.NotFound)
 
-            val review = Review(requestId, professionalId, request.clientId, rating, comment, createdAt = now)
-            val reputation = Reputation(info.reputation.ratingSum + rating, info.reputation.reviewCount + 1)
-            WriteDecision.Commit(
-                old.copy(
-                    users = old.users.map {
-                        if (it.id == professionalId) it.copy(professional = info.copy(reputation = reputation)) else it
-                    },
-                    requests = old.requests.map {
-                        if (it.id == requestId) request.copy(status = completedStatus, completedAt = now) else it
-                    },
-                    reviews = old.reviews + review,
-                ),
-                review,
-            )
+                    val review = Review(requestId, professionalId, request.clientId, rating, comment, createdAt = now)
+                    val reputation = Reputation(info.reputation.ratingSum + rating, info.reputation.reviewCount + 1)
+                    WriteDecision.Commit(
+                        old.copy(
+                            users = old.users.map {
+                                if (it.id == professionalId) it.copy(professional = info.copy(reputation = reputation)) else it
+                            },
+                            requests = old.requests.map {
+                                if (it.id == requestId) request.copy(status = next, completedAt = now) else it
+                            },
+                            reviews = old.reviews + review,
+                        ),
+                        review,
+                    )
+                }
+            }
         }
 
     private fun validationError(error: ValidationError) = AppResult.Error(DomainError.Validation(error))
+}
+
+/** Runs [block] with the request, or rejects with NotFound when it does not exist. */
+private inline fun <T> DbState.withRequest(
+    requestId: String,
+    block: (RepairRequest) -> WriteDecision<T>,
+): WriteDecision<T> = requests.firstOrNull { it.id == requestId }?.let(block) ?: WriteDecision.Reject(DomainError.NotFound)
+
+/** Applies [action] through the state machine; an invalid transition becomes a rejection. */
+private inline fun <T> transition(
+    request: RepairRequest,
+    action: RequestAction,
+    onValid: (RequestStatus) -> WriteDecision<T>,
+): WriteDecision<T> = when (val next = RequestStateMachine.transition(request.status, action)) {
+    is AppResult.Error -> WriteDecision.Reject(next.error)
+    is AppResult.Success -> onValid(next.data)
 }
 
 private fun DbState.replacing(request: RepairRequest): DbState =
