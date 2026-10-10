@@ -11,6 +11,10 @@
     <string name="common_accept">Aceptar</string>
     <string name="common_cancel">Cancelar</string>
     <string name="common_save">Guardar</string>
+    <string name="common_sign_out">Cerrar sesión</string>
+
+    <!-- Temporary placeholder screens (delete with PlaceholderScreen.kt) -->
+    <string name="placeholder_message">Pantalla pendiente de implementar (tarea %1$s).</string>
 
     <!-- Domain errors (DomainError.asMessage) -->
     <string name="error_invalid_credentials">El correo o la contraseña son incorrectos.</string>
