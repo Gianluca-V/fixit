@@ -133,22 +133,22 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 1.5 Datos Fake y DI (`:core:data`)
 
-- [ ] 1.5.1 RED `fake/FakeDatabaseTest`: un único `MutableStateFlow<DbState>`; `signIn`/`signOut` son `state.update {}` atómicos (sin `Mutex` ni `runBlocking`); las escrituras de datos usan el `Mutex`; `failNextWrite` solo lo consume la siguiente escritura que supera la validación (no `signIn`, `signOut` ni escrituras rechazadas por `Unauthorized`/validación); fechas = `clock.now()`.
-- [ ] 1.5.2 GREEN `fake/FakeDatabase.kt` y `DbState` (`@Singleton`, `Clock` por constructor; lambda pura bajo `mutex.withLock`; hook leído antes y consumido tras decidir).
-- [ ] 1.5.3 RED `fake/SeedDataTest`: todos los usuarios con teléfono; `ratingSum`/`reviewCount` de cada profesional = suma/cantidad de sus reseñas; fechas `createdAt < acceptedAt < completedAt`; contraseña `test1234`.
-- [ ] 1.5.4 GREEN `fake/SeedData.kt` (c1, c2, p1–p3, r1–r8 de diseño §12).
-- [ ] 1.5.5 RED `fake/FakeAuthRepositoryTest`: `[auth]` Registro exitoso de cliente/profesional; Email ya registrado; Email con mayúsculas y espacios; Rol persistido; Credenciales correctas/incorrectas; Cerrar sesión; Reinicio de la app en Fase 1; `session` nunca falla.
-- [ ] 1.5.6 GREEN `fake/FakeAuthRepository.kt` (normaliza email al guardar y comparar).
-- [ ] 1.5.7 RED `fake/FakeUserRepositoryTest`: `[prof]` Edición exitosa; Edición exitosa de la zona de trabajo; Actualizar el punto base; Fallo al guardar (`failNextWrite`); Las solicitudes no cambian de estado; `[prof]` Contacto con el teléfono vigente; email/rol/reputación intactos; `observe` → `NotFound`.
-- [ ] 1.5.8 GREEN `fake/FakeUserRepository.kt`.
-- [ ] 1.5.9 RED `fake/FakeRepairRequestRepositoryTest` (a) lecturas: `[rr]` Lista ordenada; Solo solicitudes propias; Creación exitosa (`createdAt`); `[feed]` Trabajo aceptado aparece; Trabajo completado; Trabajo cancelado por el cliente; Orden de la lista; Sin límite de trabajos (Varios aceptados); `observeOpenNear`, `observeReview`; `distinctUntilChanged`.
-- [ ] 1.5.10 GREEN `fake/FakeRepairRequestRepository.kt` parte (a): `create`, `get`, `observe*`.
-- [ ] 1.5.11 RED `fake/FakeRepairRequestRepositoryTest` (b) escrituras atómicas: `[feed]` Concurrencia real (10 profesionales → 1 `Success` + 9 `AlreadyTaken`); Aceptar de nuevo el mismo trabajo (idempotente); `[rr]` Cancelar antes de que otro acepte; Aceptar antes de que el cliente cancele; Cancelar no afecta la reputación; `[jc]` Falla parcial; Segundo intento de completar; completar con agregado de reputación; `acceptedAt`/`cancelledAt`/`completedAt` = `clock.now()`.
-- [ ] 1.5.12 GREEN `FakeRepairRequestRepository` parte (b): `accept` (idempotente antes de la máquina de estados), `cancel`, `completeWithReview` bajo `Mutex`.
-- [ ] 1.5.13 RED `fake/FakeLocationTest`: `[loc]` Usar mi ubicación en Fase 1 (Florencio Varela, "Av. San Martín 2000, Florencio Varela"); Falla simulada de ubicación (`failWith`).
-- [ ] 1.5.14 GREEN `fake/FakeLocation.kt` (`LocationProvider` + `AddressResolver`).
-- [ ] 1.5.15 Crear `di/RepositoryModule.kt` (`@Binds` Fake), `di/CoreModule.kt` (`Clock`, `@IoDispatcher`) y calificador `@IoDispatcher`. Sin test JVM; se verifica con `:app:assembleDebug` en 1.10.13.
-- [ ] 1.5.16 REFACTOR: revisar duplicación en los Fakes y ejecutar `./gradlew :core:data:test`.
+- [x] 1.5.1 RED `fake/FakeDatabaseTest`: un único `MutableStateFlow<DbState>`; `signIn`/`signOut` son `state.update {}` atómicos (sin `Mutex` ni `runBlocking`); las escrituras de datos usan el `Mutex`; `failNextWrite` solo lo consume la siguiente escritura que supera la validación (no `signIn`, `signOut` ni escrituras rechazadas por `Unauthorized`/validación); fechas = `clock.now()`.
+- [x] 1.5.2 GREEN `fake/FakeDatabase.kt` y `DbState` (`@Singleton`, `Clock` por constructor; lambda pura bajo `mutex.withLock`; hook leído antes y consumido tras decidir).
+- [x] 1.5.3 RED `fake/SeedDataTest`: todos los usuarios con teléfono; `ratingSum`/`reviewCount` de cada profesional = suma/cantidad de sus reseñas; fechas `createdAt < acceptedAt < completedAt`; contraseña `test1234`.
+- [x] 1.5.4 GREEN `fake/SeedData.kt` (c1, c2, p1–p3, r1–r8 de diseño §12).
+- [x] 1.5.5 RED `fake/FakeAuthRepositoryTest`: `[auth]` Registro exitoso de cliente/profesional; Email ya registrado; Email con mayúsculas y espacios; Rol persistido; Credenciales correctas/incorrectas; Cerrar sesión; Reinicio de la app en Fase 1; `session` nunca falla.
+- [x] 1.5.6 GREEN `fake/FakeAuthRepository.kt` (normaliza email al guardar y comparar).
+- [x] 1.5.7 RED `fake/FakeUserRepositoryTest`: `[prof]` Edición exitosa; Edición exitosa de la zona de trabajo; Actualizar el punto base; Fallo al guardar (`failNextWrite`); Las solicitudes no cambian de estado; `[prof]` Contacto con el teléfono vigente; email/rol/reputación intactos; `observe` → `NotFound`.
+- [x] 1.5.8 GREEN `fake/FakeUserRepository.kt`.
+- [x] 1.5.9 RED `fake/FakeRepairRequestRepositoryTest` (a) lecturas: `[rr]` Lista ordenada; Solo solicitudes propias; Creación exitosa (`createdAt`); `[feed]` Trabajo aceptado aparece; Trabajo completado; Trabajo cancelado por el cliente; Orden de la lista; Sin límite de trabajos (Varios aceptados); `observeOpenNear`, `observeReview`; `distinctUntilChanged`.
+- [x] 1.5.10 GREEN `fake/FakeRepairRequestRepository.kt` parte (a): `create`, `get`, `observe*`.
+- [x] 1.5.11 RED `fake/FakeRepairRequestRepositoryTest` (b) escrituras atómicas: `[feed]` Concurrencia real (10 profesionales → 1 `Success` + 9 `AlreadyTaken`); Aceptar de nuevo el mismo trabajo (idempotente); `[rr]` Cancelar antes de que otro acepte; Aceptar antes de que el cliente cancele; Cancelar no afecta la reputación; `[jc]` Falla parcial; Segundo intento de completar; completar con agregado de reputación; `acceptedAt`/`cancelledAt`/`completedAt` = `clock.now()`.
+- [x] 1.5.12 GREEN `FakeRepairRequestRepository` parte (b): `accept` (idempotente antes de la máquina de estados), `cancel`, `completeWithReview` bajo `Mutex`.
+- [x] 1.5.13 RED `fake/FakeLocationTest`: `[loc]` Usar mi ubicación en Fase 1 (Florencio Varela, "Av. San Martín 2000, Florencio Varela"); Falla simulada de ubicación (`failWith`).
+- [x] 1.5.14 GREEN `fake/FakeLocation.kt` (`LocationProvider` + `AddressResolver`).
+- [x] 1.5.15 Crear `di/RepositoryModule.kt` (`@Binds` Fake), `di/CoreModule.kt` (`Clock`, `@IoDispatcher`) y calificador `@IoDispatcher`. Sin test JVM; se verifica con `:app:assembleDebug` en 1.10.13. Verificación anticipada 2026-10-10: un `@HiltViewModel` descartable con `AuthRepository` y los 10 casos de uso resolvió el grafo completo en `:app:assembleDebug` (Hilt instancia `FakeDatabase`, los 3 repositorios y `FakeLocation`); descartable borrado.
+- [x] 1.5.16 REFACTOR: revisar duplicación en los Fakes y ejecutar `./gradlew :core:data:test`.
 
 ### 1.6 `:core:ui`
 
