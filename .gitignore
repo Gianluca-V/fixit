@@ -20,3 +20,6 @@ local.properties
 
 # OS
 .DS_Store
+
+# Firebase config, shared out of band
+app/google-services.json
