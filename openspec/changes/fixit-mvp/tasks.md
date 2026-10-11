@@ -259,8 +259,8 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 - [x] 2.4.4 GREEN `parseUploadResponse(code, body)` pura con `Json.parseToJsonElement(...).jsonObject["secure_url"]`.
 - [x] 2.4.5 RED `cloudinary/PhotoUploadErrorsTest` (`runTest`, `PhotoUploader` de prueba): `[media]` Mapeo de fallas de la subida: `firebaseCall { uploader.upload(bytes) }` con `IOException` → `Network`; subida que no termina → `Network` a los 30 s de tiempo virtual (`firebaseCall(UPLOAD_TIMEOUT_MS)`); `CloudinaryUploadException` (400, 401, 500) o `IllegalStateException` (configuración vacía) → `Unknown`; nunca lanza hacia afuera.
 - [x] 2.4.6 GREEN: interfaz `PhotoUploader { suspend fun upload(bytes: ByteArray): String }` y filas nuevas de `toDomainError()` (`java.io.IOException` → `Network`; `CloudinaryUploadException` → `Unknown` con el código en el log; el resto ya cae en `Unknown`).
-- [ ] 2.4.7 Crear `cloudinary/CloudinaryUploader.kt` (`@Inject`, `check` de configuración no vacía, `client.newCall(buildUploadRequest(...)).executeAsync().use { parseUploadResponse(...) }`; sin dispatcher). Sin test JVM: la subida real se verifica en 2.9.4.
-- [ ] 2.4.8 Crear `di/NetworkModule.kt` (`OkHttpClient` singleton, `CloudinaryConfig` desde `BuildConfig`, `@Binds PhotoUploader` → `CloudinaryUploader`) y comprobar `:app:assembleDebug`.
+- [x] 2.4.7 Crear `cloudinary/CloudinaryUploader.kt` (`@Inject`, `check` de configuración no vacía, `client.newCall(buildUploadRequest(...)).executeAsync().use { parseUploadResponse(...) }`; sin dispatcher). Sin test JVM: la subida real se verifica en 2.9.4.
+- [x] 2.4.8 Crear `di/NetworkModule.kt` (`OkHttpClient` singleton, `CloudinaryConfig` desde `BuildConfig`, `@Binds PhotoUploader` → `CloudinaryUploader`) y comprobar `:app:assembleDebug`.
 
 ### 2.5 Repositorios Firebase (sin tests JVM: se verifican con el checklist 2.9)
 
