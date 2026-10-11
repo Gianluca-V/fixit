@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-    namespace = "ar.edu.unaj.fixit"
+    namespace = "com.vespelabs.fixit"
     compileSdk {
         version = release(37) { minorApiLevel = 2 }
     }
 
     defaultConfig {
-        applicationId = "ar.edu.unaj.fixit"
+        applicationId = "com.vespelabs.fixit"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

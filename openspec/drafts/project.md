@@ -1,7 +1,7 @@
 # FixIt — Proyecto
 
 > Trabajo Práctico 2 — UNAJ, "Aplicaciones Móviles".
-> Nombre de trabajo de la aplicación: **FixIt** (`applicationId`: `ar.edu.unaj.fixit`).
+> Nombre de trabajo de la aplicación: **FixIt** (`applicationId`: `com.vespelabs.fixit`).
 
 ## 1. Visión
 
@@ -210,7 +210,7 @@ implementaciones capturan y mapean a `DomainError`. La validación vive en los c
 |---|---|
 | Idioma del código | Inglés (identificadores, paquetes, clases, enums, comentarios). |
 | Idioma de la UI | Español neutro, mediante `strings.xml`. Ningún texto visible hardcodeado. |
-| Paquete base | `ar.edu.unaj.fixit` (`.core.domain`, `.core.data`, `.core.ui`, `.feature.auth`, `.feature.client`, `.feature.professional`). |
+| Paquete base | `com.vespelabs.fixit` (`.core.domain`, `.core.data`, `.core.ui`, `.feature.auth`, `.feature.client`, `.feature.professional`). |
 | Casos de uso | `VerbNounUseCase` con `operator fun invoke(...)`. Una responsabilidad por clase. |
 | Repositorios | Interfaz `XxxRepository` en dominio; `FakeXxxRepository` y `FirebaseXxxRepository` en data. |
 | IDs | `String` (UUID en Fase 1, ID de documento en Fase 2). |

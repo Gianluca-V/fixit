@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "ar.edu.unaj.fixit.core.data"
+    namespace = "com.vespelabs.fixit.core.data"
     compileSdk {
         version = release(37) { minorApiLevel = 2 }
     }

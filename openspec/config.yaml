@@ -10,7 +10,7 @@ context: |
   Phases: 1 = Fake in-memory repos + full UI (TP2 delivery); 2 = Firebase Auth + Firestore (Spark plan) + Cloudinary unsigned upload preset for photos, via Hilt bindings only; 3 = hardware (GPS, camera, photo picker); 4 (optional) = push notifications via FCM, sent by a Cloudflare Worker (worker/ folder, outside Gradle; FCM service account only as a Worker secret).
   Hard constraint: the project MUST NOT require a credit card. No Cloud Storage for Firebase, no Cloud Functions, no Blaze plan (decided 2026-10-08).
   Testing (planned): JUnit4 + kotlinx-coroutines-test, hand-written fakes, NO mocking library. Strict TDD. `./gradlew test` is runnable (run Gradle with JAVA_HOME pointing to Android Studio JBR 21; see README).
-  Style: code identifiers/packages/comments in English (base package ar.edu.unaj.fixit); UI strings in neutral Spanish via strings.xml; Conventional Commits.
+  Style: code identifiers/packages/comments in English (base package com.vespelabs.fixit); UI strings in neutral Spanish via strings.xml; Conventional Commits.
   Drafts: openspec/drafts/ holds pre-SDD material (project.md, design.md, tasks.md, specs/*). It is READ-ONLY input; promote content via the SDD pipeline, never edit in place.
   State: Gradle multi-module skeleton scaffolded (U1); domain types in progress.
 

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "ar.edu.unaj.fixit.feature.auth"
+    namespace = "com.vespelabs.fixit.feature.auth"
     compileSdk {
         version = release(37) { minorApiLevel = 2 }
     }
