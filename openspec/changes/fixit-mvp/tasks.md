@@ -264,7 +264,7 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 2.5 Repositorios Firebase (sin tests JVM: se verifican con el checklist 2.9)
 
-- [ ] 2.5.1 Crear `firebase/Dtos.kt` (DTO + mappers; `getTimestamp(campo, ESTIMATE)`; `geohash` solo en el DTO; `photoUrls` como lista de URLs; `ratingSum = 0`/`reviewCount = 0` al crear usuario).
+- [x] 2.5.1 Crear `firebase/Dtos.kt` (DTO + mappers; `getTimestamp(campo, ESTIMATE)`; `geohash` solo en el DTO; `photoUrls` como lista de URLs; `ratingSum = 0`/`reviewCount = 0` al crear usuario).
 - [ ] 2.5.2 Crear `firebase/FirebaseAuthRepository.kt`: bandera de operación en curso, `signUp` (Auth → `users/{uid}`; rollback `user.delete()` en `NonCancellable`), `signIn`, `session` (`Loading`/`SignedOut`/`SignedIn`; vuelve a emitir cuando cambia el perfil, lo que usará `TopicSync` en Fase 4), cuenta huérfana y `signOut()`.
 - [ ] 2.5.3 Crear `firebase/FirebaseUserRepository.kt` (`get`, `observe`, `updateProfile` con campos editables solamente).
 - [ ] 2.5.4 Crear `FirebaseRepairRequestRepository` parte 1: `create` (por cada foto, en secuencia: `ImageCompressor.compress` **fuera** del timeout y `PhotoUploader.upload` dentro de su propio `firebaseCall(UPLOAD_TIMEOUT_MS)` de 30 s; luego la escritura de la solicitud con `photoUrls` dentro de otro `firebaseCall` de 15 s; la primera falla corta la creación, no se crea la solicitud y **no** se intenta borrar fotos; diseño §13.1 y §13.4), `get`, `observe`, `observeByClient`, `observeByProfessional`, `observeReview`.
