@@ -6,4 +6,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt) apply false
+    // Applied in :app only once app/google-services.json exists (task 2.1.1, manual).
+    alias(libs.plugins.google.services) apply false
 }

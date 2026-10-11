@@ -14,6 +14,17 @@ Kotlin + Jetpack Compose, Clean Architecture, multi-module Gradle (`:app`, `:cor
   sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk
   ```
 
+### Cloudinary keys (photo uploads, optional)
+
+Photo uploads use an unsigned Cloudinary upload preset. Add both keys to `local.properties` (never commit them):
+
+```properties
+CLOUDINARY_CLOUD_NAME=<your cloud name>
+CLOUDINARY_UPLOAD_PRESET=<your unsigned preset name>
+```
+
+`:core:data` reads them into `BuildConfig`. When they are missing they become empty strings: the project still compiles and tests pass, but uploading a photo fails with a generic error.
+
 ## Recommended local setup (no global configuration)
 
 Point `JAVA_HOME` to Android Studio's JBR **per command**, so no user or global Gradle configuration is touched.
