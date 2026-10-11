@@ -31,6 +31,11 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    testOptions {
+        // Firebase exception constructors touch android.text.TextUtils / android.util.SparseArray; the android.jar
+        // stubs would throw "not mocked" in JVM tests (FirebaseCallsTest). Default values keep them constructible.
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {

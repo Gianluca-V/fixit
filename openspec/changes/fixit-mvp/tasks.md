@@ -241,10 +241,10 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 2.2 Utilidades de error (`:core:data/firebase`)
 
-- [ ] 2.2.1 RED `firebase/FirebaseCallsTest` (`runTest` + `advanceTimeBy`): éxito → `Success`; excepción → `Error` mapeado (tabla §13.4: `FirebaseFirestoreException` `UNAVAILABLE`/`DEADLINE_EXCEEDED` → `Network`, `PERMISSION_DENIED` → `Unauthorized`, `NOT_FOUND` → `NotFound`, `FirebaseAuthInvalidCredentialsException`/`InvalidUserException` → `InvalidCredentials`, `FirebaseAuthUserCollisionException` → `EmailAlreadyInUse`, otras → `Unknown`); `DomainException` (también como causa) → su `error`; operación que no termina → `Error(Network)` a los 15 s de tiempo virtual (por defecto) y, con `timeoutMs = UPLOAD_TIMEOUT_MS`, a los 30 s; cancelación del llamador se propaga.
-- [ ] 2.2.2 GREEN `firebase/FirebaseCalls.kt`: `WRITE_TIMEOUT_MS` (15 s), `UPLOAD_TIMEOUT_MS` (30 s), `firebaseCall(timeoutMs = WRITE_TIMEOUT_MS, block)`, `DomainException`, `Throwable.toDomainError()`.
-- [ ] 2.2.3 RED `FirebaseCallsTest` (`asResult`): emite `Success` por elemento y `Error` mapeado si el flujo falla.
-- [ ] 2.2.4 GREEN `asResult()` en `FirebaseCalls.kt`.
+- [x] 2.2.1 RED `firebase/FirebaseCallsTest` (`runTest` + `advanceTimeBy`): éxito → `Success`; excepción → `Error` mapeado (tabla §13.4: `FirebaseFirestoreException` `UNAVAILABLE`/`DEADLINE_EXCEEDED` → `Network`, `PERMISSION_DENIED` → `Unauthorized`, `NOT_FOUND` → `NotFound`, `FirebaseAuthInvalidCredentialsException`/`InvalidUserException` → `InvalidCredentials`, `FirebaseAuthUserCollisionException` → `EmailAlreadyInUse`, otras → `Unknown`); `DomainException` (también como causa) → su `error`; operación que no termina → `Error(Network)` a los 15 s de tiempo virtual (por defecto) y, con `timeoutMs = UPLOAD_TIMEOUT_MS`, a los 30 s; cancelación del llamador se propaga. Nota: las excepciones de Firebase tocan `TextUtils`/`SparseArray` al construirse, por eso `:core:data` usa `unitTests.isReturnDefaultValues = true`.
+- [x] 2.2.2 GREEN `firebase/FirebaseCalls.kt`: `WRITE_TIMEOUT_MS` (15 s), `UPLOAD_TIMEOUT_MS` (30 s), `firebaseCall(timeoutMs = WRITE_TIMEOUT_MS, block)`, `DomainException`, `Throwable.toDomainError()`.
+- [x] 2.2.3 RED `FirebaseCallsTest` (`asResult`): emite `Success` por elemento y `Error` mapeado si el flujo falla.
+- [x] 2.2.4 GREEN `asResult()` en `FirebaseCalls.kt`.
 
 ### 2.3 Compresión de imágenes (`:core:data/cloudinary`)
 
