@@ -75,13 +75,13 @@ Gradle simple: `settings.gradle.kts` con los 7 `include`, un `libs.versions.toml
 
 ## 4. Estructura de paquetes
 
-Paquete base `ar.edu.unaj.fixit`. Todos los archivos son nuevos (proyecto greenfield). Por pantalla hay **dos archivos**: `XxxScreen.kt` (contiene `XxxRoute` y `XxxScreen` + `@Preview`) y `XxxViewModel.kt` (contiene `XxxViewModel` y `XxxUiState`).
+Paquete base `com.vespelabs.fixit`. Todos los archivos son nuevos (proyecto greenfield). Por pantalla hay **dos archivos**: `XxxScreen.kt` (contiene `XxxRoute` y `XxxScreen` + `@Preview`) y `XxxViewModel.kt` (contiene `XxxViewModel` y `XxxUiState`).
 
 ```
 settings.gradle.kts · build.gradle.kts · gradle/libs.versions.toml
 firestore.rules · firestore.indexes.json                            (Fase 2; ya no hay storage.rules)
 local.properties (NO versionado)  CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET (Fase 2), PUSH_WORKER_URL (Fase 4)
-app/            ar.edu.unaj.fixit
+app/            com.vespelabs.fixit
   FixItApplication.kt (@HiltAndroidApp; Fase 4: crea el canal y arranca TopicSync) · MainActivity.kt (@AndroidEntryPoint; Fase 4: lee el enlace profundo del Intent)
   navigation/   Destinations.kt (claves @Serializable : NavKey) · TopLevelDestination.kt (pestañas por rol + pseudo-pestaña AUTH)
                 NavigationState.kt (una pila por pestaña; también para AUTH) · AppNavDisplay.kt (NavDisplay + entryProvider)
@@ -89,14 +89,14 @@ app/            ar.edu.unaj.fixit
                 (Fase 4) DeepLink.kt (DeepLinkDestination, deepLinkDestination(type, role, requestId), NavigationState.open; puras)
   ui/           AppShell.kt (Scaffold + NavigationBar con las pestañas del rol; Fase 4: pide POST_NOTIFICATIONS)
   push/         (Fase 4) FixItMessagingService.kt (@AndroidEntryPoint), Notifications.kt (canal + construcción del aviso + PendingIntent)
-core/domain/    ar.edu.unaj.fixit.core.domain
+core/domain/    com.vespelabs.fixit.core.domain
   model/        User, RepairRequest, Review, enums, GeoPoint, Place, SessionState, forms, RequestDetail, Limits
   result/       AppResult, DomainError, ValidationError
   rules/        RequestStateMachine, Haversine, Matching, ContactRules, PhoneFormatter, Reputation, Validators
   repository/   AuthRepository, UserRepository, RepairRequestRepository, LocationProvider, AddressResolver, Clock
   usecase/      10 casos de uso (§7)
   src/testFixtures/  TestAuthRepository, TestUserRepository, TestRepairRequestRepository, TestLocation, MainDispatcherRule
-core/data/      ar.edu.unaj.fixit.core.data
+core/data/      com.vespelabs.fixit.core.data
   fake/         FakeDatabase, SeedData, FakeAuthRepository, FakeUserRepository, FakeRepairRequestRepository, FakeLocation
   firebase/     (Fase 2) Firebase*Repository, Dtos.kt (DTO + mappers), FirebaseCalls.kt (firebaseCall, asResult, DomainException, mapeo de excepciones)
   cloudinary/   (Fase 2) CloudinaryConfig, PhotoUploader + CloudinaryUploader (+ buildUploadRequest, parseUploadResponse, CloudinaryUploadException), ImageCompressor.kt (+ targetSize, sampleSizeFor)
@@ -106,7 +106,7 @@ core/data/      ar.edu.unaj.fixit.core.data
                 NoticeCanceller + AndroidNoticeCanceller, TopicSync (+ topicsFor, topicChanges),
                 PushDecision.kt (PushEventType, shouldNotify, mayMatchCategory; puras), PushMessageHandler
   di/           RepositoryModule, CoreModule (+ @IoDispatcher; Fase 4: @ApplicationScope), (Fase 2) FirebaseModule (Fase 4: FirebaseMessaging), NetworkModule (OkHttpClient, CloudinaryConfig; Fase 4: WorkerConfig)
-core/ui/        ar.edu.unaj.fixit.core.ui
+core/ui/        com.vespelabs.fixit.core.ui
   theme/        FixItTheme (Material 3)
   components/   LoadingContent, ErrorContent, StatusBadge, CategoryChips, PhotoThumbnails, PhotoPager,
                 PhotoPickerButtons, RatingBar, ContactCard, ReputationText (formatea con el idioma del dispositivo), ProfileFormFields (+ ProfileFormState)
@@ -567,7 +567,7 @@ Contraseña de todas las cuentas: `test1234` (solo datos locales).
 
 Las reseñas sembradas (`r5`, `r7`, `r8`) son coherentes con la reputación de cada profesional: para cada uno, `ratingSum` es la suma de sus reseñas y `reviewCount` es su cantidad. Las fechas (`createdAt` < `acceptedAt` < `completedAt`) se calculan relativas a `clock.now()`.
 
-Fotos de ejemplo: `android.resource://ar.edu.unaj.fixit/drawable/sample_repair_{1..3}` (recursos en `:core:ui`). `FakeLocation` devuelve Florencio Varela con "Av. San Martín 2000, Florencio Varela" y tiene un `var failWith: DomainError?` para simular fallas.
+Fotos de ejemplo: `android.resource://com.vespelabs.fixit/drawable/sample_repair_{1..3}` (recursos en `:core:ui`). `FakeLocation` devuelve Florencio Varela con "Av. San Martín 2000, Florencio Varela" y tiene un `var failWith: DomainError?` para simular fallas.
 
 ## 13. Firebase (Fase 2)
 

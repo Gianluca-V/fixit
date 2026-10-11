@@ -68,11 +68,11 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 - [x] 1.1.3 Crear `gradle/libs.versions.toml`: Kotlin 2.4.20, AGP 9.2.1, KSP, Hilt, Compose BOM 2026.09.00, Material 3, navigation3 1.2.0, lifecycle 2.11.0, Coil 3.6.3, coroutines (core/android/test), kotlinx-serialization, javax.inject, JUnit4. Confirmar la última versión estable al implementar (diseño §2).
 - [x] 1.1.4 Crear `settings.gradle.kts` (7 `include`: `:app`, `:core:domain`, `:core:data`, `:core:ui`, `:features:auth`, `:features:client`, `:features:professional`; repositorios) y `build.gradle.kts` raíz (plugins con `apply false`).
 - [x] 1.1.5 Crear `core/domain/build.gradle.kts`: `kotlin-jvm` + `java-test-fixtures`; `api(coroutines-core)`, `javax.inject`; tests: JUnit4 + `kotlinx-coroutines-test` (también como `testFixturesApi`). Sin Android, Hilt, Compose ni Firebase.
-- [x] 1.1.6 Crear `core/data/build.gradle.kts` (Android library, Hilt, KSP, `kotlinx-coroutines-android`, depende de `:core:domain`; `testImplementation(testFixtures(project(":core:domain")))`) con `namespace` `ar.edu.unaj.fixit.core.data`, compile/target 37, minSdk 26.
+- [x] 1.1.6 Crear `core/data/build.gradle.kts` (Android library, Hilt, KSP, `kotlinx-coroutines-android`, depende de `:core:domain`; `testImplementation(testFixtures(project(":core:domain")))`) con `namespace` `com.vespelabs.fixit.core.data`, compile/target 37, minSdk 26.
 - [x] 1.1.7 Crear `core/ui/build.gradle.kts` (Android library, Compose, Material 3, Coil 3; depende de `:core:domain`) y `AndroidManifest.xml` mínimo.
 - [x] 1.1.8 Crear `features/{auth,client,professional}/build.gradle.kts` (Android library, Compose, Hilt, KSP, `lifecycle-runtime-compose`, `hilt-lifecycle-viewmodel-compose` (sustituye a `hilt-navigation-compose`, ver 1.2.3) de la cátedra; dependen de `:core:domain` y `:core:ui`, nunca de `:core:data` ni entre sí).
 - [x] 1.1.9 Crear `app/build.gradle.kts` (application, Compose, Hilt, KSP, Kotlin Serialization, Navigation 3, `lifecycle-viewmodel-navigation3`; depende de todos los módulos) y `AndroidManifest.xml` mínimo con `FixItApplication`/`MainActivity` vacíos.
-- [x] 1.1.10 RED: crear `core/domain/src/test/kotlin/ar/edu/unaj/fixit/core/domain/SmokeTest.kt` con un test que falla; ejecutar `./gradlew :core:domain:test` y comprobar que corre y reporta el fallo.
+- [x] 1.1.10 RED: crear `core/domain/src/test/kotlin/com/vespelabs/fixit/core/domain/SmokeTest.kt` con un test que falla; ejecutar `./gradlew :core:domain:test` y comprobar que corre y reporta el fallo.
 - [x] 1.1.11 GREEN: corregir el smoke test, ejecutar `./gradlew test` y `./gradlew assembleDebug` (todos los módulos compilan) y comprobar que importar `android.*` en `:core:domain` no compila (regla de dependencia); luego borrar `SmokeTest.kt`.
 - [x] 1.1.12 Actualizar `openspec/config.yaml` (`testing.status: available`, `runner.runnable_now: true`, `layers.unit.available: true`) y registrar en `state.yaml` que `./gradlew test` ya es ejecutable.
 
@@ -85,7 +85,7 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 1.3 Dominio puro (`:core:domain`)
 
-- [x] 1.3.1 Crear tipos sin comportamiento: `model/*` (User, RepairRequest, Review, enums, GeoPoint, Place, SessionState, forms, FeedItem, Contact, RequestDetail, `Limits`), `result/AppResult`, `DomainError`, `ValidationError`/`FormField`, y las interfaces `repository/*` (+ `Clock`) en `core/domain/src/main/kotlin/ar/edu/unaj/fixit/core/domain/`.
+- [x] 1.3.1 Crear tipos sin comportamiento: `model/*` (User, RepairRequest, Review, enums, GeoPoint, Place, SessionState, forms, FeedItem, Contact, RequestDetail, `Limits`), `result/AppResult`, `DomainError`, `ValidationError`/`FormField`, y las interfaces `repository/*` (+ `Clock`) en `core/domain/src/main/kotlin/com/vespelabs/fixit/core/domain/`.
 - [x] 1.3.2 RED `rules/RequestStateMachineTest`: las 12 combinaciones. Cubre `[rr]` Transiciones válidas; Transiciones inválidas desde estados no terminales; Estados terminales rechazan toda acción; Estados terminales; `[feed]` Segundo en aceptar (ACCEPTED+ACCEPT → AlreadyTaken).
 - [x] 1.3.3 GREEN `rules/RequestStateMachine.kt`.
 - [x] 1.3.4 RED `rules/HaversineTest`: `[loc]` Mismo punto; Distancia conocida; Simetría; Cruce del antimeridiano; Un grado de latitud; puntos antípodas sin `NaN`.
@@ -232,7 +232,7 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 2.1 Configuración
 
-- [ ] 2.1.1 Crear el proyecto Firebase en el plan Spark (Auth email/contraseña y Firestore; **sin** Storage), registrar `applicationId` `ar.edu.unaj.fixit` y colocar `app/google-services.json` (decidir si se versiona). Confirmar que el panel de facturación no pide tarjeta.
+- [ ] 2.1.1 Crear el proyecto Firebase en el plan Spark (Auth email/contraseña y Firestore; **sin** Storage), registrar `applicationId` `com.vespelabs.fixit` y colocar `app/google-services.json` (decidir si se versiona). Confirmar que el panel de facturación no pide tarjeta.
 - [ ] 2.1.2 `[manual]` Crear la cuenta gratuita de Cloudinary (sin tarjeta) y el *upload preset* según la tabla de diseño §13.7 (*Unsigned*; *asset folder* `fixit/requests`; *unique filename* sí; *overwrite* no; *allowed formats* `jpg`; *incoming transformation* `c_limit,w_1600,h_1600/q_auto:good`; el tamaño máximo por archivo es opcional y solo si la consola lo ofrece, de lo contrario rigen el límite de la cuenta de 10 MB y la transformación de entrada). Anotar *cloud name* y nombre del preset, guardar una captura de la consola y resolver el ítem §19 "Opciones del preset" (qué opciones existen realmente; carpeta, formatos y transformación son obligatorios, el tamaño máximo no).
 - [ ] 2.1.3 Actualizar `libs.versions.toml` y `build.gradle.kts` raíz/`:app`: plugin `google-services`; Firebase BoM, `kotlinx-coroutines-play-services` y `geofire-android-common` en `:core:data`; `okhttp`, `okhttp-coroutines` y `kotlinx-serialization-json` en `:core:data` (verificar versión estable de OkHttp 5).
 - [ ] 2.1.4 Agregar permiso `INTERNET` al manifest de `:app`, `coil-network-okhttp` a `:core:ui` y `androidx.exifinterface` a `:core:data`.

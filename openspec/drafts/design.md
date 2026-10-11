@@ -343,7 +343,7 @@ operaciones compuestas. Contraseña de todas las cuentas de prueba: `test1234` (
 | `r7` | c1 | ELECTRICITY | (-34.6037, -58.3816) CABA | OPEN | — | nadie (fuera de radio de p1) |
 
 Las fotos mock usan recursos `drawable` (`sample_repair_1..3`) referenciados como
-`android.resource://ar.edu.unaj.fixit/drawable/...`. El seed se aplica al construir `InMemoryStore`
+`android.resource://com.vespelabs.fixit/drawable/...`. El seed se aplica al construir `InMemoryStore`
 (solo en `debug` y en tests con `SeedData.default()`); los tests de dominio usan sus propios fakes.
 
 ## 8. Modelo de datos en Firestore (Fase 2)

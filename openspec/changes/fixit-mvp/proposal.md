@@ -136,7 +136,7 @@ Aprobados por el usuario tal como se propusieron.
 
 | Supuesto | Valor | Impacto si cambia |
 |---|---|---|
-| Nombre y paquete | "FixIt", `ar.edu.unaj.fixit` | Renombrar paquetes; en Fase 2 el `applicationId` queda atado al proyecto Firebase. |
+| Nombre y paquete | "FixIt", `com.vespelabs.fixit` | Renombrar paquetes; en Fase 2 el `applicationId` queda atado al proyecto Firebase. |
 | Límites de validación | Nombre 2..60; contraseña ≥6 (mínimo de Firebase); teléfono 8..15 dígitos; radio entero 1..50 km; descripción 10..500; comentario ≤300 | Bajo en código (constantes en `Limits`); cambian escenarios y tests. |
 | Aceptar fuera de sus categorías | Prohibido → `Unauthorized` | Si se permite, se eliminan la validación y la regla de Firestore. |
 | Aceptar valida la distancia | No: el radio solo filtra el feed | Si se exige, se agrega un chequeo Haversine al aceptar (difícil de reforzar en reglas de Firestore). |
