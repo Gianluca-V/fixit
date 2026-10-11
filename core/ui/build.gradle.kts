@@ -30,5 +30,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp) // loads Cloudinary https URLs
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
