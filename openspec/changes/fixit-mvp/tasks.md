@@ -253,10 +253,10 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 2.4 Subida a Cloudinary (`:core:data/cloudinary`)
 
-- [ ] 2.4.1 RED `cloudinary/BuildUploadRequestTest`: `[media]` `POST` a `https://api.cloudinary.com/v1_1/{cloud}/image/upload`; cuerpo multipart con exactamente las partes `file` (`image/jpeg`, nombre `photo.jpg`) y `upload_preset`; ningún otro campo (sin API secret ni firma).
-- [ ] 2.4.2 GREEN `cloudinary/CloudinaryUpload.kt`: `CloudinaryConfig`, `CloudinaryUploadException(httpCode)` y `buildUploadRequest(config, bytes)` pura.
-- [ ] 2.4.3 RED `cloudinary/ParseUploadResponseTest`: 200 con `secure_url` → la URL; 200 sin `secure_url` → `CloudinaryUploadException(200)`; 400 con cuerpo de error → `CloudinaryUploadException(400)`; cuerpo que no es JSON → excepción (sin usar `org.json`).
-- [ ] 2.4.4 GREEN `parseUploadResponse(code, body)` pura con `Json.parseToJsonElement(...).jsonObject["secure_url"]`.
+- [x] 2.4.1 RED `cloudinary/BuildUploadRequestTest`: `[media]` `POST` a `https://api.cloudinary.com/v1_1/{cloud}/image/upload`; cuerpo multipart con exactamente las partes `file` (`image/jpeg`, nombre `photo.jpg`) y `upload_preset`; ningún otro campo (sin API secret ni firma).
+- [x] 2.4.2 GREEN `cloudinary/CloudinaryUpload.kt`: `CloudinaryConfig`, `CloudinaryUploadException(httpCode)` y `buildUploadRequest(config, bytes)` pura.
+- [x] 2.4.3 RED `cloudinary/ParseUploadResponseTest`: 200 con `secure_url` → la URL; 200 sin `secure_url` → `CloudinaryUploadException(200)`; 400 con cuerpo de error → `CloudinaryUploadException(400)`; cuerpo que no es JSON → excepción (sin usar `org.json`).
+- [x] 2.4.4 GREEN `parseUploadResponse(code, body)` pura con `Json.parseToJsonElement(...).jsonObject["secure_url"]`.
 - [ ] 2.4.5 RED `cloudinary/PhotoUploadErrorsTest` (`runTest`, `PhotoUploader` de prueba): `[media]` Mapeo de fallas de la subida: `firebaseCall { uploader.upload(bytes) }` con `IOException` → `Network`; subida que no termina → `Network` a los 30 s de tiempo virtual (`firebaseCall(UPLOAD_TIMEOUT_MS)`); `CloudinaryUploadException` (400, 401, 500) o `IllegalStateException` (configuración vacía) → `Unknown`; nunca lanza hacia afuera.
 - [ ] 2.4.6 GREEN: interfaz `PhotoUploader { suspend fun upload(bytes: ByteArray): String }` y filas nuevas de `toDomainError()` (`java.io.IOException` → `Network`; `CloudinaryUploadException` → `Unknown` con el código en el log; el resto ya cae en `Unknown`).
 - [ ] 2.4.7 Crear `cloudinary/CloudinaryUploader.kt` (`@Inject`, `check` de configuración no vacía, `client.newCall(buildUploadRequest(...)).executeAsync().use { parseUploadResponse(...) }`; sin dispatcher). Sin test JVM: la subida real se verifica en 2.9.4.
