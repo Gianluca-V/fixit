@@ -12,6 +12,7 @@ import com.vespelabs.fixit.core.data.cloudinary.PhotoUploader
 import com.vespelabs.fixit.core.domain.model.GeoPoint
 import com.vespelabs.fixit.core.domain.model.NewRequest
 import com.vespelabs.fixit.core.domain.model.RepairRequest
+import com.vespelabs.fixit.core.domain.model.RequestStatus
 import com.vespelabs.fixit.core.domain.model.Review
 import com.vespelabs.fixit.core.domain.repository.RepairRequestRepository
 import com.vespelabs.fixit.core.domain.result.AppResult
@@ -23,6 +24,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
@@ -103,8 +105,22 @@ class FirebaseRepairRequestRepository @Inject constructor(
             .map { snapshot -> snapshot.toRepairRequests().sortedByDescending { it.acceptedAt ?: 0L } }
             .asResult()
 
-    override fun observeOpenNear(center: GeoPoint, radiusKm: Int): Flow<AppResult<List<RepairRequest>>> =
-        TODO("2.5.5")
+    /**
+     * One `status == OPEN` listener per geohash range (index `status ASC, geohash ASC`, 13.2), each wrapped with
+     * [asResult], combined and de-duplicated. Only candidates: `Matching` in the domain drops the false positives.
+     */
+    override fun observeOpenNear(center: GeoPoint, radiusKm: Int): Flow<AppResult<List<RepairRequest>>> {
+        val listeners = feedRanges(center, radiusKm).map { range ->
+            requests.whereEqualTo(RequestFields.STATUS, RequestStatus.OPEN.name)
+                .orderBy(RequestFields.GEOHASH)
+                .startAt(range.start)
+                .endAt(range.end)
+                .snapshotFlow()
+                .map { it.toRepairRequests() }
+                .asResult()
+        }
+        return combine(listeners) { results -> mergeCandidates(results.toList()) }
+    }
 
     /** Success(null) while there is no review. */
     override fun observeReview(requestId: String): Flow<AppResult<Review?>> = reviewDoc(requestId).snapshotFlow()
