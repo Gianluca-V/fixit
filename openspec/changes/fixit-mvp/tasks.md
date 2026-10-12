@@ -278,8 +278,8 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 2.7 Reglas e índices
 
-- [ ] 2.7.1 Crear `firestore.rules` (diseño §13.3, incluidos `hasOnly` de cancelar/completar, `existsAfter` y `isPhotoUrl`/`validPhotos` con el marcador `<CLOUD_NAME>`, que hay que sustituir por el *cloud name* real antes de desplegar).
-- [ ] 2.7.2 Crear `firestore.indexes.json` (`status+geohash`, `clientId+createdAt desc`, `professionalId+acceptedAt desc`). No se crea `storage.rules`.
+- [x] 2.7.1 Crear `firestore.rules` (diseño §13.3, incluidos `hasOnly` de cancelar/completar, `existsAfter` y `isPhotoUrl`/`validPhotos` con el marcador `<CLOUD_NAME>`, que hay que sustituir por el *cloud name* real antes de desplegar). **Hecho (2026-10-11):** `firestore.rules` es el borrador §13.3 tal cual; `node scripts/prepare-firestore-rules.mjs` toma `CLOUDINARY_CLOUD_NAME` de `local.properties` y genera `firestore.deploy.rules` (ignorado por git), que es el archivo que despliega `firebase.json`; el *cloud name* real nunca se versiona.
+- [x] 2.7.2 Crear `firestore.indexes.json` (`status+geohash`, `clientId+createdAt desc`, `professionalId+acceptedAt desc`). No se crea `storage.rules`. **Hecho (2026-10-11):** los tres índices de `requests` coinciden con las consultas de `FirebaseRepairRequestRepository`; `firebase.json` mínimo (solo Firestore); `.firebaserc`, los logs del CLI y `firestore.deploy.rules` quedan en `.gitignore`.
 - [ ] 2.7.3 Desplegar reglas e índices (o Emulator Suite) y probar los rechazos esperados, incluido §19 "Regex de `validPhotos`": una `secure_url` real (con `v123...`; sin asumir que incluye la carpeta, que en carpetas dinámicas no figura en la URL) se acepta y una URL de otro host o con 0 o 4 fotos se rechaza. Comprobar también las marcas de tiempo fijadas por el servidor (§13.3): crear una solicitud con `createdAt` distinto de `request.time` (una fecha futura o pasada escrita a mano) se rechaza y con `serverTimestamp()` se acepta; aceptar, cancelar y completar con `acceptedAt`, `cancelledAt` o `completedAt` de otra fecha se rechazan.
 
 ### 2.8 Verificación abierta

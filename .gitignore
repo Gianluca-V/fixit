@@ -23,3 +23,9 @@ local.properties
 
 # Firebase config, shared out of band
 app/google-services.json
+
+# Firebase CLI: project alias, logs and the rules generated with the real Cloudinary cloud name
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+firestore.deploy.rules

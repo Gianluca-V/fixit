@@ -1,0 +1,65 @@
+rules_version = '2';
+// FixIt Firestore rules (design 13.3). They accept exactly the writes of the Firebase repositories in :core:data.
+// <CLOUD_NAME> is a placeholder: run `node scripts/prepare-firestore-rules.mjs`, which writes the git-ignored
+// firestore.deploy.rules with the real Cloudinary cloud name; firebase.json deploys that file, never this one.
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function me() { return get(/databases/$(db)/documents/users/$(request.auth.uid)).data; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    // Only URLs of OUR Cloudinary account. Does NOT depend on the folder: with dynamic folder mode the asset folder
+    // is not part of the URL (e.g. https://res.cloudinary.com/<CLOUD_NAME>/image/upload/v1712345678/abc123.jpg).
+    // `||` short-circuits, so p[1]/p[2] are never read out of range.
+    function isPhotoUrl(u) { return u is string && u.matches('https://res[.]cloudinary[.]com/<CLOUD_NAME>/image/upload/.+'); }
+    function validPhotos(p) { return p is list && p.size() >= 1 && p.size() <= 3 && isPhotoUrl(p[0])
+      && (p.size() < 2 || isPhotoUrl(p[1])) && (p.size() < 3 || isPhotoUrl(p[2])); }
+
+    match /users/{uid} {
+      allow read: if signedIn();   // KNOWN WEAKNESS: phone readable by any signed-in user
+      allow create: if request.auth.uid == uid   // the DTO always writes ratingSum = 0 and reviewCount = 0 (any role)
+        && request.resource.data.ratingSum == 0 && request.resource.data.reviewCount == 0;
+      allow update: if (request.auth.uid == uid   // profile edit: editable fields only
+          && changed().hasOnly(['name','phone','categories','baseLat','baseLng','baseAddress','radiusKm']))
+        || (signedIn()                            // KNOWN WEAKNESS: permissive aggregate (no Cloud Functions)
+          && changed().hasOnly(['ratingSum','reviewCount'])
+          && request.resource.data.reviewCount == resource.data.reviewCount + 1);
+    }
+
+    match /requests/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && me().role == 'CLIENT'
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status == 'OPEN'
+        && request.resource.data.createdAt == request.time   // server time: serverTimestamp() satisfies it, a client-chosen date does not
+        && validPhotos(request.resource.data.photoUrls)
+        && request.resource.data.description.size() >= 10 && request.resource.data.description.size() <= 500;
+      allow update: if
+        (signedIn() && me().role == 'PROFESSIONAL'                                   // accept
+          && resource.data.status == 'OPEN' && request.resource.data.status == 'ACCEPTED'
+          && request.resource.data.professionalId == request.auth.uid
+          && resource.data.category in me().categories
+          && request.resource.data.acceptedAt == request.time
+          && changed().hasOnly(['status','professionalId','acceptedAt']))
+        || (resource.data.clientId == request.auth.uid                                // cancel
+          && resource.data.status in ['OPEN','ACCEPTED']
+          && request.resource.data.status == 'CANCELLED' && request.resource.data.cancelledAt == request.time
+          && changed().hasOnly(['status','cancelledAt']))
+        || (resource.data.clientId == request.auth.uid                                // complete (+ review, same tx)
+          && resource.data.status == 'ACCEPTED' && request.resource.data.status == 'COMPLETED'
+          && existsAfter(/databases/$(db)/documents/reviews/$(id))
+          && request.resource.data.completedAt == request.time
+          && changed().hasOnly(['status','completedAt']));
+      allow delete: if false;
+    }
+
+    match /reviews/{requestId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && get(/databases/$(db)/documents/requests/$(requestId)).data.clientId == request.auth.uid
+        && getAfter(/databases/$(db)/documents/requests/$(requestId)).data.status == 'COMPLETED'
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5;
+      allow update, delete: if false;
+    }
+  }
+}
