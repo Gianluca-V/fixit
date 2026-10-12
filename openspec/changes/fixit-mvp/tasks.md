@@ -273,8 +273,8 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 2.6 Conmutación
 
-- [ ] 2.6.1 Crear `di/FirebaseModule.kt` (`FirebaseAuth` y `FirebaseFirestore`; **sin** `FirebaseStorage`) y cambiar los tres `@Binds` de repositorios en `RepositoryModule`.
-- [ ] 2.6.2 Verificar que el diff de Fase 2 no toca `core/domain` ni `features/*`; probar el rollback revirtiendo solo `RepositoryModule.kt`.
+- [x] 2.6.1 Crear `di/FirebaseModule.kt` (`FirebaseAuth` y `FirebaseFirestore`; **sin** `FirebaseStorage`) y cambiar los tres `@Binds` de repositorios en `RepositoryModule`. **Hecho (2026-10-11):** los tres `@Binds` de repositorios apuntan a las implementaciones Firebase y quedan `@Singleton` (todos comparten la misma instancia de `FirebaseAuthRepository`, cuya bandera de operación en curso lee `session`, §13.5); los Fakes se conservan y la ubicación sigue con `FakeLocation` (Fase 3).
+- [x] 2.6.2 Verificar que el diff de Fase 2 no toca `core/domain` ni `features/*`; probar el rollback revirtiendo solo `RepositoryModule.kt`. **Hecho (2026-10-11):** `git diff a0a81e1 HEAD -- core/domain features` y `git diff main HEAD -- core/domain features` vacíos; con solo `RepositoryModule.kt` revertido a los Fakes (`git show main:...`), `:app:assembleDebug` compila (revertido en el árbol de trabajo, sin commit, y restaurado).
 
 ### 2.7 Reglas e índices
 
