@@ -1,9 +1,9 @@
 package com.vespelabs.fixit.core.data.di
 
-import com.vespelabs.fixit.core.data.fake.FakeAuthRepository
 import com.vespelabs.fixit.core.data.fake.FakeLocation
-import com.vespelabs.fixit.core.data.fake.FakeRepairRequestRepository
-import com.vespelabs.fixit.core.data.fake.FakeUserRepository
+import com.vespelabs.fixit.core.data.firebase.FirebaseAuthRepository
+import com.vespelabs.fixit.core.data.firebase.FirebaseRepairRequestRepository
+import com.vespelabs.fixit.core.data.firebase.FirebaseUserRepository
 import com.vespelabs.fixit.core.domain.repository.AddressResolver
 import com.vespelabs.fixit.core.domain.repository.AuthRepository
 import com.vespelabs.fixit.core.domain.repository.LocationProvider
@@ -13,19 +13,30 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
-/** THE Fake <-> Firebase switch (D11): swapping implementations means editing these bindings only. */
+/**
+ * THE Fake <-> Firebase switch (D11): swapping implementations means editing these bindings only. Phase 2 binds the
+ * Firebase repositories; going back to the Fakes means binding FakeAuthRepository, FakeUserRepository and
+ * FakeRepairRequestRepository here again.
+ *
+ * The repository bindings are @Singleton so every consumer shares one instance: the auth repository keeps the
+ * in-progress operation flag that the session reads (design 13.5), which must be the same object everywhere.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
     @Binds
-    abstract fun auth(impl: FakeAuthRepository): AuthRepository
+    @Singleton
+    abstract fun auth(impl: FirebaseAuthRepository): AuthRepository
 
     @Binds
-    abstract fun users(impl: FakeUserRepository): UserRepository
+    @Singleton
+    abstract fun users(impl: FirebaseUserRepository): UserRepository
 
     @Binds
-    abstract fun requests(impl: FakeRepairRequestRepository): RepairRequestRepository
+    @Singleton
+    abstract fun requests(impl: FirebaseRepairRequestRepository): RepairRequestRepository
 
     @Binds // Phase 3: FusedLocationProvider
     abstract fun location(impl: FakeLocation): LocationProvider
