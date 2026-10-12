@@ -25,6 +25,10 @@ CLOUDINARY_UPLOAD_PRESET=<your unsigned preset name>
 
 `:core:data` reads them into `BuildConfig`. When they are missing they become empty strings: the project still compiles and tests pass, but uploading a photo fails with a generic error.
 
+### Firebase
+
+Since Phase 2 the app uses Firebase Auth and Firestore (bound in `core/data/.../di/RepositoryModule.kt`; revert only that file to go back to the Phase 1 fakes). `app/google-services.json` is required, git-ignored and shared out of band. Deploying the Firestore rules and indexes and seeding the test users is described in `docs/TEAM.md` (section "Firebase").
+
 ## Recommended local setup (no global configuration)
 
 Point `JAVA_HOME` to Android Studio's JBR **per command**, so no user or global Gradle configuration is touched.
