@@ -7,6 +7,7 @@ import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
+import com.google.firebase.firestore.Transaction
 import com.vespelabs.fixit.core.data.cloudinary.ImageCompressor
 import com.vespelabs.fixit.core.data.cloudinary.PhotoUploader
 import com.vespelabs.fixit.core.domain.model.GeoPoint
@@ -127,12 +128,74 @@ class FirebaseRepairRequestRepository @Inject constructor(
         .map { snapshot -> if (snapshot.exists()) snapshot.toReview() else null }
         .asResult()
 
-    override suspend fun accept(requestId: String, professionalId: String): AppResult<RepairRequest> = TODO("2.5.6")
+    /**
+     * Idempotent: the professional already assigned gets the request unchanged (no write); another one gets
+     * AlreadyTaken from the state machine. Writes only status, professionalId and acceptedAt (13.3).
+     */
+    override suspend fun accept(requestId: String, professionalId: String): AppResult<RepairRequest> =
+        transitionRequest(requestId) { request -> acceptTransition(request.status, request.professionalId, professionalId) }
 
-    override suspend fun cancel(requestId: String): AppResult<RepairRequest> = TODO("2.5.6")
+    /** Writes only status and cancelledAt (13.3); professionalId is kept, like the Fake. */
+    override suspend fun cancel(requestId: String): AppResult<RepairRequest> =
+        transitionRequest(requestId) { request -> cancelTransition(request.status) }
 
+    /**
+     * One transaction: request (status, completedAt), the review and the professional's aggregate change together or
+     * not at all (13.3 `existsAfter`). The aggregate is computed from the values read in the same transaction.
+     */
     override suspend fun completeWithReview(requestId: String, rating: Int, comment: String?): AppResult<Review> =
-        TODO("2.5.6")
+        firebaseCall {
+            val requestRef = requestDoc(requestId)
+            val reviewRef = reviewDoc(requestId)
+            firestore.runTransaction { tx ->
+                val request = tx.readRequest(requestRef)
+                val fields = when (val decision = completeTransition(request.status)) {
+                    is Transition.Write -> decision.fields
+                    is Transition.Reject -> throw DomainException(decision.error)
+                    Transition.Unchanged -> error("Completing never leaves a request unchanged")
+                }
+                val professionalId = request.professionalId ?: throw DomainException(DomainError.Unknown)
+                val professionalRef = firestore.collection(USERS).document(professionalId)
+                val professional = tx.get(professionalRef) // every read happens before the first write
+                if (!professional.exists()) throw DomainException(DomainError.NotFound)
+
+                tx.update(requestRef, fields)
+                tx.set(reviewRef, newReviewFields(professionalId, request.clientId, rating, comment))
+                tx.update(
+                    professionalRef,
+                    reputationFields(
+                        ratingSum = professional.getLong(UserFields.RATING_SUM) ?: 0,
+                        reviewCount = professional.getLong(UserFields.REVIEW_COUNT) ?: 0,
+                        rating = rating,
+                    ),
+                )
+                null
+            }.await()
+            reviewRef.get().await().toReview() // server timestamps resolved by the commit
+        }
+
+    /**
+     * Reads the request in a transaction, applies [decide] and writes its fields; a rejection is thrown as
+     * [DomainException] (13.4). A written request is read back so the server timestamps are real dates.
+     */
+    private suspend fun transitionRequest(
+        requestId: String,
+        decide: (RepairRequest) -> Transition,
+    ): AppResult<RepairRequest> = firebaseCall {
+        val doc = requestDoc(requestId)
+        val unchanged: RepairRequest? = firestore.runTransaction { tx ->
+            val request = tx.readRequest(doc)
+            when (val decision = decide(request)) {
+                Transition.Unchanged -> request
+                is Transition.Write -> {
+                    tx.update(doc, decision.fields)
+                    null
+                }
+                is Transition.Reject -> throw DomainException(decision.error)
+            }
+        }.await()
+        unchanged ?: doc.get().await().toRepairRequest()
+    }
 
     /** Compression is local CPU work: no timeout (13.4), but its failure still becomes an error, never a throw. */
     private suspend fun compress(uri: String): AppResult<ByteArray> = try {
@@ -144,6 +207,13 @@ class FirebaseRepairRequestRepository @Inject constructor(
     }
 
     private fun validationError(error: ValidationError) = AppResult.Error(DomainError.Validation(error))
+}
+
+/** NotFound (as [DomainException]) when the request does not exist. */
+private fun Transaction.readRequest(doc: DocumentReference): RepairRequest {
+    val snapshot = get(doc)
+    if (!snapshot.exists()) throw DomainException(DomainError.NotFound)
+    return snapshot.toRepairRequest()
 }
 
 private fun QuerySnapshot.toRepairRequests(): List<RepairRequest> = documents.map { it.toRepairRequest() }
