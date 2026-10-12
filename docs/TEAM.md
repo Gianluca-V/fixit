@@ -11,8 +11,33 @@ La app ya arranca con todos los módulos y todas las pantallas como **placeholde
    JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" ./gradlew assembleDebug
    ```
    En Android Studio: abrir la carpeta raíz y elegir ese JDK en *Settings > Build > Gradle > Gradle JDK*.
-3. Ejecutar `:app` en un emulador. Pantalla de inicio: formulario de inicio de sesión; entrar con una cuenta de ejemplo (Ana o Bruno como cliente, Carlos o Diana como profesional). Las cuentas y datos de ejemplo están en `design.md` §12 (contraseña `test1234`).
+3. Ejecutar `:app` en un emulador. Pantalla de inicio: formulario de inicio de sesión; entrar con una cuenta de prueba (Ana o Bruno como cliente, Carlos, Diana o Esteban como profesional; contraseña `test1234`). Desde la Fase 2 la app usa Firebase: hace falta `app/google-services.json` y las cuentas tienen que existir en el proyecto (ver [Firebase](#firebase-reglas-índices-y-usuarios-de-prueba)).
 4. Cada pantalla pendiente muestra "Pantalla pendiente de implementar (tarea X.Y.Z)": esa es la tarea de `tasks.md` que la reemplaza.
+
+## Firebase: reglas, índices y usuarios de prueba
+
+Desde la Fase 2, `RepositoryModule.kt` enlaza los repositorios de Firebase (Auth y Firestore; las fotos van a Cloudinary). Para volver a los Fakes de la Fase 1 alcanza con revertir **solo** ese archivo (enlazar `FakeAuthRepository`, `FakeUserRepository` y `FakeRepairRequestRepository`).
+
+- **Configuración**: `app/google-services.json` es obligatorio para compilar y **no** se versiona; se comparte por fuera del repositorio. Las claves de Cloudinary van en `local.properties` (ver `README.md`).
+- **Desplegar reglas e índices** (requiere el CLI de Firebase y haber iniciado sesión con `firebase login`):
+  ```bash
+  node scripts/prepare-firestore-rules.mjs
+  firebase deploy --only firestore --project <project-id>
+  ```
+  `firestore.rules` tiene el marcador `<CLOUD_NAME>`; el script lo reemplaza por `CLOUDINARY_CLOUD_NAME` de `local.properties` y genera `firestore.deploy.rules`, que es lo que despliega `firebase.json`. Ese archivo está en `.gitignore`: el *cloud name* real nunca se versiona. Sin el script, el despliegue falla porque no encuentra el archivo.
+- **Usuarios de prueba** (después de desplegar las reglas):
+  ```bash
+  node scripts/seed-test-users.mjs
+  ```
+  Crea las cuentas en Auth y su perfil en `users/{uid}` con los mismos campos que el registro de la app. Se puede ejecutar varias veces: las cuentas y los perfiles existentes se conservan. Al final imprime una tabla con email, rol y `uid`. No crea solicitudes ni reseñas, y la reputación empieza en 0.
+
+| Email | Rol | Contraseña |
+|---|---|---|
+| `ana@fixit.test` | Cliente | `test1234` |
+| `bruno@fixit.test` | Cliente | `test1234` |
+| `carlos@fixit.test` | Profesional (electricidad, gas; Florencio Varela, 10 km) | `test1234` |
+| `diana@fixit.test` | Profesional (plomería, gas; Quilmes, 8 km) | `test1234` |
+| `esteban@fixit.test` | Profesional (carpintería, pintura, otros; Berazategui, 15 km) | `test1234` |
 
 ## Dónde está todo
 
