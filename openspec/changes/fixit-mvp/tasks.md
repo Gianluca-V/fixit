@@ -270,6 +270,7 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 - [x] 2.5.4 Crear `FirebaseRepairRequestRepository` parte 1: `create` (por cada foto, en secuencia: `ImageCompressor.compress` **fuera** del timeout y `PhotoUploader.upload` dentro de su propio `firebaseCall(UPLOAD_TIMEOUT_MS)` de 30 s; luego la escritura de la solicitud con `photoUrls` dentro de otro `firebaseCall` de 15 s; la primera falla corta la creación, no se crea la solicitud y **no** se intenta borrar fotos; diseño §13.1 y §13.4), `get`, `observe`, `observeByClient`, `observeByProfessional`, `observeReview`.
 - [x] 2.5.5 `FirebaseRepairRequestRepository` parte 2: `observeOpenNear` con `GeoFireUtils` (un listener por límite, `asResult`, `combine`, sin duplicados).
 - [x] 2.5.6 `FirebaseRepairRequestRepository` parte 3: `accept` (idempotente), `cancel`, `completeWithReview` con `runTransaction` dentro de `firebaseCall`, lanzando `DomainException`.
+- [ ] 2.5.7 Agregar `DomainError.ProfileMissing`: `signIn` sin perfil lo devuelve; `asMessage()` le da su propio texto y `error_unknown` pasa a ser neutro ("Ocurrió un error inesperado. Intente nuevamente."); con el test del caso.
 
 ### 2.6 Conmutación
 

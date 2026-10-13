@@ -201,6 +201,7 @@ sealed interface DomainError {
     data object AlreadyTaken : DomainError        // another professional accepted first
     data object LocationUnavailable : DomainError
     data object Network : DomainError
+    data object ProfileMissing : DomainError   // signed in, but users/{uid} does not exist
     data object Unknown : DomainError
 }
 
@@ -713,7 +714,7 @@ Limitación aceptada: el timeout deja de esperar, pero no cancela una escritura 
 - **Bandera de operación en curso**: `FirebaseAuthRepository` tiene una bandera en memoria (`MutableStateFlow<Boolean>`) que está activa mientras dura un `signUp` o un `signIn`. Mientras está activa, `session` emite `SignedOut` aunque ya exista un usuario de Auth; así la pantalla de autenticación y su ViewModel no se quitan de la composición a mitad de la operación (la compuerta cambiaría de experiencia y el ViewModel se destruiría antes de recibir el resultado). La bandera se apaga siempre al terminar (`finally`) y, al apagarse, `session` se recalcula.
 - **Registro (`signUp`)**: bandera activa → (1) `createUserWithEmailAndPassword` → `uid`; (2) escribir `users/{uid}`. Si falla (2): `withContext(NonCancellable) { user.delete() }` (mejor esfuerzo; sigue ejecutándose aunque el ViewModel se cancele) y se devuelve el error mapeado; la sesión no queda iniciada. Si todo sale bien, al apagar la bandera `session` pasa a `SignedIn(user)`.
 - **Sesión (`session`)**: combina el `AuthStateListener`, un listener de `users/{uid}` y la bandera. Emite `SignedOut` si la bandera está activa o no hay usuario de Auth; `Loading` mientras haya usuario de Auth, no haya operación en curso y el documento de perfil todavía no exista (p. ej., al arrancar la app); `SignedIn(user)` cuando el documento existe. Si el listener del perfil falla (p. ej., `PERMISSION_DENIED`), emite `SignedOut` y llama `signOut()`.
-- **Inicio de sesión (`signIn`)**: bandera activa → `signInWithEmailAndPassword` + `get` del perfil. Si el perfil no existe: `signOut()` y `Unknown`, con un mensaje claro en `DomainError.asMessage()` ("Ocurrió un error inesperado. Si el problema continúa, cree la cuenta nuevamente.").
+- **Inicio de sesión (`signIn`)**: bandera activa → `signInWithEmailAndPassword` + `get` del perfil. Si el perfil no existe: `signOut()` y `ProfileMissing`, con su propio mensaje en `DomainError.asMessage()` ("Su cuenta no tiene un perfil asociado. Cree la cuenta nuevamente."). `Unknown` se muestra como "Ocurrió un error inesperado. Intente nuevamente." y nunca sugiere crear la cuenta.
 - **Cuenta huérfana** (la app se cierra entre (1) y (2) y el `delete` no llega a ejecutarse): para no dejar la sesión en `Loading` para siempre, si el servidor confirma que el documento no existe y la bandera está apagada, la sesión se cierra con `signOut()`. El email queda ocupado en Auth (limitación aceptada; se limpia desde la consola de Firebase).
 
 ### 13.6 Compresión de imágenes
