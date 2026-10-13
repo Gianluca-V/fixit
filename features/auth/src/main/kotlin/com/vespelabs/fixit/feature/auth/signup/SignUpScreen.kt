@@ -30,6 +30,7 @@ import com.vespelabs.fixit.core.domain.result.FormField
 import com.vespelabs.fixit.core.domain.result.ValidationError
 import com.vespelabs.fixit.core.ui.components.ProfileFormFields
 import com.vespelabs.fixit.core.ui.components.ProfileFormState
+import com.vespelabs.fixit.core.ui.permission.LocationPermissionGate
 import com.vespelabs.fixit.core.ui.text.asMessage
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.auth.R
@@ -45,18 +46,20 @@ fun SignUpRoute(
     viewModel: SignUpViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    SignUpScreen(
-        uiState = uiState,
-        onBack = onBack,
-        onEmailChange = viewModel::onEmailChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onRoleSelect = viewModel::onRoleSelect,
-        onProfileChange = viewModel::onProfileChange,
-        onUseLocation = viewModel::onUseLocation,
-        onSubmit = viewModel::onSubmit,
-        onMessageShown = viewModel::onMessageShown,
-        modifier = modifier,
-    )
+    LocationPermissionGate(onGranted = viewModel::onUseLocation) { requestLocation ->
+        SignUpScreen(
+            uiState = uiState,
+            onBack = onBack,
+            onEmailChange = viewModel::onEmailChange,
+            onPasswordChange = viewModel::onPasswordChange,
+            onRoleSelect = viewModel::onRoleSelect,
+            onProfileChange = viewModel::onProfileChange,
+            onUseLocation = requestLocation,
+            onSubmit = viewModel::onSubmit,
+            onMessageShown = viewModel::onMessageShown,
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable
