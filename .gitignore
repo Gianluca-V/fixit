@@ -29,3 +29,6 @@ app/google-services.json
 firebase-debug.log
 firestore-debug.log
 firestore.deploy.rules
+
+# CodeGraph local index (per checkout, never shared)
+.codegraph/
