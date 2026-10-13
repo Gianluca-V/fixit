@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="pro_feed_title">Feed</string>
+    <string name="pro_feed_distance">A %1$s km</string>
+    <string name="pro_feed_published_on">Publicada el %1$s</string>
+    <string name="pro_feed_empty_title">No hay solicitudes por ahora</string>
+    <string name="pro_feed_empty_body">El feed muestra solo las solicitudes abiertas de sus categorías y dentro de su radio de trabajo. Puede cambiarlos desde su perfil.</string>
     <string name="pro_request_detail_title">Detalle de la solicitud</string>
     <string name="pro_my_jobs_title">Mis trabajos</string>
     <string name="pro_profile_title">Perfil</string>

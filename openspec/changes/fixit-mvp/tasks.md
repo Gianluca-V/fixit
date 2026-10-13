@@ -184,8 +184,8 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 ### 1.9 `:features:professional`
 
-- [ ] 1.9.1 RED `feed/FeedViewModelTest`: `[feed]` Nueva solicitud aparece; Error al cargar el feed; Se agrega una categoría; Se reduce el radio.
-- [ ] 1.9.2 GREEN `feed/FeedViewModel.kt` + `FeedScreen.kt`.
+- [x] 1.9.1 RED `feed/FeedViewModelTest`: `[feed]` Nueva solicitud aparece; Error al cargar el feed; Se agrega una categoría; Se reduce el radio.
+- [x] 1.9.2 GREEN `feed/FeedViewModel.kt` + `FeedScreen.kt`.
 - [ ] 1.9.3 RED `detail/ProRequestDetailViewModelTest` (`first { ... }`; doble con `acceptError`): `[feed]` Detalle desde el feed; Solicitud tomada por otro profesional; Solicitud cancelada que no era propia; Solicitud propia aceptada; Otro profesional acepta mientras se mira el detalle; Perder la carrera; Solicitud cancelada mientras se miraba; Ganar la aceptación; `[prof]` Profesional ve una solicitud abierta; `[contact]` El profesional obtiene el contacto del cliente; `[jc]` El profesional ve su calificación; Sin acción de calificar para el profesional.
 - [ ] 1.9.4 GREEN `detail/ProRequestDetailViewModel.kt` + `ProRequestDetailScreen.kt` ("Aceptar trabajo" solo con `OPEN`; aviso "Esta solicitud ya no está disponible"; diálogo de carrera perdida).
 - [ ] 1.9.5 RED `myjobs/MyJobsViewModelTest`: `[feed]` Trabajo aceptado aparece; Trabajo completado; Trabajo cancelado por el cliente; Orden de la lista; Varios aceptados (separa activos y finalizados).
