@@ -60,7 +60,7 @@ fun CreateRequestRoute(
         onBack = onBack,
         onCategorySelect = viewModel::onCategorySelect,
         onDescriptionChange = viewModel::onDescriptionChange,
-        onAddSamplePhoto = viewModel::onAddSamplePhoto,
+        onPhotosAdded = viewModel::onPhotosAdded,
         onRemovePhoto = viewModel::onRemovePhoto,
         onUseLocation = viewModel::onUseLocation,
         onAddressChange = viewModel::onAddressChange,
@@ -76,7 +76,7 @@ fun CreateRequestScreen(
     onBack: () -> Unit,
     onCategorySelect: (ServiceCategory) -> Unit,
     onDescriptionChange: (String) -> Unit,
-    onAddSamplePhoto: () -> Unit,
+    onPhotosAdded: (List<String>) -> Unit,
     onRemovePhoto: (index: Int) -> Unit,
     onUseLocation: () -> Unit,
     onAddressChange: (String) -> Unit,
@@ -122,7 +122,8 @@ fun CreateRequestScreen(
             PhotoPickerButtons(
                 photoCount = uiState.photoUris.size,
                 maxPhotos = Limits.PHOTOS_MAX,
-                onAddSamplePhoto = onAddSamplePhoto,
+                onPhotosPicked = onPhotosAdded,
+                enabled = enabled,
             )
             FieldErrorText(errorFor(FormField.PHOTOS))
 
@@ -208,7 +209,7 @@ private fun CreateRequestScreenPreview() {
             onBack = {},
             onCategorySelect = {},
             onDescriptionChange = {},
-            onAddSamplePhoto = {},
+            onPhotosAdded = {},
             onRemovePhoto = {},
             onUseLocation = {},
             onAddressChange = {},
@@ -231,7 +232,7 @@ private fun CreateRequestScreenErrorPreview() {
             onBack = {},
             onCategorySelect = {},
             onDescriptionChange = {},
-            onAddSamplePhoto = {},
+            onPhotosAdded = {},
             onRemovePhoto = {},
             onUseLocation = {},
             onAddressChange = {},

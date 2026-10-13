@@ -17,7 +17,6 @@ import com.vespelabs.fixit.core.domain.testing.TestRepairRequestRepository
 import com.vespelabs.fixit.core.domain.testing.TestUserRepository
 import com.vespelabs.fixit.core.domain.usecase.CreateRequestUseCase
 import com.vespelabs.fixit.core.domain.usecase.GetCurrentPlaceUseCase
-import com.vespelabs.fixit.core.ui.components.SamplePhotos
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -47,13 +46,16 @@ class CreateRequestViewModelTest {
 
     private val state get() = viewModel.uiState.value
 
-    private fun addSamplePhotos(count: Int) = repeat(count) { viewModel.onAddSamplePhoto() }
+    /** Content URIs as the Photo Picker or the camera FileProvider return them. */
+    private val pickedPhotos = (1..4).map { "content://media/picker/0/com.android.providers.media.photopicker/media/$it" }
+
+    private fun addPhotos(count: Int) = viewModel.onPhotosAdded(pickedPhotos.take(count))
 
     /** Category, description and two photos; the location is left to each test. */
     private fun fillFormWithoutLocation() {
         viewModel.onCategorySelect(ServiceCategory.PLUMBING)
         viewModel.onDescriptionChange("The kitchen tap is leaking since yesterday")
-        addSamplePhotos(2)
+        addPhotos(2)
     }
 
     // [rr] Creation form
@@ -103,7 +105,7 @@ class CreateRequestViewModelTest {
         assertEquals(created.id, state.createdRequestId)
         assertEquals(RequestStatus.OPEN, created.status)
         assertEquals("c1", created.clientId)
-        assertEquals(SamplePhotos.take(2), created.photoUrls)
+        assertEquals(pickedPhotos.take(2), created.photoUrls)
 
         viewModel.onNavigated()
 
@@ -148,30 +150,49 @@ class CreateRequestViewModelTest {
     // [media] Photos
 
     @Test
-    fun `given three photos when the photo section is shown then adding photos is disabled`() {
-        addSamplePhotos(3)
+    fun `given three photos when more photos are picked then the list stays at three and adding is disabled`() {
+        addPhotos(3)
 
         assertFalse(state.canAddPhoto)
-        viewModel.onAddSamplePhoto()
-        assertEquals(3, state.photoUris.size)
+        viewModel.onPhotosAdded(listOf(pickedPhotos[3]))
+        assertEquals(pickedPhotos.take(3), state.photoUris)
     }
 
     @Test
     fun `given three photos when the user removes one then two remain and adding is enabled again`() {
-        addSamplePhotos(3)
+        addPhotos(3)
 
         viewModel.onRemovePhoto(1)
 
-        assertEquals(listOf(SamplePhotos[0], SamplePhotos[2]), state.photoUris)
+        assertEquals(listOf(pickedPhotos[0], pickedPhotos[2]), state.photoUris)
         assertTrue(state.canAddPhoto)
     }
 
     @Test
-    fun `given no photos when the user taps add sample photo then one sample photo is added`() {
-        viewModel.onAddSamplePhoto()
+    fun `given one photo when two photos are picked then they are appended in order`() {
+        addPhotos(1)
 
-        assertEquals(1, state.photoUris.size)
-        assertTrue(state.photoUris.single() in SamplePhotos)
+        viewModel.onPhotosAdded(pickedPhotos.subList(1, 3))
+
+        assertEquals(pickedPhotos.take(3), state.photoUris)
+    }
+
+    @Test
+    fun `given two photos when more photos than missing are picked then only the missing ones are added`() {
+        addPhotos(2)
+
+        viewModel.onPhotosAdded(pickedPhotos.subList(2, 4))
+
+        assertEquals(pickedPhotos.take(3), state.photoUris)
+    }
+
+    @Test
+    fun `given one photo when the picker is cancelled then the list does not change`() {
+        addPhotos(1)
+
+        viewModel.onPhotosAdded(emptyList())
+
+        assertEquals(pickedPhotos.take(1), state.photoUris)
     }
 
     // [loc] Location
