@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,10 +38,9 @@ import com.vespelabs.fixit.core.ui.components.ScreenScaffold
 import com.vespelabs.fixit.core.ui.text.label
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
+import com.vespelabs.fixit.feature.professional.common.distanceText
 import java.text.DateFormat
-import java.text.NumberFormat
 import java.util.Date
-import java.util.Locale
 
 /** Root of the "Feed" tab. The feature never navigates: `:app` passes the callbacks. */
 @Composable
@@ -89,15 +87,7 @@ fun FeedScreen(
 
 @Composable
 private fun FeedList(items: List<FeedItem>, onRequestClick: (String) -> Unit) {
-    val locale: Locale = LocalConfiguration.current.locales[0]
-    val dateFormat = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
-    // The domain already rounds to 0.1 km; the device language decides the separator ("2,5 km").
-    val kmFormat = remember(locale) {
-        NumberFormat.getNumberInstance(locale).apply {
-            minimumFractionDigits = 1
-            maximumFractionDigits = 1
-        }
-    }
+    val dateFormat = remember { DateFormat.getDateInstance(DateFormat.MEDIUM) }
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -113,7 +103,7 @@ private fun FeedList(items: List<FeedItem>, onRequestClick: (String) -> Unit) {
                     ) {
                         Text(request.category.label(), style = MaterialTheme.typography.titleMedium)
                         Text(
-                            text = stringResource(R.string.pro_feed_distance, kmFormat.format(item.distanceKm)),
+                            text = distanceText(item.distanceKm),
                             style = MaterialTheme.typography.labelLarge,
                         )
                     }
@@ -124,7 +114,7 @@ private fun FeedList(items: List<FeedItem>, onRequestClick: (String) -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = stringResource(R.string.pro_feed_published_on, dateFormat.format(Date(request.createdAt))),
+                        text = stringResource(R.string.pro_published_on, dateFormat.format(Date(request.createdAt))),
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

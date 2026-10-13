@@ -186,14 +186,14 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 - [x] 1.9.1 RED `feed/FeedViewModelTest`: `[feed]` Nueva solicitud aparece; Error al cargar el feed; Se agrega una categoría; Se reduce el radio.
 - [x] 1.9.2 GREEN `feed/FeedViewModel.kt` + `FeedScreen.kt`.
-- [ ] 1.9.3 RED `detail/ProRequestDetailViewModelTest` (`first { ... }`; doble con `acceptError`): `[feed]` Detalle desde el feed; Solicitud tomada por otro profesional; Solicitud cancelada que no era propia; Solicitud propia aceptada; Otro profesional acepta mientras se mira el detalle; Perder la carrera; Solicitud cancelada mientras se miraba; Ganar la aceptación; `[prof]` Profesional ve una solicitud abierta; `[contact]` El profesional obtiene el contacto del cliente; `[jc]` El profesional ve su calificación; Sin acción de calificar para el profesional.
-- [ ] 1.9.4 GREEN `detail/ProRequestDetailViewModel.kt` + `ProRequestDetailScreen.kt` ("Aceptar trabajo" solo con `OPEN`; aviso "Esta solicitud ya no está disponible"; diálogo de carrera perdida).
-- [ ] 1.9.5 RED `myjobs/MyJobsViewModelTest`: `[feed]` Trabajo aceptado aparece; Trabajo completado; Trabajo cancelado por el cliente; Orden de la lista; Varios aceptados (separa activos y finalizados).
-- [ ] 1.9.6 GREEN `myjobs/MyJobsViewModel.kt` + `MyJobsScreen.kt` (la lista muestra solo el estado).
-- [ ] 1.9.7 RED `profile/ProProfileViewModelTest`: `[prof]` Datos del perfil de profesional; `[auth]` Cerrar sesión; Loading → Success/Error.
-- [ ] 1.9.8 GREEN `profile/ProProfileViewModel.kt` + `ProProfileScreen.kt`.
-- [ ] 1.9.9 RED `profile/ProEditProfileViewModelTest`: `[prof]` Valores precargados; Edición exitosa; Edición exitosa de la zona de trabajo; Sin categorías; Radio fuera de rango; Actualizar el punto base; Fallo al guardar.
-- [ ] 1.9.10 GREEN `profile/ProEditProfileViewModel.kt` + `ProEditProfileScreen.kt`.
+- [x] 1.9.3 RED `detail/ProRequestDetailViewModelTest` (`first { ... }`; doble con `acceptError`): `[feed]` Detalle desde el feed; Solicitud tomada por otro profesional; Solicitud cancelada que no era propia; Solicitud propia aceptada; Otro profesional acepta mientras se mira el detalle; Perder la carrera; Solicitud cancelada mientras se miraba; Ganar la aceptación; `[prof]` Profesional ve una solicitud abierta; `[contact]` El profesional obtiene el contacto del cliente; `[jc]` El profesional ve su calificación; Sin acción de calificar para el profesional.
+- [x] 1.9.4 GREEN `detail/ProRequestDetailViewModel.kt` + `ProRequestDetailScreen.kt` ("Aceptar trabajo" solo con `OPEN`; aviso "Esta solicitud ya no está disponible"; diálogo de carrera perdida).
+- [x] 1.9.5 RED `myjobs/MyJobsViewModelTest`: `[feed]` Trabajo aceptado aparece; Trabajo completado; Trabajo cancelado por el cliente; Orden de la lista; Varios aceptados (separa activos y finalizados).
+- [x] 1.9.6 GREEN `myjobs/MyJobsViewModel.kt` + `MyJobsScreen.kt` (la lista muestra solo el estado).
+- [x] 1.9.7 RED `profile/ProProfileViewModelTest`: `[prof]` Datos del perfil de profesional; `[auth]` Cerrar sesión; Loading → Success/Error.
+- [x] 1.9.8 GREEN `profile/ProProfileViewModel.kt` + `ProProfileScreen.kt`.
+- [x] 1.9.9 RED `profile/ProEditProfileViewModelTest`: `[prof]` Valores precargados; Edición exitosa; Edición exitosa de la zona de trabajo; Sin categorías; Radio fuera de rango; Actualizar el punto base; Fallo al guardar.
+- [x] 1.9.10 GREEN `profile/ProEditProfileViewModel.kt` + `ProEditProfileScreen.kt`.
 
 ### 1.10 `:app` navegación y compuerta
 

@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="pro_feed_title">Feed</string>
-    <string name="pro_feed_distance">A %1$s km</string>
-    <string name="pro_feed_published_on">Publicada el %1$s</string>
+    <string name="pro_distance">A %1$s km</string>
+    <string name="pro_published_on">Publicada el %1$s</string>
     <string name="pro_feed_empty_title">No hay solicitudes por ahora</string>
     <string name="pro_feed_empty_body">El feed muestra solo las solicitudes abiertas de sus categorías y dentro de su radio de trabajo. Puede cambiarlos desde su perfil.</string>
     <string name="pro_request_detail_title">Detalle de la solicitud</string>
+    <string name="pro_detail_accept">Aceptar trabajo</string>
+    <string name="pro_detail_accept_title">¿Aceptar este trabajo?</string>
+    <string name="pro_detail_accept_text">El cliente verá sus datos de contacto y la solicitud dejará de estar disponible para otros profesionales.</string>
+    <string name="pro_detail_accept_confirm">Aceptar</string>
+    <string name="pro_detail_accept_dismiss">Volver</string>
+    <string name="pro_detail_unavailable">Esta solicitud ya no está disponible</string>
+    <string name="pro_detail_cancelled_by_client">Cancelada por el cliente</string>
+    <string name="pro_detail_review">Calificación recibida</string>
+    <string name="pro_race_lost_taken">Otro profesional ya tomó este trabajo</string>
+    <string name="pro_race_lost_unavailable">La solicitud ya no está disponible</string>
+    <string name="pro_race_lost_confirm">Volver al feed</string>
     <string name="pro_my_jobs_title">Mis trabajos</string>
+    <string name="pro_my_jobs_active">En curso</string>
+    <string name="pro_my_jobs_finished">Finalizados</string>
+    <string name="pro_my_jobs_accepted_on">Aceptado el %1$s</string>
+    <string name="pro_my_jobs_empty_title">Todavía no tiene trabajos</string>
+    <string name="pro_my_jobs_empty_body">Los trabajos que acepte desde el feed aparecerán aquí.</string>
     <string name="pro_profile_title">Perfil</string>
+    <string name="pro_profile_email">Email</string>
+    <string name="pro_profile_radius">Radio de trabajo</string>
+    <string name="pro_profile_radius_value">%1$d km</string>
+    <string name="pro_profile_reputation">Reputación</string>
+    <string name="pro_profile_edit">Editar perfil</string>
     <string name="pro_edit_profile_title">Editar perfil</string>
-
-    <!-- TEMPORARY placeholder actions: they exercise the navigation callbacks until the real screens exist -->
-    <string name="pro_placeholder_open_request">Abrir solicitud de ejemplo</string>
-    <string name="pro_placeholder_accept">Simular aceptación</string>
-    <string name="pro_placeholder_edit_profile">Editar perfil</string>
-    <string name="pro_placeholder_saved">Simular cambios guardados</string>
 </resources>
