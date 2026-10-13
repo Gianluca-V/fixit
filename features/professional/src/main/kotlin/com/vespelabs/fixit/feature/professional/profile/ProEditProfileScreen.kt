@@ -29,6 +29,7 @@ import com.vespelabs.fixit.core.ui.components.ErrorContent
 import com.vespelabs.fixit.core.ui.components.LoadingContent
 import com.vespelabs.fixit.core.ui.components.ProfileFormFields
 import com.vespelabs.fixit.core.ui.components.ProfileFormState
+import com.vespelabs.fixit.core.ui.permission.LocationPermissionGate
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
 import com.vespelabs.fixit.feature.professional.common.MessageScaffold
@@ -52,16 +53,18 @@ fun ProEditProfileRoute(
             viewModel.onNavigated()
         }
     }
-    ProEditProfileScreen(
-        uiState = uiState,
-        onBack = onBack,
-        onFormChange = viewModel::onFormChange,
-        onUseLocation = viewModel::onUseLocation,
-        onSave = viewModel::onSave,
-        onRetry = viewModel::onRetry,
-        onMessageShown = viewModel::onMessageShown,
-        modifier = modifier,
-    )
+    LocationPermissionGate(onGranted = viewModel::onUseLocation) { requestLocation ->
+        ProEditProfileScreen(
+            uiState = uiState,
+            onBack = onBack,
+            onFormChange = viewModel::onFormChange,
+            onUseLocation = requestLocation,
+            onSave = viewModel::onSave,
+            onRetry = viewModel::onRetry,
+            onMessageShown = viewModel::onMessageShown,
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable

@@ -300,12 +300,12 @@ Paralelismo: las tareas dentro de una unidad son secuenciales (RED → GREEN). E
 
 > Sin cambios respecto de la versión anterior (la subida a Cloudinary de Fase 2 no afecta a `PhotoPickerButtons`: el dominio sigue recibiendo `String`). Estos escenarios son `[manual]` por depender de hardware (diseño §15); no hay tests JVM nuevos.
 
-- [ ] 3.1 Agregar al manifest de `:app` los permisos de ubicación y cámara y el `FileProvider` (`res/xml/file_paths.xml`); `play-services-location` en `:core:data`.
-- [ ] 3.2 Crear `device/FusedLocationProvider.kt` (`getCurrentLocation`, prioridad balanceada, timeout 10 s → `LocationUnavailable`).
-- [ ] 3.3 Crear `device/GeocoderAddressResolver.kt` (recibe `@IoDispatcher` por constructor; falla de dirección → `""` en el caso de uso).
-- [ ] 3.4 Cambiar los dos `@Binds` de ubicación en `RepositoryModule` (`LocationProvider`, `AddressResolver`).
-- [ ] 3.5 Crear en `:core:ui` el helper de permisos (`rememberLauncherForActivityResult(RequestMultiplePermissions())`, solo al tocar "Usar mi ubicación"; manejo de denegado y denegado permanente con acceso a Ajustes).
-- [ ] 3.6 Cambiar `PhotoPickerButtons` (`:core:ui`): `PickVisualMedia` si falta 1 foto, `PickMultipleVisualMedia(faltantes)` si faltan 2 o más, `TakePicture` con `FileProvider`; aplicar `take(faltantes)` y entregar `uri.toString()`; ocultar la cámara si no hay dispositivo.
+- [x] 3.1 Agregar al manifest de `:app` los permisos de ubicación y cámara y el `FileProvider` (`res/xml/file_paths.xml`); `play-services-location` en `:core:data`.
+- [x] 3.2 Crear `device/FusedLocationProvider.kt` (`getCurrentLocation`, prioridad balanceada, timeout 10 s → `LocationUnavailable`).
+- [x] 3.3 Crear `device/GeocoderAddressResolver.kt` (recibe `@IoDispatcher` por constructor; falla de dirección → `""` en el caso de uso).
+- [x] 3.4 Cambiar los dos `@Binds` de ubicación en `RepositoryModule` (`LocationProvider`, `AddressResolver`).
+- [x] 3.5 Crear en `:core:ui` el helper de permisos (`rememberLauncherForActivityResult(RequestMultiplePermissions())`, solo al tocar "Usar mi ubicación"; manejo de denegado y denegado permanente con acceso a Ajustes).
+- [x] 3.6 Cambiar `PhotoPickerButtons` (`:core:ui`): `PickVisualMedia` si falta 1 foto, `PickMultipleVisualMedia(faltantes)` si faltan 2 o más, `TakePicture` con `FileProvider`; aplicar `take(faltantes)` y entregar `uri.toString()`; ocultar la cámara si no hay dispositivo.
 - [ ] 3.7 Checklist manual de ubicación (7): `[loc]` Permiso concedido; Permiso denegado; Permiso denegado de forma permanente; Solo se pide al usar la acción; GPS desactivado; Tiempo de espera agotado; Punto base real del profesional.
 - [ ] 3.8 Checklist manual de fotos (6): `[media]` Selección múltiple; 2 fotos ya cargadas; Cancelar la selección; Foto tomada; Captura cancelada; Dispositivo sin cámara.
 - [ ] 3.9 Cierre: `./gradlew test` y `./gradlew build` en verde; confirmar que el cambio solo toca `RepositoryModule`, `:core:ui`, `:core:data/device` y `:app`; marcar Fase 3 en `state.yaml`.

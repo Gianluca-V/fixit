@@ -186,7 +186,8 @@ private fun DetailContent(
         }
     }
 
-    if (confirmingAccept) {
+    // A live update that makes the request unavailable also closes the dialog: confirming would do nothing.
+    if (confirmingAccept && state.canAccept) {
         AcceptDialog(
             onConfirm = {
                 confirmingAccept = false
