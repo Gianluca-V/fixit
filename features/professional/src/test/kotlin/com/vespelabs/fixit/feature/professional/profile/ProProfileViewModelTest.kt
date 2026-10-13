@@ -86,6 +86,17 @@ class ProProfileViewModelTest {
         }
 
     @Test
+    fun `given observing the user failed with network when retry is tapped then the profile is shown`() = runTest {
+        users.observeError = DomainError.Network // fails only the first observe
+        val viewModel = viewModel()
+        viewModel.awaitState { it is ProProfileUiState.Error }
+
+        viewModel.onRetry()
+
+        assertEquals(ProProfileUiState.Success(electrician), viewModel.awaitState { it is ProProfileUiState.Success })
+    }
+
+    @Test
     fun `given there is no session when the profile tab opens then it shows unauthorized`() = runTest {
         auth.setSession(SessionState.SignedOut)
 

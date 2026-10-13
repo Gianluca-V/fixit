@@ -33,6 +33,7 @@ import com.vespelabs.fixit.core.ui.permission.LocationPermissionGate
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
 import com.vespelabs.fixit.feature.professional.common.MessageScaffold
+import com.vespelabs.fixit.feature.professional.common.isRetryable
 import com.vespelabs.fixit.core.ui.R as UiR
 
 /**
@@ -88,7 +89,11 @@ fun ProEditProfileScreen(
         val contentModifier = Modifier.padding(padding)
         val loadError = uiState.loadError
         when {
-            loadError != null -> ErrorContent(error = loadError, modifier = contentModifier, onRetry = onRetry)
+            loadError != null -> ErrorContent(
+                error = loadError,
+                modifier = contentModifier,
+                onRetry = onRetry.takeIf { loadError.isRetryable() },
+            )
             uiState.isLoading -> LoadingContent(contentModifier)
             else -> EditForm(
                 uiState = uiState,

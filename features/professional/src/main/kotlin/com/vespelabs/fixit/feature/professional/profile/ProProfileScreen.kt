@@ -33,6 +33,7 @@ import com.vespelabs.fixit.core.ui.components.ScreenScaffold
 import com.vespelabs.fixit.core.ui.text.label
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
+import com.vespelabs.fixit.feature.professional.common.isRetryable
 import java.util.Locale
 import com.vespelabs.fixit.core.ui.R as UiR
 
@@ -48,6 +49,7 @@ fun ProProfileRoute(
         uiState = uiState,
         onEditClick = onEditClick,
         onSignOutClick = viewModel::onSignOutClick,
+        onRetry = viewModel::onRetry,
         modifier = modifier,
     )
 }
@@ -57,6 +59,7 @@ fun ProProfileScreen(
     uiState: ProProfileUiState,
     onEditClick: () -> Unit,
     onSignOutClick: () -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ScreenScaffold(title = stringResource(R.string.pro_profile_title), modifier = modifier) { padding ->
@@ -65,7 +68,11 @@ fun ProProfileScreen(
             ProProfileUiState.Loading -> LoadingContent(contentModifier)
             // Sign out stays reachable even when the profile cannot be read.
             is ProProfileUiState.Error -> Column(contentModifier.fillMaxSize()) {
-                ErrorContent(error = uiState.error, modifier = Modifier.weight(1f))
+                ErrorContent(
+                    error = uiState.error,
+                    modifier = Modifier.weight(1f),
+                    onRetry = onRetry.takeIf { uiState.error.isRetryable() },
+                )
                 SignOutButton(onSignOutClick, Modifier.padding(16.dp))
             }
             is ProProfileUiState.Success -> ProfileDetails(
@@ -159,6 +166,7 @@ private fun ProProfileScreenPreview() {
             ),
             onEditClick = {},
             onSignOutClick = {},
+            onRetry = {},
         )
     }
 }

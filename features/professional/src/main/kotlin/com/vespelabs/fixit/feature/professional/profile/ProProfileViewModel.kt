@@ -9,6 +9,7 @@ import com.vespelabs.fixit.core.domain.result.AppResult
 import com.vespelabs.fixit.core.domain.result.DomainError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,8 +36,20 @@ class ProProfileViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ProProfileUiState>(ProProfileUiState.Loading)
     val uiState: StateFlow<ProProfileUiState> = _uiState.asStateFlow()
 
+    private var job: Job? = null
+
     init {
-        viewModelScope.launch {
+        observe()
+    }
+
+    fun onRetry() {
+        _uiState.value = ProProfileUiState.Loading
+        observe()
+    }
+
+    private fun observe() {
+        job?.cancel()
+        job = viewModelScope.launch {
             val userId = authRepository.currentUserId()
             if (userId == null) {
                 _uiState.value = ProProfileUiState.Error(DomainError.Unauthorized)
