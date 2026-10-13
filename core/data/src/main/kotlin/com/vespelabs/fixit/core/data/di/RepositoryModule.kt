@@ -1,6 +1,7 @@
 package com.vespelabs.fixit.core.data.di
 
-import com.vespelabs.fixit.core.data.fake.FakeLocation
+import com.vespelabs.fixit.core.data.device.FusedLocationProvider
+import com.vespelabs.fixit.core.data.device.GeocoderAddressResolver
 import com.vespelabs.fixit.core.data.firebase.FirebaseAuthRepository
 import com.vespelabs.fixit.core.data.firebase.FirebaseRepairRequestRepository
 import com.vespelabs.fixit.core.data.firebase.FirebaseUserRepository
@@ -18,7 +19,8 @@ import javax.inject.Singleton
 /**
  * THE Fake <-> Firebase switch (D11): swapping implementations means editing these bindings only. Phase 2 binds the
  * Firebase repositories; going back to the Fakes means binding FakeAuthRepository, FakeUserRepository and
- * FakeRepairRequestRepository here again.
+ * FakeRepairRequestRepository here again. Phase 3 binds the real location (Fused provider + Geocoder); going back to
+ * the fixed simulated place means binding FakeLocation to both LocationProvider and AddressResolver.
  *
  * The repository bindings are @Singleton so every consumer shares one instance: the auth repository keeps the
  * in-progress operation flag that the session reads (design 13.5), which must be the same object everywhere.
@@ -38,9 +40,9 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun requests(impl: FirebaseRepairRequestRepository): RepairRequestRepository
 
-    @Binds // Phase 3: FusedLocationProvider
-    abstract fun location(impl: FakeLocation): LocationProvider
+    @Binds
+    abstract fun location(impl: FusedLocationProvider): LocationProvider
 
-    @Binds // Phase 3: GeocoderAddressResolver
-    abstract fun address(impl: FakeLocation): AddressResolver
+    @Binds
+    abstract fun address(impl: GeocoderAddressResolver): AddressResolver
 }

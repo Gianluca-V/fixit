@@ -12,7 +12,6 @@ import com.vespelabs.fixit.core.domain.result.DomainError
 import com.vespelabs.fixit.core.domain.result.ValidationError
 import com.vespelabs.fixit.core.domain.usecase.CreateRequestUseCase
 import com.vespelabs.fixit.core.domain.usecase.GetCurrentPlaceUseCase
-import com.vespelabs.fixit.core.ui.components.SamplePhotos
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,11 +62,13 @@ class CreateRequestViewModel @Inject constructor(
 
     fun onDescriptionChange(description: String) = _uiState.update { it.copy(description = description) }
 
-    /** Phase 1: adds a sample photo not used yet (there are as many samples as the photo limit). */
-    fun onAddSamplePhoto() = _uiState.update {
-        if (!it.canAddPhoto) return@update it
-        val sample = SamplePhotos.firstOrNull { uri -> uri !in it.photoUris } ?: SamplePhotos.first()
-        it.copy(photoUris = it.photoUris + sample)
+    /**
+     * Appends the URIs returned by the gallery or the camera, keeping at most [Limits.PHOTOS_MAX].
+     * An empty list (picker or capture cancelled) leaves the photos unchanged.
+     */
+    fun onPhotosAdded(uris: List<String>) = _uiState.update {
+        val missing = Limits.PHOTOS_MAX - it.photoUris.size
+        if (uris.isEmpty() || missing <= 0) it else it.copy(photoUris = it.photoUris + uris.take(missing))
     }
 
     fun onRemovePhoto(index: Int) = _uiState.update {

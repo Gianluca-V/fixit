@@ -66,7 +66,8 @@
     <string name="status_cancelled">Cancelada</string>
 
     <!-- Photos -->
-    <string name="photo_add_sample">Agregar foto de ejemplo</string>
+    <string name="photo_gallery">Galería</string>
+    <string name="photo_camera">Cámara</string>
     <string name="photo_count">%1$d de %2$d fotos</string>
     <string name="photo_content_description">Foto %1$d de %2$d de la solicitud</string>
     <string name="photo_remove">Quitar foto %1$d</string>
@@ -98,4 +99,15 @@
     <string name="profile_field_base_empty">Sin punto base definido</string>
     <string name="profile_field_radius">Radio de trabajo (km)</string>
     <string name="profile_use_location">Usar mi ubicación</string>
+
+    <!-- Location permission -->
+    <string name="location_permission_title">Permiso de ubicación</string>
+    <string name="location_permission_rationale">La ubicación se usa solo para completar las coordenadas y la dirección. Alcanza con la ubicación aproximada.</string>
+    <string name="location_permission_continue">Continuar</string>
+    <string name="location_permission_cancel">Cancelar</string>
+    <string name="location_permission_ok">Entendido</string>
+    <string name="location_permission_denied_title">Ubicación no autorizada</string>
+    <string name="location_permission_denied">Sin el permiso de ubicación no es posible obtener las coordenadas. La dirección sigue siendo editable; vuelva a tocar «Usar mi ubicación» para intentarlo de nuevo.</string>
+    <string name="location_permission_permanently_denied">El permiso de ubicación fue denegado de forma permanente. Para obtener las coordenadas, habilítelo en los ajustes de la aplicación.</string>
+    <string name="location_permission_open_settings">Abrir ajustes</string>
 </resources>

@@ -33,6 +33,7 @@ import com.vespelabs.fixit.core.ui.components.CategoryChips
 import com.vespelabs.fixit.core.ui.components.PhotoPickerButtons
 import com.vespelabs.fixit.core.ui.components.PhotoThumbnails
 import com.vespelabs.fixit.core.ui.components.SamplePhotos
+import com.vespelabs.fixit.core.ui.permission.LocationPermissionGate
 import com.vespelabs.fixit.core.ui.text.asMessage
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.client.R
@@ -55,19 +56,22 @@ fun CreateRequestRoute(
             viewModel.onNavigated()
         }
     }
-    CreateRequestScreen(
-        uiState = uiState,
-        onBack = onBack,
-        onCategorySelect = viewModel::onCategorySelect,
-        onDescriptionChange = viewModel::onDescriptionChange,
-        onAddSamplePhoto = viewModel::onAddSamplePhoto,
-        onRemovePhoto = viewModel::onRemovePhoto,
-        onUseLocation = viewModel::onUseLocation,
-        onAddressChange = viewModel::onAddressChange,
-        onSubmit = viewModel::onSubmit,
-        onMessageShown = viewModel::onMessageShown,
-        modifier = modifier,
-    )
+    // The permission is asked only when tapping "Usar mi ubicación"; the ViewModel locates once it is granted.
+    LocationPermissionGate(onGranted = viewModel::onUseLocation) { requestLocation ->
+        CreateRequestScreen(
+            uiState = uiState,
+            onBack = onBack,
+            onCategorySelect = viewModel::onCategorySelect,
+            onDescriptionChange = viewModel::onDescriptionChange,
+            onPhotosAdded = viewModel::onPhotosAdded,
+            onRemovePhoto = viewModel::onRemovePhoto,
+            onUseLocation = requestLocation,
+            onAddressChange = viewModel::onAddressChange,
+            onSubmit = viewModel::onSubmit,
+            onMessageShown = viewModel::onMessageShown,
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable
@@ -76,7 +80,7 @@ fun CreateRequestScreen(
     onBack: () -> Unit,
     onCategorySelect: (ServiceCategory) -> Unit,
     onDescriptionChange: (String) -> Unit,
-    onAddSamplePhoto: () -> Unit,
+    onPhotosAdded: (List<String>) -> Unit,
     onRemovePhoto: (index: Int) -> Unit,
     onUseLocation: () -> Unit,
     onAddressChange: (String) -> Unit,
@@ -122,7 +126,8 @@ fun CreateRequestScreen(
             PhotoPickerButtons(
                 photoCount = uiState.photoUris.size,
                 maxPhotos = Limits.PHOTOS_MAX,
-                onAddSamplePhoto = onAddSamplePhoto,
+                onPhotosPicked = onPhotosAdded,
+                enabled = enabled,
             )
             FieldErrorText(errorFor(FormField.PHOTOS))
 
@@ -208,7 +213,7 @@ private fun CreateRequestScreenPreview() {
             onBack = {},
             onCategorySelect = {},
             onDescriptionChange = {},
-            onAddSamplePhoto = {},
+            onPhotosAdded = {},
             onRemovePhoto = {},
             onUseLocation = {},
             onAddressChange = {},
@@ -231,7 +236,7 @@ private fun CreateRequestScreenErrorPreview() {
             onBack = {},
             onCategorySelect = {},
             onDescriptionChange = {},
-            onAddSamplePhoto = {},
+            onPhotosAdded = {},
             onRemovePhoto = {},
             onUseLocation = {},
             onAddressChange = {},
