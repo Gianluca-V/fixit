@@ -99,7 +99,7 @@ class FirebaseAuthRepository @Inject constructor(
             val snapshot = userDoc(uid).get().await()
             if (!snapshot.exists()) {
                 Log.w(LOG_TAG, "Signed in without profile document")
-                throw DomainException(DomainError.Unknown)
+                throw DomainException(DomainError.ProfileMissing)
             }
             snapshot.toUser()
         }

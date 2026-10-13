@@ -22,5 +22,6 @@ sealed interface DomainError {
 
     data object Network : DomainError
 
+    data object ProfileMissing : DomainError // signed in, but users/{uid} does not exist
     data object Unknown : DomainError
 }

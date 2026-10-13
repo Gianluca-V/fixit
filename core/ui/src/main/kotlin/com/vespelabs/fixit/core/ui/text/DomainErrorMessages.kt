@@ -18,7 +18,8 @@ fun DomainError.asMessage(): String = when (this) {
     DomainError.AlreadyTaken -> stringResource(R.string.error_already_taken)
     DomainError.LocationUnavailable -> stringResource(R.string.error_location_unavailable)
     DomainError.Network -> stringResource(R.string.error_network)
-    DomainError.Unknown -> stringResource(R.string.error_unknown) // also: account without profile
+    DomainError.ProfileMissing -> stringResource(R.string.error_profile_missing)
+    DomainError.Unknown -> stringResource(R.string.error_unknown)
 }
 
 /** Text shown next to the form field that [ValidationError.field] points to. */
