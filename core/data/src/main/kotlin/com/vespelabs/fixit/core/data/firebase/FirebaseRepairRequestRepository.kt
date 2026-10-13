@@ -1,5 +1,6 @@
 package com.vespelabs.fixit.core.data.firebase
 
+import android.util.Log
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
@@ -15,6 +16,7 @@ import com.vespelabs.fixit.core.domain.model.NewRequest
 import com.vespelabs.fixit.core.domain.model.RepairRequest
 import com.vespelabs.fixit.core.domain.model.RequestStatus
 import com.vespelabs.fixit.core.domain.model.Review
+import com.vespelabs.fixit.core.domain.repository.Clock
 import com.vespelabs.fixit.core.domain.repository.RepairRequestRepository
 import com.vespelabs.fixit.core.domain.result.AppResult
 import com.vespelabs.fixit.core.domain.result.DomainError
@@ -29,6 +31,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
+private const val LOG_TAG = "FirebaseRepairRequestRepo"
+
 /**
  * `requests/{id}` and `reviews/{requestId}` over Firestore, photos over Cloudinary (design 13.1, 13.3, 13.7).
  * Never throws into the domain: commands go through [firebaseCall], observations through [asResult] (13.4).
@@ -37,6 +41,7 @@ class FirebaseRepairRequestRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val imageCompressor: ImageCompressor,
     private val photoUploader: PhotoUploader,
+    private val clock: Clock,
 ) : RepairRequestRepository {
 
     private val requests get() = firestore.collection(REQUESTS)
@@ -147,7 +152,7 @@ class FirebaseRepairRequestRepository @Inject constructor(
         firebaseCall {
             val requestRef = requestDoc(requestId)
             val reviewRef = reviewDoc(requestId)
-            firestore.runTransaction { tx ->
+            val written = firestore.runTransaction { tx ->
                 val request = tx.readRequest(requestRef)
                 val fields = when (val decision = completeTransition(request.status)) {
                     is Transition.Write -> decision.fields
@@ -169,9 +174,19 @@ class FirebaseRepairRequestRepository @Inject constructor(
                         rating = rating,
                     ),
                 )
-                null
+                Review(requestId, professionalId, request.clientId, rating, comment, createdAt = clock.now())
             }.await()
-            reviewRef.get().await().toReview() // server timestamps resolved by the commit
+            // The commit already happened, so a failed read-back must not turn it into an error: it only swaps the
+            // local createdAt for the server one. SERVER for the same reason as in transitionRequest (observeReview).
+            val committed = try {
+                reviewRef.get(Source.SERVER).await().takeIf { it.exists() }?.toReview()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(LOG_TAG, "Review read-back failed; keeping the local createdAt", e)
+                null
+            }
+            committed ?: written
         }
 
     /**
@@ -194,7 +209,9 @@ class FirebaseRepairRequestRepository @Inject constructor(
                 is Transition.Reject -> throw DomainException(decision.error)
             }
         }.await()
-        unchanged ?: doc.get().await().toRepairRequest()
+        // SERVER, not DEFAULT: with a live listener on this document, DEFAULT may answer from the listener's view,
+        // which does not have the transaction's write yet (transactions are not applied to the local cache).
+        unchanged ?: doc.get(Source.SERVER).await().toRepairRequest()
     }
 
     /** Compression is local CPU work: no timeout (13.4), but its failure still becomes an error, never a throw. */
