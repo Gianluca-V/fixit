@@ -60,7 +60,10 @@ fun Throwable.toDomainError(): DomainError {
             Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED -> DomainError.Network
             Code.PERMISSION_DENIED -> DomainError.Unauthorized
             Code.NOT_FOUND -> DomainError.NotFound
-            else -> DomainError.Unknown
+            else -> {
+                Log.w(LOG_TAG, "Unmapped Firestore error $code", this)
+                DomainError.Unknown
+            }
         }
         is FirebaseAuthInvalidCredentialsException, is FirebaseAuthInvalidUserException -> DomainError.InvalidCredentials
         is FirebaseAuthUserCollisionException -> DomainError.EmailAlreadyInUse
@@ -71,6 +74,9 @@ fun Throwable.toDomainError(): DomainError {
             Log.w(LOG_TAG, "Cloudinary upload rejected with HTTP $httpCode")
             DomainError.Unknown // specs/media: only network and timeout are Network
         }
-        else -> DomainError.Unknown
+        else -> {
+            Log.w(LOG_TAG, "Unmapped error", this)
+            DomainError.Unknown
+        }
     }
 }
