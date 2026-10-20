@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.androidx.activity.compose) // Photo Picker and camera launchers
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp) // loads Cloudinary https URLs
+    implementation(libs.maplibre.android.sdk) // map picker with OpenStreetMap data (icon-map-address D1)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // The map picker has its own ViewModel (icon-map-address D4); still no dependency on :core:data.
