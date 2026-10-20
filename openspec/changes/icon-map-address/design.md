@@ -60,7 +60,7 @@ La búsqueda se hace con `GET https://photon.komoot.io/api/?q=<texto>&limit=8&la
 
 Además:
 - Va un `User-Agent` identificable: `FixIt/<versionName> (UNAJ TP2)`.
-- El timeout es de 10 s (`callTimeout`). Se aplica sobre el cliente compartido con `newBuilder()`, que reutiliza el *pool* de conexiones.
+- El timeout es de 10 s y se aplica con `firebaseCall(SEARCH_TIMEOUT_MS)`, el mismo envoltorio que usan la subida a Cloudinary y Firestore. Así el mapeo de errores queda en un solo lugar y el cliente compartido no se modifica.
 
 | Alternativa | Por qué no |
 |---|---|

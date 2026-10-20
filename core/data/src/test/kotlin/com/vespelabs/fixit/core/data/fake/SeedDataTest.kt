@@ -25,6 +25,13 @@ class SeedDataTest {
     }
 
     @Test
+    fun `given the seed when reading the clients then Ana has an area in Florencio Varela and Bruno has none`() {
+        assertEquals("Av. Calchaquí 3950, Florencio Varela", user("c1").area?.address)
+        assertEquals(null, user("c2").area)
+        assertTrue(seed.users.filter { it.role == UserRole.PROFESSIONAL }.all { it.area == null })
+    }
+
+    @Test
     fun `given the seed when checking contact data then every user has a phone`() {
         assertTrue(seed.users.all { it.phone.isNotBlank() })
     }

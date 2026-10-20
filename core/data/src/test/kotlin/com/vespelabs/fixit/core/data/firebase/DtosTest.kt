@@ -152,7 +152,98 @@ class DtosTest {
             ProfileForm(name = "A", phone = "1", categories = setOf(ServiceCategory.GAS), base = base, radiusKm = 5),
         )
 
-        assertEquals(mapOf(UserFields.NAME to "A", UserFields.PHONE to "1"), fields)
+        assertEquals(setOf(UserFields.NAME, UserFields.PHONE) + areaKeys, fields.keys)
+    }
+
+    // [prof] Client area
+
+    private val quilmes = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes")
+    private val areaKeys = setOf(UserFields.AREA_LAT, UserFields.AREA_LNG, UserFields.AREA_ADDRESS)
+
+    @Test
+    fun `given a stored client without area fields when a user dto is mapped then it is a client without area`() {
+        val user = UserDto(id = "u1", name = "Ana", email = "ana@mail.com", phone = "1155550000", role = "CLIENT").toDomain()
+
+        assertNull(user.area)
+    }
+
+    @Test
+    fun `given a stored client with area fields when a user dto is mapped then the area is rebuilt`() {
+        val dto = UserDto(
+            id = "u1",
+            name = "Ana",
+            email = "ana@mail.com",
+            phone = "1155550000",
+            role = "CLIENT",
+            areaLat = -34.7206,
+            areaLng = -58.2546,
+            areaAddress = "Calle 123, Quilmes",
+        )
+
+        assertEquals(client.copy(area = quilmes), dto.toDomain())
+    }
+
+    @Test
+    fun `given a stored professional with area fields when a user dto is mapped then it has no area`() {
+        val dto = UserDto(
+            id = "u2",
+            name = "Beto",
+            email = "beto@mail.com",
+            phone = "1155551111",
+            role = "PROFESSIONAL",
+            categories = listOf("GAS", "PLUMBING"),
+            baseLat = -34.6037,
+            baseLng = -58.3816,
+            baseAddress = "Av. Corrientes 1234",
+            radiusKm = 10L,
+            ratingSum = 9L,
+            reviewCount = 2L,
+            areaLat = -34.7206,
+            areaLng = -58.2546,
+            areaAddress = "Calle 123, Quilmes",
+        )
+
+        assertEquals(professional, dto.toDomain())
+    }
+
+    @Test
+    fun `given a client form with area when the profile is updated then the area fields are written`() {
+        val fields = profileUpdateFields(UserRole.CLIENT, ProfileForm(name = "A", phone = "1", area = quilmes))
+
+        assertEquals(
+            mapOf(
+                UserFields.NAME to "A",
+                UserFields.PHONE to "1",
+                UserFields.AREA_LAT to -34.7206,
+                UserFields.AREA_LNG to -58.2546,
+                UserFields.AREA_ADDRESS to "Calle 123, Quilmes",
+            ),
+            fields,
+        )
+        assertTrue(UserFields.EDITABLE.containsAll(fields.keys))
+    }
+
+    @Test
+    fun `given a client form without area when the profile is updated then the three area fields are deleted`() {
+        val fields = profileUpdateFields(UserRole.CLIENT, ProfileForm(name = "A", phone = "1", area = null))
+
+        areaKeys.forEach { assertEquals(FieldValue.delete(), fields[it]) }
+    }
+
+    @Test
+    fun `given a professional form with area when the profile is updated then no area field is written`() {
+        val fields = profileUpdateFields(UserRole.PROFESSIONAL, ProfileForm(name = "B", phone = "2", area = quilmes))
+
+        assertTrue(fields.keys.none { it in areaKeys })
+    }
+
+    @Test
+    fun `given a client when the profile is applied locally then the area is replaced or cleared`() {
+        val withArea = client.withProfile(ProfileForm(name = "A", phone = "1", area = quilmes))
+
+        assertEquals(quilmes, withArea.area)
+        assertNull(withArea.withProfile(ProfileForm(name = "A", phone = "1")).area)
+        assertNull(professional.withProfile(ProfileForm(name = "B", phone = "2", area = quilmes)).area)
     }
 
     @Test

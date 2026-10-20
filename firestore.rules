@@ -15,11 +15,12 @@ service cloud.firestore {
       && (p.size() < 2 || isPhotoUrl(p[1])) && (p.size() < 3 || isPhotoUrl(p[2])); }
 
     match /users/{uid} {
-      allow read: if signedIn();   // KNOWN WEAKNESS: phone readable by any signed-in user
+      allow read: if signedIn();   // KNOWN WEAKNESS: phone and client area readable by any signed-in user
       allow create: if request.auth.uid == uid   // the DTO always writes ratingSum = 0 and reviewCount = 0 (any role)
         && request.resource.data.ratingSum == 0 && request.resource.data.reviewCount == 0;
       allow update: if (request.auth.uid == uid   // profile edit: editable fields only
-          && changed().hasOnly(['name','phone','categories','baseLat','baseLng','baseAddress','radiusKm']))
+          && changed().hasOnly(['name','phone','categories','baseLat','baseLng','baseAddress','radiusKm',
+                                'areaLat','areaLng','areaAddress']))
         || (signedIn()                            // KNOWN WEAKNESS: permissive aggregate (no Cloud Functions)
           && changed().hasOnly(['ratingSum','reviewCount'])
           && request.resource.data.reviewCount == resource.data.reviewCount + 1);

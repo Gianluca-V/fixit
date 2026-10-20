@@ -75,21 +75,21 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
 
 ## 3. Datos (`:core:data`)
 
-- [ ] 3.1 RED `FakeAddressSearchTest`:
+- [x] 3.1 RED `FakeAddressSearchTest`:
   - "quilmes" encuentra lugares de Quilmes sin distinguir mayúsculas.
   - "calchaqui" encuentra "Av. Calchaquí…" sin distinguir tildes.
   - Un texto sin coincidencias devuelve una lista vacía.
 
   Verificar que falla.
-- [ ] 3.2 GREEN `fake/FakeAddressSearch` con un catálogo fijo de Florencio Varela, Quilmes y Berazategui (D3). Verificar que el test pasa.
-- [ ] 3.3 RED `photon/ParsePhotonResponseTest` con JSON de ejemplo escritos a mano en el test:
+- [x] 3.2 GREEN `fake/FakeAddressSearch` con un catálogo fijo de Florencio Varela, Quilmes y Berazategui (D3). Verificar que el test pasa.
+- [x] 3.3 RED `photon/ParsePhotonResponseTest` con JSON de ejemplo escritos a mano en el test:
   - FeatureCollection con 2 resultados: coordenadas `[lon, lat]` invertidas correctamente.
   - Propiedades faltantes → `null`.
   - JSON inválido → excepción de parseo.
 
   Verificar que falla.
-- [ ] 3.4 GREEN `photon/PhotonResponse.kt`: `parsePhotonResponse` con la API de `JsonElement`. Verificar que el test pasa.
-- [ ] 3.5 RED/GREEN `photon/FormatPhotonAddressTest` + `formatPhotonAddress`, que cubren `[addr]` "Dirección legible de una sugerencia":
+- [x] 3.4 GREEN `photon/PhotonResponse.kt`: `parsePhotonResponse` con la API de `JsonElement`. Verificar que el test pasa.
+- [x] 3.5 RED/GREEN `photon/FormatPhotonAddressTest` + `formatPhotonAddress`, que cubren `[addr]` "Dirección legible de una sugerencia":
   - Calle con número y localidad.
   - Lugar sin calle.
   - Calle sin número.
@@ -97,16 +97,16 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
   - Nada usable → `null`.
 
   Verificar que pasa.
-- [ ] 3.6 RED `photon/PhotonRequestTest`: `buildPhotonRequest(query, near, userAgent)` arma la URL con `q` codificado, `limit=8`, `bbox` de Argentina, y `lat`/`lon` solo si `near` no es `null`, más la cabecera `User-Agent`. Verificar que falla.
-- [ ] 3.7 GREEN `photon/PhotonAddressSearch` (`@Inject`, usa el `OkHttpClient` compartido con `callTimeout` de 10 s). Errores según D2: `IOException` → `Network`; respuesta que no es 2xx o JSON inválido → `Unknown`, con `Log.w`; `CancellationException` se relanza. Agregar un test JVM del mapeo de errores, siguiendo el patrón de `PhotoUploadErrorsTest`. Verificar que `./gradlew :core:data:test` pasa.
-- [ ] 3.8 RED en `DtosTest` `[prof]`:
+- [x] 3.6 RED `photon/PhotonRequestTest`: `buildPhotonRequest(query, near, userAgent)` arma la URL con `q` codificado, `limit=8`, `bbox` de Argentina, y `lat`/`lon` solo si `near` no es `null`, más la cabecera `User-Agent`. Verificar que falla.
+- [x] 3.7 GREEN `photon/PhotonAddressSearch` (`@Inject`, usa el `OkHttpClient` compartido; timeout de 10 s con `firebaseCall`). Errores según D2: `IOException` → `Network`; respuesta que no es 2xx o JSON inválido → `Unknown`, con `Log.w`; `CancellationException` se relanza. Agregar un test JVM del mapeo de errores, siguiendo el patrón de `PhotoUploadErrorsTest`. Verificar que `./gradlew :core:data:test` pasa.
+- [x] 3.8 RED en `DtosTest` `[prof]`:
   - "Usuario anterior sin zona": un documento sin campos `area*` se lee como cliente con `area == null`.
   - Los campos de una zona se leen y se escriben (`areaLat`, `areaLng`, `areaAddress`).
   - `area == null` en la edición de un cliente produce el borrado de los tres campos.
 
   Verificar que falla.
-- [ ] 3.9 GREEN: `UserFields` y `UserDto` con la zona, `toDomain()` y el mapa de actualización de perfil con `FieldValue.delete()` (D5), y `FakeUserRepository`/`FakeDatabase` copiando `area`. Agregar una zona a un cliente de `SeedData` y ajustar `SeedDataTest`. Verificar que `./gradlew :core:data:test` pasa.
-- [ ] 3.10 Agregar `@Binds AddressSearch → PhotonAddressSearch` en `NetworkModule` (con un comentario sobre cómo volver a `FakeAddressSearch`). En `firestore.rules`, sumar `areaLat`, `areaLng` y `areaAddress` al `hasOnly` de la edición propia y documentar la debilidad aceptada en el comentario de `read`. Verificar que `:app:assembleDebug` compila; el despliegue de las reglas se prueba en 8.3.
+- [x] 3.9 GREEN: `UserFields` y `UserDto` con la zona, `toDomain()` y el mapa de actualización de perfil con `FieldValue.delete()` (D5), y `FakeUserRepository`/`FakeDatabase` copiando `area`. Agregar una zona a un cliente de `SeedData` y ajustar `SeedDataTest`. Verificar que `./gradlew :core:data:test` pasa.
+- [x] 3.10 Agregar `@Binds AddressSearch → PhotonAddressSearch` en `NetworkModule` (con un comentario sobre cómo volver a `FakeAddressSearch`). En `firestore.rules`, sumar `areaLat`, `areaLng` y `areaAddress` al `hasOnly` de la edición propia y documentar la debilidad aceptada en el comentario de `read`. Verificar que `:app:assembleDebug` compila; el despliegue de las reglas se prueba en 8.3.
 
 ## 4. `MapPickerViewModel` (`:core:ui`)
 

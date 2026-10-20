@@ -42,7 +42,15 @@ object SeedData {
             return Reputation(ratingSum = own.sumOf { it.rating }, reviewCount = own.size)
         }
         return listOf(
-            User("c1", "Ana López", "ana@fixit.test", "11 5555-0001", UserRole.CLIENT),
+            User(
+                "c1",
+                "Ana López",
+                "ana@fixit.test",
+                "11 5555-0001",
+                UserRole.CLIENT,
+                // Ana has an area so the request form starts preloaded (icon-map-address); Bruno has none.
+                area = Place(GeoPoint(-34.7745, -58.2669), "Av. Calchaquí 3950, Florencio Varela"),
+            ),
             User("c2", "Bruno Díaz", "bruno@fixit.test", "11 5555-0002", UserRole.CLIENT),
             User(
                 "p1", "Carlos Gómez", "carlos@fixit.test", "11 5555-0101", UserRole.PROFESSIONAL,

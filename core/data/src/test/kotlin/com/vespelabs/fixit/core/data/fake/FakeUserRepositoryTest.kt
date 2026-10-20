@@ -144,4 +144,32 @@ class FakeUserRepositoryTest {
 
         assertEquals(1, emissions.size)
     }
+
+    // [prof] Client area
+
+    @Test
+    fun `given a client when saving an area and then clearing it then the stored area follows`() = runTest {
+        val quilmes = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes")
+
+        users.updateProfile("c2", ProfileForm("Bruno Díaz", "11 5555-0002", area = quilmes))
+        assertEquals(quilmes, user("c2").area)
+
+        users.updateProfile("c2", ProfileForm("Bruno Díaz", "11 5555-0002", area = null))
+        assertEquals(null, user("c2").area)
+    }
+
+    @Test
+    fun `given a professional form with an area when saving then the professional keeps no area`() = runTest {
+        val before = user("p1")
+        val form = ProfileForm(
+            name = before.name,
+            phone = before.phone,
+            categories = before.professional!!.categories,
+            area = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes"),
+        )
+
+        users.updateProfile("p1", form)
+
+        assertEquals(null, user("p1").area)
+    }
 }
