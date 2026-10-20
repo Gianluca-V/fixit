@@ -53,7 +53,7 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
 
 ## 2. Dominio (`:core:domain`)
 
-- [ ] 2.1 RED `SearchAddressUseCaseTest` con un `TestAddressSearch` nuevo en `testFixtures` (respuesta configurable y registro de llamadas). Cubre `[addr]`:
+- [x] 2.1 RED `SearchAddressUseCaseTest` con un `TestAddressSearch` nuevo en `testFixtures` (respuesta configurable y registro de llamadas). Cubre `[addr]`:
   - Texto demasiado corto: no hay llamada al servicio.
   - Máximo de sugerencias: 8 → 5, en el mismo orden.
   - Sugerencias inválidas descartadas: sin dirección o con latitud 91.
@@ -61,8 +61,8 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
   - El texto que llega al servicio va recortado.
 
   Verificar que el test falla por falta de la clase.
-- [ ] 2.2 GREEN: interfaz `repository/AddressSearch` y `usecase/SearchAddressUseCase` según D3. Verificar que `./gradlew :core:domain:test` pasa.
-- [ ] 2.3 RED en `UpdateProfileUseCaseTest`, para la zona del cliente `[prof]`:
+- [x] 2.2 GREEN: interfaz `repository/AddressSearch` y `usecase/SearchAddressUseCase` según D3. Verificar que `./gradlew :core:domain:test` pasa.
+- [x] 2.3 RED en `UpdateProfileUseCaseTest`, para la zona del cliente `[prof]`:
   - Guardar la zona: el repositorio recibe `area`.
   - Quitar la zona: `area = null`.
   - Zona con dirección vacía: `LOCATION_REQUIRED` y nada persistido.
@@ -70,8 +70,8 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
   - Un profesional con `area` en el formulario: se ignora.
 
   Verificar que falla.
-- [ ] 2.4 GREEN: `User.area: Place? = null`, `ProfileForm.area: Place? = null`, y en `UpdateProfileUseCase` la validación de la zona para `CLIENT` (D5). Ajustar `TestUserRepository` y `TestData` (parámetro `area` opcional). Verificar que `./gradlew :core:domain:test` pasa, incluidos los tests anteriores sin cambios.
-- [ ] 2.5 RED/GREEN en `SignUpUseCaseTest` `[prof]`: "El registro no pide zona". El usuario creado tiene `area == null` aunque el formulario traiga una. Verificar que pasa.
+- [x] 2.4 GREEN: `User.area: Place? = null`, `ProfileForm.area: Place? = null`, y en `UpdateProfileUseCase` la validación de la zona para `CLIENT` (D5). Ajustar `TestUserRepository` y `TestData` (parámetro `area` opcional). Verificar que `./gradlew :core:domain:test` pasa, incluidos los tests anteriores sin cambios.
+- [x] 2.5 RED/GREEN en `SignUpUseCaseTest` `[prof]`: "El registro no pide zona". El usuario creado tiene `area == null` aunque el formulario traiga una. Verificar que pasa.
 
 ## 3. Datos (`:core:data`)
 

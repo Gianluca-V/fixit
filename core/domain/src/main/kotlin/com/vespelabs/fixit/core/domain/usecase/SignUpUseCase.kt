@@ -16,7 +16,11 @@ class SignUpUseCase @Inject constructor(
         // Validators.signUp guarantees the role is present.
         val role = checkNotNull(form.role)
         return authRepository.signUp(
-            form.copy(email = Validators.normalizeEmail(form.email), profile = form.profile.forPersistence(role)),
+            form.copy(
+                email = Validators.normalizeEmail(form.email),
+                // The area is only set from "Editar perfil" (profiles spec): sign-up never stores one.
+                profile = form.profile.forPersistence(role).copy(area = null),
+            ),
         )
     }
 }

@@ -20,7 +20,8 @@ object TestData {
         name: String = "Ana López",
         email: String = "ana@fixit.test",
         phone: String = "11 5555-0001",
-    ) = User(id = id, name = name, email = email, phone = phone, role = UserRole.CLIENT)
+        area: Place? = null,
+    ) = User(id = id, name = name, email = email, phone = phone, role = UserRole.CLIENT, area = area)
 
     fun professional(
         id: String = "p1",

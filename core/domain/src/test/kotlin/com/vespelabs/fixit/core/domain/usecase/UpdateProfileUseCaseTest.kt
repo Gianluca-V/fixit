@@ -160,4 +160,75 @@ class UpdateProfileUseCaseTest {
 
         assertEquals(AppResult.Error(DomainError.Network), result)
     }
+
+    // [prof] Client area
+
+    private val quilmes = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes")
+
+    @Test
+    fun `given a client without area when saving an area picked on the map then it is persisted`() = runTest {
+        signInAs(ana)
+
+        val result = updateProfile(ProfileForm("Ana", "1155551234", area = quilmes))
+
+        assertEquals(quilmes, (result as AppResult.Success).data.area)
+        assertEquals(quilmes, users.updateProfileCalls.single().second.area)
+    }
+
+    @Test
+    fun `given a padded area address when saving then the address is persisted trimmed`() = runTest {
+        signInAs(ana)
+
+        updateProfile(ProfileForm("Ana", "1155551234", area = quilmes.copy(address = "  Calle 123, Quilmes ")))
+
+        assertEquals(quilmes, users.updateProfileCalls.single().second.area)
+    }
+
+    @Test
+    fun `given a client with area when clearing it and saving then the profile has no area`() = runTest {
+        signInAs(ana.copy(area = quilmes))
+
+        val result = updateProfile(ProfileForm("Ana", "1155551234", area = null))
+
+        assertEquals(null, (result as AppResult.Success).data.area)
+    }
+
+    @Test
+    fun `given an area with a blank address when saving then the result is LocationRequired`() = runTest {
+        signInAs(ana)
+
+        assertRejected(
+            ValidationError.LOCATION_REQUIRED,
+            updateProfile(ProfileForm("Ana", "1155551234", area = quilmes.copy(address = "  "))),
+        )
+    }
+
+    @Test
+    fun `given an area with latitude 91 when saving then the result is InvalidCoordinates`() = runTest {
+        signInAs(ana)
+
+        assertRejected(
+            ValidationError.INVALID_COORDINATES,
+            updateProfile(ProfileForm("Ana", "1155551234", area = Place(GeoPoint(91.0, -58.2546), "Calle 123, Quilmes"))),
+        )
+    }
+
+    @Test
+    fun `given an invalid name and an invalid area when saving then only the name error is reported`() = runTest {
+        signInAs(ana)
+
+        assertRejected(
+            ValidationError.INVALID_NAME,
+            updateProfile(ProfileForm("A", "1155551234", area = quilmes.copy(address = ""))),
+        )
+    }
+
+    @Test
+    fun `given an area on a professional form when updating then it is not persisted`() = runTest {
+        signInAs(plumber)
+
+        updateProfile(proForm().copy(area = quilmes))
+
+        assertEquals(null, users.updateProfileCalls.single().second.area)
+    }
 }
