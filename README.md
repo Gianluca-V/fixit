@@ -25,6 +25,10 @@ CLOUDINARY_UPLOAD_PRESET=<your unsigned preset name>
 
 `:core:data` reads them into `BuildConfig`. When they are missing they become empty strings: the project still compiles and tests pass, but uploading a photo fails with a generic error.
 
+### Map and address search (no keys)
+
+"Elegir en el mapa" uses MapLibre with the OpenFreeMap style (`map_style_url` in `core/ui/src/main/res/values/strings.xml`), and address suggestions come from the public Photon instance by komoot. Neither needs an API key, an account or a card. Map data © OpenStreetMap contributors; the map shows the attribution. To work without network, bind `FakeAddressSearch` instead of `PhotonAddressSearch` in `core/data/.../di/NetworkModule.kt`.
+
 ### Firebase
 
 Since Phase 2 the app uses Firebase Auth and Firestore (bound in `core/data/.../di/RepositoryModule.kt`; revert only that file to go back to the Phase 1 fakes). `app/google-services.json` is required, git-ignored and shared out of band. Deploying the Firestore rules and indexes and seeding the test users is described in `docs/TEAM.md` (section "Firebase").
