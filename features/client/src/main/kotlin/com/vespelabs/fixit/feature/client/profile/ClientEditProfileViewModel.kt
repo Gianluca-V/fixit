@@ -2,12 +2,14 @@ package com.vespelabs.fixit.feature.client.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vespelabs.fixit.core.domain.model.Place
 import com.vespelabs.fixit.core.domain.model.UserRole
 import com.vespelabs.fixit.core.domain.repository.AuthRepository
 import com.vespelabs.fixit.core.domain.repository.UserRepository
 import com.vespelabs.fixit.core.domain.result.AppResult
 import com.vespelabs.fixit.core.domain.result.DomainError
 import com.vespelabs.fixit.core.domain.result.ValidationError
+import com.vespelabs.fixit.core.domain.usecase.GetCurrentPlaceUseCase
 import com.vespelabs.fixit.core.domain.usecase.UpdateProfileUseCase
 import com.vespelabs.fixit.core.ui.components.ProfileFormState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +22,9 @@ import kotlinx.coroutines.launch
 
 /**
  * "Editar perfil" of a client. [form] is preloaded once with the current values; [email] and [role]
- * are read-only. When the user cannot be loaded, [loadError] is shown with "Reintentar".
+ * are read-only; the optional area is set with "Usar mi ubicación" ([isLocating] while it runs) or
+ * "Elegir en el mapa", and cleared with "Quitar zona". When the user cannot be loaded, [loadError] is
+ * shown with "Reintentar".
  * [validationError] is shown next to its field; any other error is a one-shot [message] cleared
  * with `onMessageShown()`; [saved] is a one-shot navigation event cleared with `onNavigated()`.
  */
@@ -30,12 +34,13 @@ data class ClientEditProfileUiState(
     val email: String = "",
     val role: UserRole = UserRole.CLIENT,
     val form: ProfileFormState = ProfileFormState(),
+    val isLocating: Boolean = false,
     val isSaving: Boolean = false,
     val validationError: ValidationError? = null,
     val message: DomainError? = null,
     val saved: Boolean = false,
 ) {
-    val canSave: Boolean get() = !isLoading && loadError == null && !isSaving
+    val canSave: Boolean get() = !isLoading && loadError == null && !isSaving && !isLocating
 }
 
 @HiltViewModel
@@ -43,6 +48,7 @@ class ClientEditProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
     private val updateProfile: UpdateProfileUseCase,
+    private val getCurrentPlace: GetCurrentPlaceUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ClientEditProfileUiState())
     val uiState: StateFlow<ClientEditProfileUiState> = _uiState.asStateFlow()
@@ -78,6 +84,25 @@ class ClientEditProfileViewModel @Inject constructor(
     }
 
     fun onFormChange(form: ProfileFormState) = _uiState.update { it.copy(form = form, validationError = null) }
+
+    /** The area comes from the device location; when it fails the previous area stays (profiles spec). */
+    fun onUseLocation() {
+        if (_uiState.value.isLocating) return
+        _uiState.update { it.copy(isLocating = true) }
+        viewModelScope.launch {
+            val result = getCurrentPlace()
+            _uiState.update {
+                when (result) {
+                    is AppResult.Success -> it.copy(isLocating = false, form = it.form.copy(area = result.data), validationError = null)
+                    is AppResult.Error -> it.copy(isLocating = false, message = result.error)
+                }
+            }
+        }
+    }
+
+    /** The area confirmed in "Elegir en el mapa": coordinates and address are replaced together. */
+    fun onPlacePicked(place: Place) =
+        _uiState.update { it.copy(form = it.form.copy(area = place), validationError = null) }
 
     /** Rules and trimming live in [UpdateProfileUseCase]; on failure what was typed stays, so the user can retry. */
     fun onSave() {

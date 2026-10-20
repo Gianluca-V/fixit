@@ -192,7 +192,7 @@ Los ViewModels reciben el `Place` confirmado con `onPlacePicked(place)`:
 | Pantalla | Cambio |
 |---|---|
 | `ProEditProfileScreen` | `onPickOnMapClick` abre el diálogo con `initial = form.base`. `onPlacePicked` → `form.copy(base = place)`. |
-| `ClientEditProfileScreen` | `showClientArea = true`. Gana `onUseLocation`, igual que el profesional: inyecta `GetCurrentPlaceUseCase`, con `LocationPermission` e `isLocating`. Gana también `onPlacePicked` y `onClearArea`. `ProfileFormState` gana `area`, y `from(user)` la precarga. |
+| `ClientEditProfileScreen` | `showClientArea = true`. Gana `onUseLocation`, igual que el profesional: inyecta `GetCurrentPlaceUseCase`, con `LocationPermission` e `isLocating`. Gana también `onPlacePicked`. "Quitar zona" no necesita un evento propio: `ProfileFormFields` lo resuelve con `onFormChange(area = null)`. `ProfileFormState` gana `area`, y `from(user)` la precarga. |
 | `CreateRequestScreen` | Muestra "Elegir en el mapa" junto a "Usar mi ubicación" (`initial = place`). `onPlacePicked` → `point = place.point`, `address = place.address`. |
 
 **`CreateRequestViewModel`** gana `AuthRepository` y `UserRepository`. En `init` lee una vez al usuario actual y, si tiene `area` y el formulario no tiene ubicación, la precarga. Si la lectura falla, no muestra error: el formulario queda vacío como antes.

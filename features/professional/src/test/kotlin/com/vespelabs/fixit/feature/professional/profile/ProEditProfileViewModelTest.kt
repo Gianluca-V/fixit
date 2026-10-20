@@ -239,4 +239,36 @@ class ProEditProfileViewModelTest {
             assertNull(state.loadError)
             assertEquals("Luis", state.form.name)
         }
+
+    // [prof] Base point chosen on the map
+
+    @Test
+    fun `given a professional based in Florencio Varela when picking Q on the map and saving then the base is Q and the work zone and reputation stay`() =
+        runTest {
+            val q = Place(GeoPoint(-34.7240, -58.2620), "Av. Mitre 500, Quilmes")
+            val viewModel = loadedViewModel()
+
+            viewModel.onPlacePicked(q)
+            assertEquals(q, viewModel.uiState.value.form.base)
+            viewModel.onSave()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.saved)
+            assertEquals(q, saved().professional?.base)
+            assertEquals(setOf(ServiceCategory.PLUMBING), saved().professional?.categories)
+            assertEquals(12, saved().professional?.radiusKm)
+            assertEquals(reputation, saved().professional?.reputation)
+        }
+
+    @Test
+    fun `given a validation error on the base when a place is picked on the map then the error is cleared`() = runTest {
+        val viewModel = loadedViewModel()
+        viewModel.edit { it.copy(categories = emptySet()) }
+        viewModel.onSave()
+        advanceUntilIdle()
+
+        viewModel.onPlacePicked(Place(GeoPoint(-34.7240, -58.2620), "Av. Mitre 500, Quilmes"))
+
+        assertNull(viewModel.uiState.value.validationError)
+    }
 }

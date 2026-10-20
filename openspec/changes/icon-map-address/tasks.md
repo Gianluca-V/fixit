@@ -142,15 +142,15 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
 - [x] 5.1 Agregar al catálogo de versiones `maplibre = "13.6.1"` (estable de septiembre de 2026; la 13.7.1 tenía 5 días) (`org.maplibre.gl:android-sdk`; verificar la última versión estable y su `minSdk` antes de fijarla) y la dependencia en `:core:ui`. Verificar que `:app:assembleDebug` compila con AGP 9.2.1, `compileSdk` 37 y `minSdk` 26. Si no compila, aplicar la alternativa de D1/Riesgos y registrar la decisión en `design.md` (D1).
 - [x] 5.2 `components/MapLibreMap.kt`: un `AndroidView` con `MapView`, el estilo desde `R.string.map_style_url` (no traducible), el ciclo de vida con `DisposableEffect` sobre `LocalLifecycleOwner`, rotación e inclinación desactivadas, `addOnCameraIdleListener` → `onCameraIdle(GeoPoint)` y animación de la cámara cuando cambia `cameraTarget` → `onCameraMoved()`. No lleva test JVM: lo cubre el checklist 8.2. Verificar que compila y que tiene una `@Preview` con un marcador de posición, porque MapLibre no se dibuja en la vista previa.
 - [x] 5.3 `components/MapPickerDialog.kt`: el `Route` (que obtiene el ViewModel con `hiltViewModel` y una clave por apertura) y la `Screen` sin estado (búsqueda, sugerencias, mapa con el pin superpuesto en el centro, campo de dirección y "Cancelar"/"Confirmar"). Los textos de D6 van en `core/ui/res/values/strings.xml`. Verificar que compila y que hay `@Preview` de la `Screen` con sugerencias y con búsqueda no disponible.
-- [x] 5.4 `ProfileFormFields`: parámetro `onPickOnMapClick` (botón "Elegir en el mapa" junto a "Usar mi ubicación" en la sección del punto base), y `showClientArea` con `onClearAreaClick` (sección "Zona" con dirección o "Sin zona", "Usar mi ubicación", "Elegir en el mapa", "Quitar zona" y la nota de visibilidad). `ProfileFormState` gana `area`, y `from(user)` y `toProfileForm()` la incluyen. Verificar con un test JVM de `ProfileFormState` (`from` con y sin zona; `toProfileForm` pasa `area`) y con `./gradlew test`. Las llamadas existentes compilan sin cambios.
+- [x] 5.4 `ProfileFormFields`: parámetro `onPickOnMapClick` (botón "Elegir en el mapa" junto a "Usar mi ubicación" en la sección del punto base), y `showClientArea` (sección "Zona" con dirección o "Sin zona", "Usar mi ubicación", "Elegir en el mapa", "Quitar zona" y la nota de visibilidad). `ProfileFormState` gana `area`, y `from(user)` y `toProfileForm()` la incluyen. Verificar con un test JVM de `ProfileFormState` (`from` con y sin zona; `toProfileForm` pasa `area`) y con `./gradlew test`. Las llamadas existentes compilan sin cambios.
 - [x] 5.5 `@Preview` de `ProfileFormFields` con zona y sin zona. Verificar en Android Studio o compilando.
 - [x] 5.6 Verificar que `./gradlew test` y `:app:assembleDebug` pasan en verde.
 
 ## 6. Integración en el profesional y el cliente (perfiles)
 
-- [ ] 6.1 RED en `ProEditProfileViewModelTest` `[prof]`: "Punto base elegido en el mapa". `onPlacePicked(Q)` y guardar persisten la base Q con su dirección y conservan las categorías, el radio y la reputación. Verificar que falla.
-- [ ] 6.2 GREEN: `ProEditProfileViewModel.onPlacePicked`, y en `ProEditProfileScreen` abrir `MapPickerDialog` con `initial = form.base` desde `onPickOnMapClick`. Verificar que los tests pasan.
-- [ ] 6.3 RED en `ClientEditProfileViewModelTest` `[prof]`:
+- [x] 6.1 RED en `ProEditProfileViewModelTest` `[prof]`: "Punto base elegido en el mapa". `onPlacePicked(Q)` y guardar persisten la base Q con su dirección y conservan las categorías, el radio y la reputación. Verificar que falla.
+- [x] 6.2 GREEN: `ProEditProfileViewModel.onPlacePicked`, y en `ProEditProfileScreen` abrir `MapPickerDialog` con `initial = form.base` desde `onPickOnMapClick`. Verificar que los tests pasan.
+- [x] 6.3 RED en `ClientEditProfileViewModelTest` `[prof]`:
   - Zona precargada al editar.
   - Guardar la zona desde el mapa.
   - Guardar la zona con la ubicación actual (`onUseLocation` con `TestLocation`).
@@ -159,8 +159,8 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
   - Ubicación no disponible al tocar "Usar mi ubicación": mensaje, y se conserva la zona anterior.
 
   Verificar que falla.
-- [ ] 6.4 GREEN: `ClientEditProfileViewModel` inyecta `GetCurrentPlaceUseCase` y gana `onUseLocation`, `isLocating`, `onPlacePicked` y `onClearArea`. `ClientEditProfileScreen` usa `showClientArea`, `LocationPermission` y `MapPickerDialog`. Verificar que `./gradlew :features:client:test` pasa.
-- [ ] 6.5 `ClientProfileScreen` muestra la zona o "Sin zona" (`[prof]` "Perfil de cliente con zona" y "sin zona", que son `[manual]`). Verificar que compila y que hay `@Preview` con y sin zona.
+- [x] 6.4 GREEN: `ClientEditProfileViewModel` inyecta `GetCurrentPlaceUseCase` y gana `onUseLocation`, `isLocating` y `onPlacePicked` ("Quitar zona" va por `onFormChange`). `ClientEditProfileScreen` usa `showClientArea`, `LocationPermission` y `MapPickerDialog`. Verificar que `./gradlew :features:client:test` pasa.
+- [x] 6.5 `ClientProfileScreen` muestra la zona o "Sin zona" (`[prof]` "Perfil de cliente con zona" y "sin zona", que son `[manual]`). Verificar que compila y que hay `@Preview` con y sin zona.
 
 ## 7. Integración en la creación de solicitud (`:features:client`)
 

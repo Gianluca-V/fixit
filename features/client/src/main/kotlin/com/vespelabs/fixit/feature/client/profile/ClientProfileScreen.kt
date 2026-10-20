@@ -19,6 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vespelabs.fixit.core.domain.model.GeoPoint
+import com.vespelabs.fixit.core.domain.model.Place
 import com.vespelabs.fixit.core.domain.model.User
 import com.vespelabs.fixit.core.domain.model.UserRole
 import com.vespelabs.fixit.core.ui.components.ErrorContent
@@ -88,6 +90,10 @@ private fun ProfileDetails(
         ProfileField(label = stringResource(R.string.client_profile_email), value = user.email)
         ProfileField(label = stringResource(UiR.string.profile_field_phone), value = user.phone)
         ProfileField(label = stringResource(R.string.client_profile_role), value = user.role.label())
+        ProfileField(
+            label = stringResource(UiR.string.profile_field_area),
+            value = user.area?.address ?: stringResource(UiR.string.profile_area_empty),
+        )
         Button(onClick = onEditClick, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.client_profile_edit))
         }
@@ -126,6 +132,27 @@ private fun ClientProfileScreenPreview() {
         ClientProfileScreen(
             uiState = ClientProfileUiState.Success(
                 User(id = "c1", name = "Ana López", email = "ana@fixit.test", phone = "11 5555-0001", role = UserRole.CLIENT),
+            ),
+            onEditClick = {},
+            onSignOutClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ClientProfileScreenWithAreaPreview() {
+    FixItTheme {
+        ClientProfileScreen(
+            uiState = ClientProfileUiState.Success(
+                User(
+                    id = "c1",
+                    name = "Ana López",
+                    email = "ana@fixit.test",
+                    phone = "11 5555-0001",
+                    role = UserRole.CLIENT,
+                    area = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes"),
+                ),
             ),
             onEditClick = {},
             onSignOutClick = {},

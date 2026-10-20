@@ -2,6 +2,7 @@ package com.vespelabs.fixit.feature.professional.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vespelabs.fixit.core.domain.model.Place
 import com.vespelabs.fixit.core.domain.repository.AuthRepository
 import com.vespelabs.fixit.core.domain.repository.UserRepository
 import com.vespelabs.fixit.core.domain.result.AppResult
@@ -94,6 +95,10 @@ class ProEditProfileViewModel @Inject constructor(
             }
         }
     }
+
+    /** The base confirmed in "Elegir en el mapa" (icon-map-address): coordinates and address are replaced together. */
+    fun onPlacePicked(place: Place) =
+        _uiState.update { it.copy(form = it.form.copy(base = place), validationError = null) }
 
     /** Rules and trimming live in [UpdateProfileUseCase]; on failure what was typed stays, so the user can retry. */
     fun onSave() {
