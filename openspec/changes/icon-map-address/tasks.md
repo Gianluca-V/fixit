@@ -47,9 +47,9 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
 
 ## 1. Ícono adaptativo (`:app`)
 
-- [ ] 1.1 Crear `res/drawable/ic_launcher_background.xml` (color sólido `#1565C0`) y `res/drawable/ic_launcher_foreground.xml`: un vector de 108 dp con una llave inglesa blanca a 45°, cuyo trazado quede dentro del círculo seguro de 66 dp (D7). Verificar en la vista previa de Android Studio, o con `:app:assembleDebug`, que los recursos compilan.
-- [ ] 1.2 Crear `res/drawable/ic_launcher_monochrome.xml` (mismo trazado, un solo color) y `res/mipmap-anydpi/ic_launcher.xml` y `ic_launcher_round.xml` con `<adaptive-icon>` (`background`, `foreground` y `monochrome`). Verificar que `:app:assembleDebug` compila.
-- [ ] 1.3 Agregar `android:icon="@mipmap/ic_launcher"` y `android:roundIcon="@mipmap/ic_launcher_round"` al `<application>` del manifest. Verificar con `:app:assembleDebug` y con `aapt2 dump badging` sobre el APK que aparezcan `application-icon` y el ícono redondo.
+- [x] 1.1 Crear `res/drawable/ic_launcher_background.xml` (color sólido `#1565C0`) y `res/drawable/ic_launcher_foreground.xml`: un vector de 108 dp con una llave inglesa blanca a 45°, cuyo trazado quede dentro del círculo seguro de 66 dp (D7). Verificar en la vista previa de Android Studio, o con `:app:assembleDebug`, que los recursos compilan.
+- [x] 1.2 Crear `res/drawable/ic_launcher_monochrome.xml` (mismo trazado, un solo color) y `res/mipmap-anydpi/ic_launcher.xml` y `ic_launcher_round.xml` con `<adaptive-icon>` (`background`, `foreground` y `monochrome`). Verificar que `:app:assembleDebug` compila.
+- [x] 1.3 Agregar `android:icon="@mipmap/ic_launcher"` y `android:roundIcon="@mipmap/ic_launcher_round"` al `<application>` del manifest. Verificar con `:app:assembleDebug` y con `aapt2 dump badging` sobre el APK que aparezcan `application-icon` y el ícono redondo.
 
 ## 2. Dominio (`:core:domain`)
 
