@@ -164,15 +164,15 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
 
 ## 7. Integración en la creación de solicitud (`:features:client`)
 
-- [ ] 7.1 RED en `CreateRequestViewModelTest` `[rr]`:
+- [x] 7.1 RED en `CreateRequestViewModelTest` `[rr]`:
   - Ubicación precargada con la zona del cliente.
   - Cliente sin zona: la ubicación queda vacía.
   - Si la lectura del usuario falla, no hay mensaje y la ubicación queda vacía.
   - Publicar con una ubicación elegida en el mapa: la solicitud creada tiene Q y su dirección.
 
   `[loc]` "Ubicación elegida en el mapa": `onPlacePicked` reemplaza juntas las coordenadas y la dirección obtenidas antes con "Usar mi ubicación". Verificar que falla.
-- [ ] 7.2 GREEN: `CreateRequestViewModel` inyecta `AuthRepository` y `UserRepository`, precarga la zona una vez en `init` sin pisar una ubicación ya cargada, y gana `onPlacePicked`. `CreateRequestScreen` muestra "Elegir en el mapa" y abre `MapPickerDialog` con `initial = place`. Verificar que `./gradlew :features:client:test` pasa y que los tests existentes de creación siguen en verde.
-- [ ] 7.3 Verificar que `./gradlew test` y `./gradlew build` pasan en verde. Revisar que `:features:*` no dependan de `:core:data` ni entre sí (`build.gradle.kts` sin cambios de módulos en las features).
+- [x] 7.2 GREEN: `CreateRequestViewModel` inyecta `AuthRepository` y `UserRepository`, precarga la zona una vez en `init` sin pisar una ubicación ya cargada, y gana `onPlacePicked`. `CreateRequestScreen` muestra "Elegir en el mapa" y abre `MapPickerDialog` con `initial = place`. Verificar que `./gradlew :features:client:test` pasa y que los tests existentes de creación siguen en verde.
+- [x] 7.3 Verificar que `./gradlew test` y `./gradlew build` pasan en verde. Revisar que `:features:*` no dependan de `:core:data` ni entre sí (`build.gradle.kts` sin cambios de módulos en las features).
 
 ## 8. Checklist manual y cierre
 

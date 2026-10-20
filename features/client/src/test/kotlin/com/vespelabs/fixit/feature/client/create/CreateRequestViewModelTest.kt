@@ -39,9 +39,14 @@ class CreateRequestViewModelTest {
     private val users = TestUserRepository(listOf(client))
     private val requests = TestRepairRequestRepository()
     private val location = TestLocation()
-    private val viewModel = CreateRequestViewModel(
+    // Lazy: the ViewModel launches its area read in init, so it must be built after MainDispatcherRule sets Main.
+    private val viewModel by lazy { newViewModel() }
+
+    private fun newViewModel() = CreateRequestViewModel(
         CreateRequestUseCase(auth, users, requests),
         GetCurrentPlaceUseCase(location, location),
+        auth,
+        users,
     )
 
     private val state get() = viewModel.uiState.value
@@ -247,4 +252,75 @@ class CreateRequestViewModelTest {
             assertEquals(ValidationError.LOCATION_REQUIRED, state.validationError)
             assertTrue(requests.createCalls.isEmpty())
         }
+
+    // [rr] Location preloaded with the client area / chosen on the map
+
+    private val quilmes = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes")
+
+    @Test
+    fun `given a client with area Z when the creation form opens then the location is Z with its address`() = runTest {
+        users.upsert(client.copy(area = quilmes))
+
+        val viewModel = newViewModel()
+        advanceUntilIdle()
+
+        assertEquals(quilmes.point, viewModel.uiState.value.point)
+        assertEquals("Calle 123, Quilmes", viewModel.uiState.value.address)
+    }
+
+    @Test
+    fun `given a client without area when the creation form opens then the location is empty`() = runTest {
+        advanceUntilIdle()
+
+        assertNull(state.point)
+        assertEquals("", state.address)
+    }
+
+    @Test
+    fun `given the user cannot be read when the creation form opens then there is no message and the location is empty`() =
+        runTest {
+            users.setUsers(emptyList())
+
+            val viewModel = newViewModel()
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.message)
+            assertNull(viewModel.uiState.value.point)
+        }
+
+    @Test
+    fun `given a location already obtained when the area arrives later then it does not overwrite it`() = runTest {
+        users.upsert(client.copy(area = quilmes))
+        val viewModel = newViewModel()
+
+        viewModel.onPlacePicked(Place(GeoPoint(-34.7631, -58.2112), "Calle 12 450, Berazategui"))
+        advanceUntilIdle()
+
+        assertEquals("Calle 12 450, Berazategui", viewModel.uiState.value.address)
+    }
+
+    @Test
+    fun `given a location from use my location when Q is confirmed on the map then point and address are both replaced`() =
+        runTest {
+            viewModel.onUseLocation()
+            advanceUntilIdle()
+            val q = Place(GeoPoint(-34.7631, -58.2112), "Calle 12 450, Berazategui")
+
+            viewModel.onPlacePicked(q)
+
+            assertEquals(q.point, state.point)
+            assertEquals("Calle 12 450, Berazategui", state.address)
+        }
+
+    @Test
+    fun `given a valid form with Q chosen on the map when publishing then the request has Q and its address`() = runTest {
+        val q = Place(GeoPoint(-34.7631, -58.2112), "Calle 12 450, Berazategui")
+        fillFormWithoutLocation()
+        viewModel.onPlacePicked(q)
+
+        viewModel.onSubmit()
+        advanceUntilIdle()
+
+        assertEquals(q, requests.requestsSnapshot().single().place)
+    }
 }
