@@ -110,8 +110,8 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
 
 ## 4. `MapPickerViewModel` (`:core:ui`)
 
-- [ ] 4.1 Agregar a `core/ui/build.gradle.kts` los *plugins* `ksp` y `hilt` y las dependencias `hilt-android`, `hilt-compiler` (KSP), `androidx-hilt-lifecycle-viewmodel-compose` y `lifecycle-runtime-compose`, más las de test `junit`, `kotlinx-coroutines-test` y `testFixtures(project(":core:domain"))`. Verificar que `./gradlew :core:ui:test` corre: agregar un test que falle, comprobar que se reporta, corregirlo y borrarlo.
-- [ ] 4.2 RED `MapPickerViewModelTest` (con `StandardTestDispatcher`, `TestAddressSearch` y `TestLocation` como `AddressResolver`), parte de apertura y mapa `[addr]`:
+- [x] 4.1 Agregar a `core/ui/build.gradle.kts` los *plugins* `ksp` y `hilt` y las dependencias `hilt-android`, `hilt-compiler` (KSP), `androidx-hilt-lifecycle-viewmodel-compose` y `lifecycle-runtime-compose`, más las de test `junit`, `kotlinx-coroutines-test` y `testFixtures(project(":core:domain"))`. Verificar que `./gradlew :core:ui:test` corre: agregar un test que falle, comprobar que se reporta, corregirlo y borrarlo.
+- [x] 4.2 RED `MapPickerViewModelTest` (con `StandardTestDispatcher`, `TestAddressSearch` y `TestLocation` como `AddressResolver`), parte de apertura y mapa `[addr]`:
   - Apertura sin ubicación previa: centro en Florencio Varela y ninguna llamada a `LocationProvider`.
   - Apertura con ubicación previa.
   - Mover el mapa resuelve la dirección: `isResolving` pasa a `true` y luego a `false`.
@@ -119,8 +119,8 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
   - Dos `onCameraIdle` seguidos: solo vale la última resolución.
 
   Verificar que falla.
-- [ ] 4.3 GREEN: `MapPickerViewModel` con inyección asistida (`initial: Place?`) y `MapPickerUiState`, más `onCameraIdle` y `onAddressChange`, según D4. Verificar que los tests de 4.2 pasan.
-- [ ] 4.4 RED, parte de búsqueda `[addr]`:
+- [x] 4.3 GREEN: `MapPickerViewModel` con inyección asistida (`initial: Place?`) y `MapPickerUiState`, más `onCameraIdle` y `onAddressChange`, según D4. Verificar que los tests de 4.2 pasan.
+- [x] 4.4 RED, parte de búsqueda `[addr]`:
   - Espera entre teclas: 3 cambios en menos de 300 ms → 1 búsqueda con el último texto. Se avanza el tiempo virtual.
   - Resultado viejo descartado: la búsqueda de "Calle 1" responde después que la de "Calle 12" y no pisa sus sugerencias; usar un `TestAddressSearch` con respuestas diferidas.
   - Búsqueda fallida: `searchUnavailable = true`, sin sugerencias, y `onConfirm` sigue funcionando.
@@ -128,8 +128,8 @@ Recomendación (no vinculante): `feature-branch-chain`, porque Gian trabaja en p
   - La búsqueda usa el centro actual como `near`.
 
   Verificar que falla.
-- [ ] 4.5 GREEN: `onQueryChange` con `debounce(300)` + `mapLatest` (D4). Verificar que los tests de 4.4 pasan.
-- [ ] 4.6 RED/GREEN, sugerencia y confirmación `[addr]`:
+- [x] 4.5 GREEN: `onQueryChange` con `debounce(300)` + `mapLatest` (D4). Verificar que los tests de 4.4 pasan.
+- [x] 4.6 RED/GREEN, sugerencia y confirmación `[addr]`:
   - Elegir una sugerencia: centro y dirección de la sugerencia, se emite `cameraTarget`, se ocultan las sugerencias y el `onCameraIdle` siguiente en el mismo punto no resuelve.
   - `onCameraMoved` limpia `cameraTarget`.
   - Confirmar devuelve `Place(center, address.trim())` con la dirección editada.
