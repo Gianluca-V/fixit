@@ -41,10 +41,11 @@ El conjunto de temas a los que debe estar suscrito un dispositivo DEBE ser una f
 - Al cerrar sesión, el dispositivo DEBE desuscribirse de todos los temas (`user_{uid}` y todos los `category_*`) de esa cuenta.
 - Cerrar o matar la app NO DEBE desuscribir ningún tema.
 - Al cerrar sesión, la app DEBE retirar de la bandeja del sistema los avisos que siguen visibles, para que no los vea la persona que inicie sesión después en el mismo dispositivo. Esta retirada DEBE ocurrir de inmediato al cerrar sesión, sin esperar a que terminen operaciones de suscripción pendientes.
-- El dispositivo DEBE registrar de forma persistente el conjunto de temas **aplicado con éxito**. Al arrancar y con cada cambio de sesión, DEBE reconciliarlo con el conjunto deseado (vacío sin sesión): una operación que falló (por ejemplo, sin conexión) DEBE reintentarse en la siguiente emisión de sesión que cambie el usuario o sus categorías (las que solo cambian el nombre o la reputación no cuentan) o, a más tardar, en el siguiente arranque, y NO DEBEN quedar suscripciones de una cuenta anterior.
-- Los temas cuya suscripción quedó sin confirmar (falló, venció el tiempo o se canceló) DEBEN registrarse de forma persistente como **posiblemente suscritos**; al cerrar sesión el dispositivo DEBE desuscribirse de los temas aplicados y de los posiblemente suscritos.
+- Cada **reconciliación** DEBE: suscribirse a todos los temas del conjunto deseado, desuscribirse de cada `category_{C}` de las ocho categorías que no esté en el conjunto deseado y desuscribirse de cada tema `user_*` registrado en el dispositivo que no esté en el conjunto deseado. Las operaciones de temas de FCM son idempotentes, así que repetir una suscripción o una desuscripción ya aplicada es seguro; por eso el dispositivo NO registra qué categorías aplicó.
+- Hay una reconciliación al arrancar, con cada emisión de sesión que cambie el usuario o sus categorías (las que solo cambian el nombre, la reputación o el radio no cuentan) y cuando FCM entrega un token nuevo. Una emisión de determinación (`Loading`) NO DEBE suscribir nada.
+- El dispositivo DEBE registrar de forma persistente cada tema `user_{uid}` **antes** de suscribirse a él, y DEBE borrarlo del registro solo cuando su desuscripción termina con éxito, de modo que una desuscripción fallida de una cuenta anterior se repita en cada reconciliación hasta que tenga éxito y NO DEBEN quedar suscripciones de una cuenta anterior.
+- Si alguna operación de una reconciliación falla (por ejemplo, sin conexión o por tiempo agotado), la reconciliación completa DEBE repetirse mientras la app siga abierta, con una espera creciente (30 s, que se duplica en cada intento hasta un máximo de 10 min), sin esperar a otro cambio de sesión. Una reconciliación nueva (por un cambio de sesión o un token nuevo) reemplaza a la que estaba en curso o esperando.
 - Las operaciones sobre los temas DEBEN aplicarse de forma serializada, y un cambio de sesión nuevo (por ejemplo, cerrar sesión) NO DEBE quedar en cola detrás de operaciones lentas: interrumpe las que están en curso.
-- Cuando FCM entrega un token nuevo, el dispositivo DEBE descartar lo que tenía registrado como suscrito (incluso si la app termina antes de reconciliar) y suscribirse de nuevo a todo el conjunto deseado en la siguiente emisión de sesión que no sea de determinación (`Loading`); NO DEBE suscribirse mientras la sesión está en determinación.
 - Un fallo al suscribirse o desuscribirse NO DEBE hacer fallar iniciar sesión, cerrar sesión ni guardar el perfil.
 
 #### Escenario: Temas de un cliente
@@ -99,11 +100,16 @@ El conjunto de temas a los que debe estar suscrito un dispositivo DEBE ser una f
 - CUANDO la persona inicia sesión o guarda sus categorías
 - ENTONCES la operación termina con éxito y la falla no llega a la capa de presentación
 
-#### Escenario: Operación fallida se reintenta en la siguiente emisión de sesión
+#### Escenario: Operación fallida se reintenta con la app abierta
 - DADO un suscriptor de prueba que falla al suscribirse a `category_GAS` durante el inicio de sesión de un profesional con categorías `{GAS, PLUMBING}`
-- CUANDO el suscriptor se recupera y la sesión vuelve a emitir con un cambio relevante (por ejemplo, la persona guarda sus categorías)
-- ENTONCES se suscribe a `category_GAS`
-- Y no repite las operaciones que ya habían tenido éxito
+- CUANDO el suscriptor se recupera y pasan 30 segundos (tiempo virtual) sin ninguna emisión de sesión nueva
+- ENTONCES el suscriptor queda suscrito a `user_p1`, `category_GAS` y `category_PLUMBING`
+
+#### Escenario: Desuscripción fallida de una cuenta anterior se repara con la cuenta siguiente
+- DADO un cliente `c1` que cerró sesión con el suscriptor de prueba sin conexión, de modo que `user_c1` sigue suscrito y registrado
+- CUANDO el suscriptor se recupera y el profesional `p1` inicia sesión en el mismo dispositivo
+- ENTONCES el suscriptor queda sin `user_c1` y suscrito a los temas de `p1`
+- Y `user_c1` ya no figura en el registro del dispositivo
 
 #### Escenario: Desuscripción fallida al cerrar sesión se repara al arrancar
 - DADO un profesional suscrito a `user_p1` y `category_GAS` cuyo cierre de sesión falló al desuscribirse (suscriptor de prueba sin conexión), con el estado de temas persistido de prueba
@@ -119,19 +125,19 @@ El conjunto de temas a los que debe estar suscrito un dispositivo DEBE ser una f
 - DADO un profesional `p1` con categorías `{GAS}`, los temas `user_p1` y `category_GAS` ya aplicados y la sesión en determinación (`Loading`)
 - CUANDO FCM entrega un token nuevo
 - ENTONCES no se realiza ninguna suscripción mientras la sesión sigue en determinación
-- Y cuando la sesión pasa a `SignedIn(p1)` el suscriptor de prueba recibe la suscripción a `user_p1` y `category_GAS`, aunque ya figuraran como aplicados antes del token
+- Y cuando la sesión pasa a `SignedIn(p1)` el suscriptor de prueba recibe la suscripción a `user_p1` y `category_GAS`, aunque ya estuviera suscrito a ellos antes del token
 
 #### Escenario: Cerrar sesión con operaciones pendientes cancela la bandeja de inmediato
 - DADO un profesional con operaciones de suscripción en curso que no terminan (suscriptor de prueba bloqueado) y un gestor de avisos de prueba
 - CUANDO la sesión pasa a sin sesión
 - ENTONCES se cancelan todos los avisos de la bandeja sin esperar a que las operaciones pendientes terminen
-- Y después se desuscribe de los temas aplicados y de los posiblemente suscritos
+- Y después se desuscribe de `user_p1` y de todas las categorías
 
 #### Escenario: Suscripción con tiempo agotado se desuscribe al cerrar sesión
 - DADO un suscriptor de prueba cuya suscripción a `category_GAS` no termina (tiempo agotado, en tiempo virtual) y un profesional que inicia sesión con categorías `{GAS}`
 - CUANDO se agota el tiempo de la operación y luego el profesional cierra sesión
-- ENTONCES `category_GAS` queda registrada de forma persistente como posiblemente suscrita (no como aplicada)
-- Y al cerrar sesión el suscriptor recibe la desuscripción de `category_GAS` además de la de los temas aplicados
+- ENTONCES el suscriptor recibe la desuscripción de `category_GAS` y de `user_p1`
+- Y la operación siguiente a la que agotó el tiempo, en la misma reconciliación, se aplicó igual
 
 ### Requirement: Aviso de solicitud aceptada [Fase 4]
 
