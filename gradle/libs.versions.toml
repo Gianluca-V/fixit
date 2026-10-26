@@ -59,6 +59,8 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+# Phase 4 push (design 14b): FCM topics and data messages; version from the Firebase BoM.
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 geofire-android-common = { group = "com.firebase", name = "geofire-android-common", version.ref = "geofire" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-coroutines = { group = "com.squareup.okhttp3", name = "okhttp-coroutines", version.ref = "okhttp" }

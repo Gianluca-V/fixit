@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-// Cloudinary keys (D22): read from the git-ignored local.properties; empty when missing so the build never breaks.
+// Cloudinary keys (D22) and the push Worker URL (design 14b): read from the git-ignored local.properties; empty when missing so the build never breaks.
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.isFile) file.inputStream().use { load(it) }
@@ -23,6 +23,8 @@ android {
         minSdk = 26
         buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"${localProperty("CLOUDINARY_CLOUD_NAME")}\"")
         buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", "\"${localProperty("CLOUDINARY_UPLOAD_PRESET")}\"")
+        // Empty (the default) leaves the request repository undecorated: no push requests at all (withPush, 14b.3).
+        buildConfigField("String", "PUSH_WORKER_URL", "\"${localProperty("PUSH_WORKER_URL")}\"")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -57,6 +59,10 @@ dependencies {
 
     // Phase 3: real location (Fused provider; the Geocoder is part of the framework).
     implementation(libs.play.services.location)
+
+    // Phase 4: push notifications (FCM topics, design 14b); core-ktx for NotificationManagerCompat.
+    implementation(libs.firebase.messaging)
+    implementation(libs.androidx.core.ktx)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

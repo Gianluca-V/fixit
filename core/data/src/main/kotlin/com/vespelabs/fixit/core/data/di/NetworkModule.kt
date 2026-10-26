@@ -5,6 +5,7 @@ import com.vespelabs.fixit.core.data.cloudinary.CloudinaryConfig
 import com.vespelabs.fixit.core.data.cloudinary.CloudinaryUploader
 import com.vespelabs.fixit.core.data.cloudinary.PhotoUploader
 import com.vespelabs.fixit.core.data.photon.PhotonAddressSearch
+import com.vespelabs.fixit.core.data.push.WorkerConfig
 import com.vespelabs.fixit.core.domain.repository.AddressSearch
 import dagger.Binds
 import dagger.Module
@@ -16,7 +17,7 @@ import okhttp3.OkHttpClient
 
 /**
  * HTTP stack of the data layer: one shared [OkHttpClient], the Cloudinary uploader (design 13.7, D21, D22) and the
- * Photon address search (icon-map-address D2).
+ * Photon address search (icon-map-address D2). Phase 4 adds the push Worker configuration (design 14b.3).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -40,5 +41,9 @@ abstract class NetworkModule {
             cloudName = BuildConfig.CLOUDINARY_CLOUD_NAME,
             uploadPreset = BuildConfig.CLOUDINARY_UPLOAD_PRESET,
         )
+
+        /** From the git-ignored local.properties; empty means no Worker: requests are not decorated (withPush). */
+        @Provides
+        fun workerConfig(): WorkerConfig = WorkerConfig(baseUrl = BuildConfig.PUSH_WORKER_URL)
     }
 }
