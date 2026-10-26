@@ -2,8 +2,10 @@ package com.vespelabs.fixit.feature.client.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vespelabs.fixit.core.domain.model.ThemeMode
 import com.vespelabs.fixit.core.domain.model.User
 import com.vespelabs.fixit.core.domain.repository.AuthRepository
+import com.vespelabs.fixit.core.domain.repository.ThemePreferences
 import com.vespelabs.fixit.core.domain.repository.UserRepository
 import com.vespelabs.fixit.core.domain.result.AppResult
 import com.vespelabs.fixit.core.domain.result.DomainError
@@ -30,9 +32,13 @@ sealed interface ClientProfileUiState {
 class ClientProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
+    private val themePreferences: ThemePreferences,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ClientProfileUiState>(ClientProfileUiState.Loading)
     val uiState: StateFlow<ClientProfileUiState> = _uiState.asStateFlow()
+
+    /** Device state, not screen state: the repository's own flow, so both profile screens agree. */
+    val themeMode: StateFlow<ThemeMode> = themePreferences.mode
 
     init {
         viewModelScope.launch {
@@ -52,4 +58,6 @@ class ClientProfileViewModel @Inject constructor(
 
     /** The session gate in `:app` reacts by itself to the signed-out session. */
     fun onSignOutClick() = authRepository.signOut()
+
+    fun onThemeModeChange(mode: ThemeMode) = themePreferences.setMode(mode)
 }

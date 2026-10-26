@@ -1,5 +1,6 @@
 package com.vespelabs.fixit.feature.client.profile
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,11 +20,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vespelabs.fixit.core.domain.model.ThemeMode
 import com.vespelabs.fixit.core.domain.model.User
 import com.vespelabs.fixit.core.domain.model.UserRole
 import com.vespelabs.fixit.core.ui.components.ErrorContent
 import com.vespelabs.fixit.core.ui.components.LoadingContent
 import com.vespelabs.fixit.core.ui.components.ScreenScaffold
+import com.vespelabs.fixit.core.ui.components.SectionCard
+import com.vespelabs.fixit.core.ui.components.ThemeModeRow
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.client.R
 import com.vespelabs.fixit.core.ui.R as UiR
@@ -36,10 +40,13 @@ fun ClientProfileRoute(
     viewModel: ClientProfileViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     ClientProfileScreen(
         uiState = uiState,
+        themeMode = themeMode,
         onEditClick = onEditClick,
         onSignOutClick = viewModel::onSignOutClick,
+        onThemeModeChange = viewModel::onThemeModeChange,
         modifier = modifier,
     )
 }
@@ -47,8 +54,10 @@ fun ClientProfileRoute(
 @Composable
 fun ClientProfileScreen(
     uiState: ClientProfileUiState,
+    themeMode: ThemeMode,
     onEditClick: () -> Unit,
     onSignOutClick: () -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ScreenScaffold(title = stringResource(R.string.client_profile_title), modifier = modifier) { padding ->
@@ -62,8 +71,10 @@ fun ClientProfileScreen(
             }
             is ClientProfileUiState.Success -> ProfileDetails(
                 user = uiState.user,
+                themeMode = themeMode,
                 onEditClick = onEditClick,
                 onSignOutClick = onSignOutClick,
+                onThemeModeChange = onThemeModeChange,
                 modifier = contentModifier,
             )
         }
@@ -73,8 +84,10 @@ fun ClientProfileScreen(
 @Composable
 private fun ProfileDetails(
     user: User,
+    themeMode: ThemeMode,
     onEditClick: () -> Unit,
     onSignOutClick: () -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -82,14 +95,25 @@ private fun ProfileDetails(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        ProfileField(label = stringResource(UiR.string.profile_field_name), value = user.name)
-        ProfileField(label = stringResource(R.string.client_profile_email), value = user.email)
-        ProfileField(label = stringResource(UiR.string.profile_field_phone), value = user.phone)
-        ProfileField(label = stringResource(R.string.client_profile_role), value = user.role.label())
+        SectionCard(
+            title = stringResource(UiR.string.settings_section_account),
+            subtitle = stringResource(UiR.string.settings_section_account_hint),
+        ) {
+            ProfileField(label = stringResource(UiR.string.profile_field_name), value = user.name)
+            ProfileField(label = stringResource(R.string.client_profile_email), value = user.email)
+            ProfileField(label = stringResource(UiR.string.profile_field_phone), value = user.phone)
+            ProfileField(label = stringResource(R.string.client_profile_role), value = user.role.label())
+        }
         Button(onClick = onEditClick, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.client_profile_edit))
+        }
+        SectionCard(
+            title = stringResource(UiR.string.settings_section_appearance),
+            subtitle = stringResource(UiR.string.settings_section_appearance_hint),
+        ) {
+            ThemeModeRow(mode = themeMode, onModeChange = onThemeModeChange)
         }
         SignOutButton(onSignOutClick)
     }
@@ -98,8 +122,12 @@ private fun ProfileDetails(
 @Composable
 internal fun ProfileField(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
-        Text(value, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(text = value, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -119,7 +147,7 @@ internal fun UserRole.label(): String = stringResource(
     },
 )
 
-@Preview(showBackground = true)
+@Preview(showBackground = true,uiMode=UI_MODE_NIGHT_YES)
 @Composable
 private fun ClientProfileScreenPreview() {
     FixItTheme {
@@ -127,8 +155,10 @@ private fun ClientProfileScreenPreview() {
             uiState = ClientProfileUiState.Success(
                 User(id = "c1", name = "Ana López", email = "ana@fixit.test", phone = "11 5555-0001", role = UserRole.CLIENT),
             ),
+            themeMode = ThemeMode.SYSTEM,
             onEditClick = {},
             onSignOutClick = {},
+            onThemeModeChange = {},
         )
     }
 }

@@ -5,10 +5,12 @@ import com.vespelabs.fixit.core.data.device.GeocoderAddressResolver
 import com.vespelabs.fixit.core.data.firebase.FirebaseAuthRepository
 import com.vespelabs.fixit.core.data.firebase.FirebaseRepairRequestRepository
 import com.vespelabs.fixit.core.data.firebase.FirebaseUserRepository
+import com.vespelabs.fixit.core.data.prefs.SharedPreferencesThemePreferences
 import com.vespelabs.fixit.core.domain.repository.AddressResolver
 import com.vespelabs.fixit.core.domain.repository.AuthRepository
 import com.vespelabs.fixit.core.domain.repository.LocationProvider
 import com.vespelabs.fixit.core.domain.repository.RepairRequestRepository
+import com.vespelabs.fixit.core.domain.repository.ThemePreferences
 import com.vespelabs.fixit.core.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -45,4 +47,9 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun address(impl: GeocoderAddressResolver): AddressResolver
+
+    /** Also @Singleton: the app shell and the profile screens must observe the same instance. */
+    @Binds
+    @Singleton
+    abstract fun themePreferences(impl: SharedPreferencesThemePreferences): ThemePreferences
 }

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,6 +18,9 @@ import com.vespelabs.fixit.core.ui.theme.FixItTheme
 /**
  * One chip per [ServiceCategory]. It only reports taps: the ViewModel decides whether the
  * selection is single (new request) or multiple (professional profile).
+ *
+ * A selected chip is solid teal, not the default pale secondary container: choosing a trade is a
+ * decision, and it should look decided.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -25,6 +30,13 @@ fun CategoryChips(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val chipColors = FilterChipDefaults.filterChipColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        selectedContainerColor = MaterialTheme.colorScheme.primary,
+        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+    )
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -36,6 +48,7 @@ fun CategoryChips(
                 onClick = { onCategoryClick(category) },
                 label = { Text(category.label()) },
                 enabled = enabled,
+                colors = chipColors,
             )
         }
     }
