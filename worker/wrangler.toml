@@ -1,0 +1,8 @@
+name = "fixit-push"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# Public configuration only. The service account JSON is the secret
+# GOOGLE_SERVICE_ACCOUNT (`wrangler secret put`, or `.dev.vars` locally).
+[vars]
+FIREBASE_PROJECT_ID = "fixit-af047"
