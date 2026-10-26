@@ -64,7 +64,7 @@ fun ContactCard(contact: Contact, modifier: Modifier = Modifier) {
 }
 
 /** Returns false when no app can handle the intent. */
-private fun Context.tryStart(intent: Intent): Boolean = try {
+internal fun Context.tryStart(intent: Intent): Boolean = try {
     startActivity(intent)
     true
 } catch (_: ActivityNotFoundException) {
