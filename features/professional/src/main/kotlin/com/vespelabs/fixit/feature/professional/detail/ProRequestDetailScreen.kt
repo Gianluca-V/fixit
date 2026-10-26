@@ -51,6 +51,7 @@ import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
 import com.vespelabs.fixit.feature.professional.common.MessageScaffold
 import com.vespelabs.fixit.feature.professional.common.distanceText
+import com.vespelabs.fixit.feature.professional.common.isRetryable
 import java.text.DateFormat
 import java.util.Date
 
@@ -131,8 +132,6 @@ fun ProRequestDetailScreen(
         )
     }
 }
-
-private fun DomainError.isRetryable(): Boolean = this != DomainError.NotFound && this != DomainError.Unauthorized
 
 @Composable
 private fun DetailContent(

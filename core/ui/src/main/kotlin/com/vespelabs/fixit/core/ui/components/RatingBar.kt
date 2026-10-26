@@ -17,8 +17,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.vespelabs.fixit.core.domain.model.Limits
 import com.vespelabs.fixit.core.ui.R
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
+import com.vespelabs.fixit.core.ui.theme.LocalFixItColors
 
-/** Five stars. Read-only when [onRatingChange] is null; [rating] 0 means "not rated yet". */
+/**
+ * Five stars. Read-only when [onRatingChange] is null; [rating] 0 means "not rated yet".
+ *
+ * Filled stars use the amber rating colour, not `primary`: a rating is praise, and praise should
+ * not look like a button. The empty stars stay in the outline colour so the scale is still readable.
+ */
 @Composable
 fun RatingBar(
     rating: Int,
@@ -26,6 +32,7 @@ fun RatingBar(
     onRatingChange: ((Int) -> Unit)? = null,
 ) {
     val description = stringResource(R.string.rating_value, rating)
+    val filledColor = LocalFixItColors.current.rating
     val rowModifier = if (onRatingChange == null) {
         modifier.semantics { contentDescription = description }
     } else {
@@ -35,7 +42,7 @@ fun RatingBar(
         (Limits.RATING_MIN..Limits.RATING_MAX).forEach { value ->
             val filled = value <= rating
             val icon = if (filled) Icons.Filled.Star else Icons.Outlined.Star
-            val tint = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+            val tint = if (filled) filledColor else MaterialTheme.colorScheme.outline
             if (onRatingChange == null) {
                 Icon(icon, contentDescription = null, tint = tint)
             } else {

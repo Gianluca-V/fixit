@@ -11,6 +11,7 @@ import com.google.firebase.firestore.Source
 import com.google.firebase.firestore.Transaction
 import com.vespelabs.fixit.core.data.cloudinary.ImageCompressor
 import com.vespelabs.fixit.core.data.cloudinary.PhotoUploader
+import com.vespelabs.fixit.core.data.device.CapturedPhotos
 import com.vespelabs.fixit.core.domain.model.GeoPoint
 import com.vespelabs.fixit.core.domain.model.NewRequest
 import com.vespelabs.fixit.core.domain.model.RepairRequest
@@ -42,6 +43,7 @@ class FirebaseRepairRequestRepository @Inject constructor(
     private val imageCompressor: ImageCompressor,
     private val photoUploader: PhotoUploader,
     private val clock: Clock,
+    private val capturedPhotos: CapturedPhotos,
 ) : RepairRequestRepository {
 
     private val requests get() = firestore.collection(REQUESTS)
@@ -53,7 +55,8 @@ class FirebaseRepairRequestRepository @Inject constructor(
     /**
      * For each photo, in order: compress (local CPU, outside any timeout) and upload in its own 30 s [firebaseCall];
      * then write the document in a 15 s [firebaseCall]. The first failure ends the creation: no request is written
-     * and the photos already uploaded are NOT deleted (deleting needs the signed API, D18).
+     * and the photos already uploaded are NOT deleted (deleting needs the signed API, D18). Only after a successful
+     * write are the local camera captures deleted; a failure keeps them so the user can retry.
      */
     override suspend fun create(clientId: String, input: NewRequest): AppResult<RepairRequest> {
         val category = input.category ?: return validationError(ValidationError.CATEGORY_REQUIRED)
@@ -72,11 +75,13 @@ class FirebaseRepairRequestRepository @Inject constructor(
             }
         }
 
-        return firebaseCall {
+        val created = firebaseCall {
             doc.set(newRequestFields(clientId, category, input.description, photoUrls, place)).await()
             // The acknowledged write is in the local cache; ESTIMATE resolves createdAt even before the server echo.
             doc.get(Source.CACHE).await().toRepairRequest()
         }
+        if (created is AppResult.Success) capturedPhotos.delete(input.photoUris)
+        return created
     }
 
     override suspend fun get(requestId: String): AppResult<RepairRequest> = firebaseCall {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="auth_sign_in_title">Iniciar sesión</string>
+    <string name="auth_welcome_tagline">Oficios de confianza, cerca de casa.</string>
     <string name="auth_sign_up_title">Crear cuenta</string>
     <string name="auth_go_to_sign_up">Crear cuenta</string>
 

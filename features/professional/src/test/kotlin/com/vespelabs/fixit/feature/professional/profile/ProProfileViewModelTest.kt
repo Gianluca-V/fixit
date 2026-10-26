@@ -3,11 +3,13 @@ package com.vespelabs.fixit.feature.professional.profile
 import com.vespelabs.fixit.core.domain.model.Reputation
 import com.vespelabs.fixit.core.domain.model.ServiceCategory
 import com.vespelabs.fixit.core.domain.model.SessionState
+import com.vespelabs.fixit.core.domain.model.ThemeMode
 import com.vespelabs.fixit.core.domain.result.DomainError
 import com.vespelabs.fixit.core.domain.rules.average
 import com.vespelabs.fixit.core.domain.testing.MainDispatcherRule
 import com.vespelabs.fixit.core.domain.testing.TestAuthRepository
 import com.vespelabs.fixit.core.domain.testing.TestData
+import com.vespelabs.fixit.core.domain.testing.TestThemePreferences
 import com.vespelabs.fixit.core.domain.testing.TestUserRepository
 import java.math.BigDecimal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,8 +37,9 @@ class ProProfileViewModelTest {
     )
     private val auth = TestAuthRepository(SessionState.SignedIn(electrician))
     private val users = TestUserRepository(listOf(electrician))
+    private val theme = TestThemePreferences()
 
-    private fun viewModel() = ProProfileViewModel(auth, users)
+    private fun viewModel() = ProProfileViewModel(auth, users, theme)
 
     /** Waits for the first matching state; the virtual-time timeout makes a missing state fail fast. */
     private suspend fun ProProfileViewModel.awaitState(
@@ -86,6 +89,17 @@ class ProProfileViewModelTest {
         }
 
     @Test
+    fun `given observing the user failed with network when retry is tapped then the profile is shown`() = runTest {
+        users.observeError = DomainError.Network // fails only the first observe
+        val viewModel = viewModel()
+        viewModel.awaitState { it is ProProfileUiState.Error }
+
+        viewModel.onRetry()
+
+        assertEquals(ProProfileUiState.Success(electrician), viewModel.awaitState { it is ProProfileUiState.Success })
+    }
+
+    @Test
     fun `given there is no session when the profile tab opens then it shows unauthorized`() = runTest {
         auth.setSession(SessionState.SignedOut)
 
@@ -103,5 +117,18 @@ class ProProfileViewModelTest {
         viewModel.onSignOutClick()
 
         assertEquals(1, auth.signOutCalls)
+    }
+
+    // [ui] Appearance
+
+    @Test
+    fun `given dark mode when the system theme is restored then the preference is written`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.onThemeModeChange(ThemeMode.DARK)
+        viewModel.onThemeModeChange(ThemeMode.SYSTEM)
+
+        assertEquals(listOf(ThemeMode.DARK, ThemeMode.SYSTEM), theme.writes)
+        assertEquals(ThemeMode.SYSTEM, viewModel.themeMode.first())
     }
 }

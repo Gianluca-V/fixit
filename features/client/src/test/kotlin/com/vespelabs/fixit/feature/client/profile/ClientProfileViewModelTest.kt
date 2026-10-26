@@ -1,11 +1,13 @@
 package com.vespelabs.fixit.feature.client.profile
 
 import com.vespelabs.fixit.core.domain.model.SessionState
+import com.vespelabs.fixit.core.domain.model.ThemeMode
 import com.vespelabs.fixit.core.domain.model.UserRole
 import com.vespelabs.fixit.core.domain.result.DomainError
 import com.vespelabs.fixit.core.domain.testing.MainDispatcherRule
 import com.vespelabs.fixit.core.domain.testing.TestAuthRepository
 import com.vespelabs.fixit.core.domain.testing.TestData
+import com.vespelabs.fixit.core.domain.testing.TestThemePreferences
 import com.vespelabs.fixit.core.domain.testing.TestUserRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -26,8 +28,9 @@ class ClientProfileViewModelTest {
     private val client = TestData.client(id = "c1", name = "Ana López", email = "ana@fixit.test", phone = "11 5555-0001")
     private val auth = TestAuthRepository(SessionState.SignedIn(client))
     private val users = TestUserRepository(listOf(client))
+    private val theme = TestThemePreferences()
 
-    private fun viewModel() = ClientProfileViewModel(auth, users)
+    private fun viewModel() = ClientProfileViewModel(auth, users, theme)
 
     /** Waits for the first matching state; the virtual-time timeout makes a missing state fail fast. */
     private suspend fun ClientProfileViewModel.awaitState(
@@ -91,5 +94,17 @@ class ClientProfileViewModelTest {
 
         assertEquals(1, auth.signOutCalls)
         assertEquals(SessionState.SignedOut, auth.session.first())
+    }
+
+    // [ui] Appearance
+
+    @Test
+    fun `given the system theme when dark mode is turned on then the preference is written`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.onThemeModeChange(ThemeMode.DARK)
+
+        assertEquals(listOf(ThemeMode.DARK), theme.writes)
+        assertEquals(ThemeMode.DARK, viewModel.themeMode.first())
     }
 }

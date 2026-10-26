@@ -2,13 +2,16 @@ package com.vespelabs.fixit.feature.professional.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vespelabs.fixit.core.domain.model.ThemeMode
 import com.vespelabs.fixit.core.domain.model.User
 import com.vespelabs.fixit.core.domain.repository.AuthRepository
+import com.vespelabs.fixit.core.domain.repository.ThemePreferences
 import com.vespelabs.fixit.core.domain.repository.UserRepository
 import com.vespelabs.fixit.core.domain.result.AppResult
 import com.vespelabs.fixit.core.domain.result.DomainError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,12 +34,28 @@ sealed interface ProProfileUiState {
 class ProProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
+    private val themePreferences: ThemePreferences,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ProProfileUiState>(ProProfileUiState.Loading)
     val uiState: StateFlow<ProProfileUiState> = _uiState.asStateFlow()
 
+    /** Device state, not screen state: the repository's own flow, so both profile screens agree. */
+    val themeMode: StateFlow<ThemeMode> = themePreferences.mode
+
+    private var job: Job? = null
+
     init {
-        viewModelScope.launch {
+        observe()
+    }
+
+    fun onRetry() {
+        _uiState.value = ProProfileUiState.Loading
+        observe()
+    }
+
+    private fun observe() {
+        job?.cancel()
+        job = viewModelScope.launch {
             val userId = authRepository.currentUserId()
             if (userId == null) {
                 _uiState.value = ProProfileUiState.Error(DomainError.Unauthorized)
@@ -53,4 +72,6 @@ class ProProfileViewModel @Inject constructor(
 
     /** The session gate in `:app` reacts by itself to the signed-out session. */
     fun onSignOutClick() = authRepository.signOut()
+
+    fun onThemeModeChange(mode: ThemeMode) = themePreferences.setMode(mode)
 }

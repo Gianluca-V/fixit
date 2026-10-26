@@ -210,7 +210,7 @@ Con el backend de Fase 2, la sesión DEBE persistir entre reinicios de la app y 
 
 ### Requirement: Registro consistente con el servicio [Fase 2]
 
-Con el backend de Fase 2, el registro DEBE crear primero la cuenta de autenticación y después el documento de perfil del usuario. Si falla la escritura del perfil, DEBE eliminarse la cuenta de autenticación recién creada (mejor esfuerzo) y devolverse el error. Mientras el registro o el inicio de sesión estén en curso, la sesión DEBE permanecer en "sin sesión", de modo que la pantalla de autenticación no se reemplace antes de recibir el resultado; la eliminación de la cuenta recién creada DEBE completarse aunque la pantalla se cierre. Al iniciar la app, mientras exista la cuenta de autenticación pero el perfil todavía no se haya leído, la sesión DEBE estar en "determinando". Iniciar sesión con una cuenta sin perfil DEBE cerrar la sesión y devolver `Unknown` con un mensaje de error claro.
+Con el backend de Fase 2, el registro DEBE crear primero la cuenta de autenticación y después el documento de perfil del usuario. Si falla la escritura del perfil, DEBE eliminarse la cuenta de autenticación recién creada (mejor esfuerzo) y devolverse el error. Mientras el registro o el inicio de sesión estén en curso, la sesión DEBE permanecer en "sin sesión", de modo que la pantalla de autenticación no se reemplace antes de recibir el resultado; la eliminación de la cuenta recién creada DEBE completarse aunque la pantalla se cierre. Al iniciar la app, mientras exista la cuenta de autenticación pero el perfil todavía no se haya leído, la sesión DEBE estar en "determinando". Iniciar sesión con una cuenta sin perfil DEBE cerrar la sesión y devolver `ProfileMissing` con un mensaje que indique que la cuenta no tiene perfil y que debe crearse nuevamente.
 
 #### Escenario: Falla al escribir el perfil [manual]
 - DADO que la cuenta de autenticación se creó y la escritura del perfil falla
@@ -227,5 +227,11 @@ Con el backend de Fase 2, el registro DEBE crear primero la cuenta de autenticac
 #### Escenario: Cuenta sin perfil [manual]
 - DADO una cuenta de autenticación sin documento de perfil
 - CUANDO la persona intenta iniciar sesión
-- ENTONCES el resultado es `Unknown` con un mensaje de error claro
+- ENTONCES el resultado es `ProfileMissing` con el mensaje "Su cuenta no tiene un perfil asociado. Cree la cuenta nuevamente."
 - Y la sesión se cierra
+
+#### Escenario: Error inesperado sin relación con el perfil
+- DADO cualquier operación que falla con `Unknown`
+- CUANDO se muestra el error
+- ENTONCES el mensaje es "Ocurrió un error inesperado. Intente nuevamente."
+- Y no sugiere crear la cuenta nuevamente

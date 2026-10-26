@@ -29,5 +29,7 @@
     <string name="pro_profile_radius_value">%1$d km</string>
     <string name="pro_profile_reputation">Reputación</string>
     <string name="pro_profile_edit">Editar perfil</string>
+    <string name="pro_profile_section_services">Servicios</string>
+    <string name="pro_profile_section_services_hint">Dónde y en qué trabaja</string>
     <string name="pro_edit_profile_title">Editar perfil</string>
 </resources>

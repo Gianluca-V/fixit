@@ -30,6 +30,9 @@ import com.vespelabs.fixit.core.ui.text.asMessage
 /**
  * [ScreenScaffold] plus a snackbar for the one-shot [message]: it is shown once and then cleared
  * with [onMessageShown], so it does not come back after a rotation.
+ *
+ * `showBrand = false`: the bar keeps only the screen name, because every auth screen carries the
+ * FixIt wordmark in its own content (sign-in shows it large, as the app's introduction).
  */
 @Composable
 internal fun AuthScaffold(
@@ -48,7 +51,7 @@ internal fun AuthScaffold(
             onMessageShown()
         }
     }
-    ScreenScaffold(title = title, modifier = modifier, onBack = onBack) { padding ->
+    ScreenScaffold(title = title, modifier = modifier, onBack = onBack, showBrand = false) { padding ->
         Box(Modifier.fillMaxSize()) {
             content(padding)
             SnackbarHost(

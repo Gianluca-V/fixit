@@ -24,15 +24,19 @@ import com.vespelabs.fixit.core.domain.model.Place
 import com.vespelabs.fixit.core.domain.model.ProfessionalInfo
 import com.vespelabs.fixit.core.domain.model.Reputation
 import com.vespelabs.fixit.core.domain.model.ServiceCategory
+import com.vespelabs.fixit.core.domain.model.ThemeMode
 import com.vespelabs.fixit.core.domain.model.User
 import com.vespelabs.fixit.core.domain.model.UserRole
 import com.vespelabs.fixit.core.ui.components.ErrorContent
 import com.vespelabs.fixit.core.ui.components.LoadingContent
 import com.vespelabs.fixit.core.ui.components.ReputationText
 import com.vespelabs.fixit.core.ui.components.ScreenScaffold
+import com.vespelabs.fixit.core.ui.components.SectionCard
+import com.vespelabs.fixit.core.ui.components.ThemeModeRow
 import com.vespelabs.fixit.core.ui.text.label
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
+import com.vespelabs.fixit.feature.professional.common.isRetryable
 import java.util.Locale
 import com.vespelabs.fixit.core.ui.R as UiR
 
@@ -44,10 +48,14 @@ fun ProProfileRoute(
     viewModel: ProProfileViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     ProProfileScreen(
         uiState = uiState,
+        themeMode = themeMode,
         onEditClick = onEditClick,
         onSignOutClick = viewModel::onSignOutClick,
+        onThemeModeChange = viewModel::onThemeModeChange,
+        onRetry = viewModel::onRetry,
         modifier = modifier,
     )
 }
@@ -55,8 +63,11 @@ fun ProProfileRoute(
 @Composable
 fun ProProfileScreen(
     uiState: ProProfileUiState,
+    themeMode: ThemeMode,
     onEditClick: () -> Unit,
     onSignOutClick: () -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ScreenScaffold(title = stringResource(R.string.pro_profile_title), modifier = modifier) { padding ->
@@ -65,13 +76,19 @@ fun ProProfileScreen(
             ProProfileUiState.Loading -> LoadingContent(contentModifier)
             // Sign out stays reachable even when the profile cannot be read.
             is ProProfileUiState.Error -> Column(contentModifier.fillMaxSize()) {
-                ErrorContent(error = uiState.error, modifier = Modifier.weight(1f))
+                ErrorContent(
+                    error = uiState.error,
+                    modifier = Modifier.weight(1f),
+                    onRetry = onRetry.takeIf { uiState.error.isRetryable() },
+                )
                 SignOutButton(onSignOutClick, Modifier.padding(16.dp))
             }
             is ProProfileUiState.Success -> ProfileDetails(
                 user = uiState.user,
+                themeMode = themeMode,
                 onEditClick = onEditClick,
                 onSignOutClick = onSignOutClick,
+                onThemeModeChange = onThemeModeChange,
                 modifier = contentModifier,
             )
         }
@@ -81,8 +98,10 @@ fun ProProfileScreen(
 @Composable
 private fun ProfileDetails(
     user: User,
+    themeMode: ThemeMode,
     onEditClick: () -> Unit,
     onSignOutClick: () -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val professional = user.professional
@@ -91,28 +110,48 @@ private fun ProfileDetails(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        ProfileField(label = stringResource(UiR.string.profile_field_name), value = user.name)
-        ProfileField(label = stringResource(R.string.pro_profile_email), value = user.email)
-        ProfileField(label = stringResource(UiR.string.profile_field_phone), value = user.phone)
+        SectionCard(
+            title = stringResource(UiR.string.settings_section_account),
+            subtitle = stringResource(UiR.string.settings_section_account_hint),
+        ) {
+            ProfileField(label = stringResource(UiR.string.profile_field_name), value = user.name)
+            ProfileField(label = stringResource(R.string.pro_profile_email), value = user.email)
+            ProfileField(label = stringResource(UiR.string.profile_field_phone), value = user.phone)
+        }
         if (professional != null) {
-            ProfileField(
-                label = stringResource(UiR.string.profile_field_categories),
-                value = professional.categories.sortedBy { it.ordinal }.map { it.label() }.joinToString(", "),
-            )
-            ProfileField(
-                label = stringResource(R.string.pro_profile_radius),
-                value = stringResource(R.string.pro_profile_radius_value, professional.radiusKm),
-            )
-            ProfileField(label = stringResource(UiR.string.profile_field_base), value = professional.base.display())
-            Column(Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.pro_profile_reputation), style = MaterialTheme.typography.labelLarge)
-                ReputationText(professional.reputation)
+            SectionCard(
+                title = stringResource(R.string.pro_profile_section_services),
+                subtitle = stringResource(R.string.pro_profile_section_services_hint),
+            ) {
+                ProfileField(
+                    label = stringResource(UiR.string.profile_field_categories),
+                    value = professional.categories.sortedBy { it.ordinal }.map { it.label() }.joinToString(", "),
+                )
+                ProfileField(
+                    label = stringResource(R.string.pro_profile_radius),
+                    value = stringResource(R.string.pro_profile_radius_value, professional.radiusKm),
+                )
+                ProfileField(label = stringResource(UiR.string.profile_field_base), value = professional.base.display())
+                Column(Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.pro_profile_reputation),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    ReputationText(professional.reputation)
+                }
             }
         }
         Button(onClick = onEditClick, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.pro_profile_edit))
+        }
+        SectionCard(
+            title = stringResource(UiR.string.settings_section_appearance),
+            subtitle = stringResource(UiR.string.settings_section_appearance_hint),
+        ) {
+            ThemeModeRow(mode = themeMode, onModeChange = onThemeModeChange)
         }
         SignOutButton(onSignOutClick)
     }
@@ -125,8 +164,12 @@ private fun Place.display(): String =
 @Composable
 private fun ProfileField(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
-        Text(value, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(text = value, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -157,8 +200,11 @@ private fun ProProfileScreenPreview() {
                     ),
                 ),
             ),
+            themeMode = ThemeMode.DARK,
             onEditClick = {},
             onSignOutClick = {},
+            onThemeModeChange = {},
+            onRetry = {},
         )
     }
 }
