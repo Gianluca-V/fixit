@@ -7,6 +7,8 @@ import com.vespelabs.fixit.core.domain.model.Limits
 import com.vespelabs.fixit.core.domain.model.NewRequest
 import com.vespelabs.fixit.core.domain.model.Place
 import com.vespelabs.fixit.core.domain.model.ServiceCategory
+import com.vespelabs.fixit.core.domain.repository.AuthRepository
+import com.vespelabs.fixit.core.domain.repository.UserRepository
 import com.vespelabs.fixit.core.domain.result.AppResult
 import com.vespelabs.fixit.core.domain.result.DomainError
 import com.vespelabs.fixit.core.domain.result.ValidationError
@@ -21,8 +23,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * "Nueva solicitud" form. The coordinates ([point]) only come from "Usar mi ubicación"; the
- * [address] text is editable. [validationError] is shown next to its section; any other error is a
+ * "Nueva solicitud" form. The coordinates ([point]) come from "Usar mi ubicación", from "Elegir en
+ * el mapa" or, when the form opens, from the client area; they are never typed. The [address] text
+ * is editable. [validationError] is shown next to its section; any other error is a
  * one-shot [message] cleared with `onMessageShown()`. [createdRequestId] is a one-shot navigation
  * event cleared with `onNavigated()`.
  */
@@ -53,9 +56,27 @@ data class CreateRequestUiState(
 class CreateRequestViewModel @Inject constructor(
     private val createRequest: CreateRequestUseCase,
     private val getCurrentPlace: GetCurrentPlaceUseCase,
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(CreateRequestUiState())
     val uiState: StateFlow<CreateRequestUiState> = _uiState.asStateFlow()
+
+    init {
+        preloadArea()
+    }
+
+    /**
+     * A single read of the client area (repair-requests spec). It never overwrites a location the
+     * client already set, and a failed read leaves the form empty without a message.
+     */
+    private fun preloadArea() {
+        viewModelScope.launch {
+            val userId = authRepository.currentUserId() ?: return@launch
+            val area = (userRepository.get(userId) as? AppResult.Success)?.data?.area ?: return@launch
+            _uiState.update { if (it.point != null) it else it.copy(point = area.point, address = area.address) }
+        }
+    }
 
     /** Single selection: the tapped category replaces the previous one. */
     fun onCategorySelect(category: ServiceCategory) = _uiState.update { it.copy(category = category) }
@@ -89,6 +110,9 @@ class CreateRequestViewModel @Inject constructor(
             }
         }
     }
+
+    /** The place confirmed in "Elegir en el mapa": coordinates and address are replaced together. */
+    fun onPlacePicked(place: Place) = _uiState.update { it.copy(point = place.point, address = place.address) }
 
     fun onAddressChange(address: String) = _uiState.update { it.copy(address = address) }
 

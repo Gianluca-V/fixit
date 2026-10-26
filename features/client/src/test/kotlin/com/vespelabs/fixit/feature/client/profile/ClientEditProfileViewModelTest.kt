@@ -1,13 +1,18 @@
 package com.vespelabs.fixit.feature.client.profile
 
+import com.vespelabs.fixit.core.domain.model.GeoPoint
+import com.vespelabs.fixit.core.domain.model.Place
 import com.vespelabs.fixit.core.domain.model.SessionState
 import com.vespelabs.fixit.core.domain.model.UserRole
+import com.vespelabs.fixit.core.domain.result.AppResult
 import com.vespelabs.fixit.core.domain.result.DomainError
 import com.vespelabs.fixit.core.domain.result.ValidationError
 import com.vespelabs.fixit.core.domain.testing.MainDispatcherRule
 import com.vespelabs.fixit.core.domain.testing.TestAuthRepository
 import com.vespelabs.fixit.core.domain.testing.TestData
+import com.vespelabs.fixit.core.domain.testing.TestLocation
 import com.vespelabs.fixit.core.domain.testing.TestUserRepository
+import com.vespelabs.fixit.core.domain.usecase.GetCurrentPlaceUseCase
 import com.vespelabs.fixit.core.domain.usecase.UpdateProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -32,7 +37,10 @@ class ClientEditProfileViewModelTest {
     private val auth = TestAuthRepository(SessionState.SignedIn(client))
     private val users = TestUserRepository(listOf(client))
 
-    private fun viewModel() = ClientEditProfileViewModel(auth, users, UpdateProfileUseCase(auth, users))
+    private val location = TestLocation()
+
+    private fun viewModel() =
+        ClientEditProfileViewModel(auth, users, UpdateProfileUseCase(auth, users), GetCurrentPlaceUseCase(location, location))
 
     /** Waits for the first matching state; the virtual-time timeout makes a missing state fail fast. */
     private suspend fun ClientEditProfileViewModel.awaitState(
@@ -176,4 +184,83 @@ class ClientEditProfileViewModelTest {
 
         assertEquals(DomainError.Unauthorized, viewModel().awaitState { it.loadError != null }.loadError)
     }
+
+    // [prof] Client area
+
+    private val quilmes = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes")
+
+    @Test
+    fun `given a client with area Calle 123 Quilmes when the edit screen opens then the form holds that area`() = runTest {
+        users.upsert(client.copy(area = quilmes))
+
+        assertEquals(quilmes, viewModel().awaitState { !it.isLoading }.form.area)
+    }
+
+    @Test
+    fun `given a client without area when she picks Q on the map and saves then her profile has the area Q`() = runTest {
+        val viewModel = loadedViewModel()
+
+        viewModel.onPlacePicked(quilmes)
+        viewModel.onSave()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.saved)
+        assertEquals(quilmes, users.user("c1")!!.area)
+    }
+
+    @Test
+    fun `given a client without area when she uses her location and saves then her profile has the current place`() = runTest {
+        val viewModel = loadedViewModel()
+
+        viewModel.onUseLocation()
+        assertTrue(viewModel.uiState.value.isLocating)
+        assertFalse(viewModel.uiState.value.canSave)
+        advanceUntilIdle()
+        viewModel.onSave()
+        advanceUntilIdle()
+
+        assertEquals(TestData.florencioVarela, users.user("c1")!!.area)
+    }
+
+    @Test
+    fun `given a client with area when she clears it and saves then her profile has no area`() = runTest {
+        users.upsert(client.copy(area = quilmes))
+        val viewModel = loadedViewModel()
+
+        viewModel.onFormChange(viewModel.uiState.value.form.copy(area = null)) // "Quitar zona"
+        viewModel.onSave()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.saved)
+        assertNull(users.user("c1")!!.area)
+    }
+
+    @Test
+    fun `given an area whose address was erased when saving then the error is location required and nothing is persisted`() =
+        runTest {
+            val viewModel = loadedViewModel()
+            viewModel.onPlacePicked(quilmes)
+            viewModel.onFormChange(viewModel.uiState.value.form.copy(area = quilmes.copy(address = "")))
+
+            viewModel.onSave()
+            advanceUntilIdle()
+
+            assertEquals(ValidationError.LOCATION_REQUIRED, viewModel.uiState.value.validationError)
+            assertTrue(users.updateProfileCalls.isEmpty())
+        }
+
+    @Test
+    fun `given the location is unavailable when use my location is tapped then a message is shown and the area is kept`() =
+        runTest {
+            users.upsert(client.copy(area = quilmes))
+            location.point = AppResult.Error(DomainError.LocationUnavailable)
+            val viewModel = loadedViewModel()
+
+            viewModel.onUseLocation()
+            advanceUntilIdle()
+
+            assertEquals(DomainError.LocationUnavailable, viewModel.uiState.value.message)
+            assertEquals(quilmes, viewModel.uiState.value.form.area)
+            assertFalse(viewModel.uiState.value.isLocating)
+        }
 }

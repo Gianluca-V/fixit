@@ -39,7 +39,7 @@ object Validators {
     }
 
     fun profile(role: UserRole, form: ProfileForm): ValidationError? =
-        nameError(form.name) ?: phoneError(form.phone) ?: professionalError(role, form)
+        nameError(form.name) ?: phoneError(form.phone) ?: professionalError(role, form) ?: clientAreaError(role, form.area)
 
     fun request(input: NewRequest): ValidationError? {
         if (input.category == null) return ValidationError.CATEGORY_REQUIRED
@@ -76,6 +76,13 @@ object Validators {
     private fun professionalError(role: UserRole, form: ProfileForm): ValidationError? {
         if (role != UserRole.PROFESSIONAL) return null
         return categoriesError(form.categories) ?: baseError(form.base) ?: radiusError(form.radiusKm)
+    }
+
+    /** The client area is optional; when present it needs an address and valid coordinates. */
+    private fun clientAreaError(role: UserRole, area: Place?): ValidationError? = when {
+        role != UserRole.CLIENT || area == null -> null
+        area.address.isBlank() -> ValidationError.LOCATION_REQUIRED
+        else -> coordinates(area.point)
     }
 
     private fun categoriesError(categories: Set<ServiceCategory>): ValidationError? =

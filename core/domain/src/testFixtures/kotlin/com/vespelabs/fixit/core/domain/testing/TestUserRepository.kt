@@ -41,7 +41,10 @@ class TestUserRepository(initial: List<User> = emptyList()) : UserRepository {
         return users.map { find(userId) }
     }
 
-    /** Applies name and phone (and the professional fields when the user is a professional); never email, role or reputation. */
+    /**
+     * Applies name and phone, plus the professional fields for a professional or the area for a client;
+     * never email, role or reputation.
+     */
     override suspend fun updateProfile(userId: String, form: ProfileForm): AppResult<User> {
         updateProfileCalls += userId to form
         ::updateProfileError.take()?.let { return AppResult.Error(it) }
@@ -54,6 +57,7 @@ class TestUserRepository(initial: List<User> = emptyList()) : UserRepository {
                 base = form.base ?: current.professional.base,
                 radiusKm = form.radiusKm ?: current.professional.radiusKm,
             ),
+            area = if (current.professional == null) form.area else null,
         )
         upsert(updated)
         return AppResult.Success(updated)

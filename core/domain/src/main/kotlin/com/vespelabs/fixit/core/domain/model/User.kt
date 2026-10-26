@@ -17,4 +17,5 @@ data class User(
     val phone: String,
     val role: UserRole,
     val professional: ProfessionalInfo? = null, // non-null only when role == PROFESSIONAL
+    val area: Place? = null, // optional "where the client is from"; always null for a professional
 )

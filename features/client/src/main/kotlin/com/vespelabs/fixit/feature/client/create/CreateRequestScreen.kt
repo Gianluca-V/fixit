@@ -18,6 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +29,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vespelabs.fixit.core.domain.model.GeoPoint
 import com.vespelabs.fixit.core.domain.model.Limits
+import com.vespelabs.fixit.core.domain.model.Place
 import com.vespelabs.fixit.core.domain.model.ServiceCategory
 import com.vespelabs.fixit.core.domain.result.FormField
 import com.vespelabs.fixit.core.domain.result.ValidationError
@@ -33,12 +37,14 @@ import com.vespelabs.fixit.core.ui.components.CategoryChips
 import com.vespelabs.fixit.core.ui.components.PhotoPickerButtons
 import com.vespelabs.fixit.core.ui.components.PhotoThumbnails
 import com.vespelabs.fixit.core.ui.components.SamplePhotos
+import com.vespelabs.fixit.core.ui.map.MapPickerDialog
 import com.vespelabs.fixit.core.ui.permission.LocationPermissionGate
 import com.vespelabs.fixit.core.ui.text.asMessage
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.client.R
 import com.vespelabs.fixit.feature.client.common.FieldErrorText
 import com.vespelabs.fixit.feature.client.common.MessageScaffold
+import com.vespelabs.fixit.core.ui.R as UiR
 
 /** "Nueva solicitud". `:app` resolves onCreated(id) to goBackFrom(CreateRequestKey) + navigate(detail). */
 @Composable
@@ -66,6 +72,7 @@ fun CreateRequestRoute(
             onPhotosAdded = viewModel::onPhotosAdded,
             onRemovePhoto = viewModel::onRemovePhoto,
             onUseLocation = requestLocation,
+            onPlacePicked = viewModel::onPlacePicked,
             onAddressChange = viewModel::onAddressChange,
             onSubmit = viewModel::onSubmit,
             onMessageShown = viewModel::onMessageShown,
@@ -83,12 +90,24 @@ fun CreateRequestScreen(
     onPhotosAdded: (List<String>) -> Unit,
     onRemovePhoto: (index: Int) -> Unit,
     onUseLocation: () -> Unit,
+    onPlacePicked: (Place) -> Unit,
     onAddressChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onMessageShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val enabled = !uiState.isSubmitting
+    var showMapPicker by rememberSaveable { mutableStateOf(false) }
+    if (showMapPicker) {
+        MapPickerDialog(
+            initial = uiState.point?.let { Place(it, uiState.address) },
+            onConfirm = { place ->
+                showMapPicker = false
+                onPlacePicked(place)
+            },
+            onDismiss = { showMapPicker = false },
+        )
+    }
     fun errorFor(field: FormField) = uiState.validationError?.takeIf { it.field == field }
 
     MessageScaffold(
@@ -132,14 +151,20 @@ fun CreateRequestScreen(
             FieldErrorText(errorFor(FormField.PHOTOS))
 
             SectionTitle(stringResource(R.string.client_create_location))
-            OutlinedButton(onClick = onUseLocation, enabled = enabled && !uiState.isLocating) {
-                if (uiState.isLocating) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(stringResource(R.string.client_create_use_location))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onUseLocation, enabled = enabled && !uiState.isLocating) {
+                    if (uiState.isLocating) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.client_create_use_location))
+                    }
+                }
+                // The map never asks for the location permission (repair-requests spec).
+                OutlinedButton(onClick = { showMapPicker = true }, enabled = enabled && !uiState.isLocating) {
+                    Text(stringResource(UiR.string.map_pick_on_map))
                 }
             }
-            // The address is always editable; the coordinates only come from "Usar mi ubicación".
+            // The address is always editable; the coordinates come from "Usar mi ubicación" or the map.
             OutlinedTextField(
                 value = uiState.address,
                 onValueChange = onAddressChange,
@@ -216,6 +241,7 @@ private fun CreateRequestScreenPreview() {
             onPhotosAdded = {},
             onRemovePhoto = {},
             onUseLocation = {},
+            onPlacePicked = {},
             onAddressChange = {},
             onSubmit = {},
             onMessageShown = {},
@@ -239,6 +265,7 @@ private fun CreateRequestScreenErrorPreview() {
             onPhotosAdded = {},
             onRemovePhoto = {},
             onUseLocation = {},
+            onPlacePicked = {},
             onAddressChange = {},
             onSubmit = {},
             onMessageShown = {},

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp) // Hilt for MapPickerViewModel (icon-map-address D4)
 }
 
 android {
@@ -32,5 +33,17 @@ dependencies {
     implementation(libs.androidx.activity.compose) // Photo Picker and camera launchers
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp) // loads Cloudinary https URLs
+    implementation(libs.maplibre.android.sdk) // map picker with OpenStreetMap data (icon-map-address D1)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // The map picker has its own ViewModel (icon-map-address D4); still no dependency on :core:data.
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(testFixtures(project(":core:domain")))
 }

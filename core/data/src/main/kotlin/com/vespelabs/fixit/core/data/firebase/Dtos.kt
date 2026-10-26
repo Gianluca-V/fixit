@@ -38,9 +38,12 @@ internal object UserFields {
     const val RATING_SUM = "ratingSum"
     const val REVIEW_COUNT = "reviewCount"
     const val CREATED_AT = "createdAt"
+    const val AREA_LAT = "areaLat"
+    const val AREA_LNG = "areaLng"
+    const val AREA_ADDRESS = "areaAddress"
 
     /** The only fields a profile edit may change (rules 13.3): never email, role or reputation. */
-    val EDITABLE = setOf(NAME, PHONE, CATEGORIES, BASE_LAT, BASE_LNG, BASE_ADDRESS, RADIUS_KM)
+    val EDITABLE = setOf(NAME, PHONE, CATEGORIES, BASE_LAT, BASE_LNG, BASE_ADDRESS, RADIUS_KM, AREA_LAT, AREA_LNG, AREA_ADDRESS)
 }
 
 internal object RequestFields {
@@ -83,6 +86,9 @@ internal data class UserDto(
     val radiusKm: Long? = null,
     val ratingSum: Long = 0,
     val reviewCount: Long = 0,
+    val areaLat: Double? = null,
+    val areaLng: Double? = null,
+    val areaAddress: String? = null,
 )
 
 internal fun UserDto.toDomain(): User {
@@ -100,7 +106,13 @@ internal fun UserDto.toDomain(): User {
     } else {
         null
     }
-    return User(id = id, name = name, email = email, phone = phone, role = userRole, professional = professional)
+    // The client area is optional (icon-map-address D5): a document written before it, or a partial one, has none.
+    val area = if (userRole == UserRole.CLIENT && areaLat != null && areaLng != null && areaAddress != null) {
+        Place(GeoPoint(areaLat, areaLng), areaAddress)
+    } else {
+        null
+    }
+    return User(id = id, name = name, email = email, phone = phone, role = userRole, professional = professional, area = area)
 }
 
 /** Fields of a new `users/{uid}`: ratingSum = 0 and reviewCount = 0 for every role, as the create rule demands (13.1). */
@@ -122,6 +134,7 @@ internal fun User.toCreateFields(): Map<String, Any> = buildMap {
 /**
  * Editable fields only (rules 13.3), mirroring FakeUserRepository: name and phone always; for a professional also
  * categories, and base and radius only when the form carries them. Professional fields are ignored for a client.
+ * A client always sends its whole area, so a null area deletes the three area fields (icon-map-address D5).
  */
 internal fun profileUpdateFields(role: UserRole, form: ProfileForm): Map<String, Any> = buildMap {
     put(UserFields.NAME, form.name)
@@ -130,6 +143,11 @@ internal fun profileUpdateFields(role: UserRole, form: ProfileForm): Map<String,
         put(UserFields.CATEGORIES, form.categories.map { it.name })
         form.base?.let { putBase(it) }
         form.radiusKm?.let { put(UserFields.RADIUS_KM, it) }
+    } else {
+        val area = form.area
+        put(UserFields.AREA_LAT, area?.point?.latitude ?: FieldValue.delete())
+        put(UserFields.AREA_LNG, area?.point?.longitude ?: FieldValue.delete())
+        put(UserFields.AREA_ADDRESS, area?.address ?: FieldValue.delete())
     }
 }
 
@@ -140,6 +158,7 @@ internal fun User.withProfile(form: ProfileForm): User = copy(
     professional = professional?.let { info ->
         info.copy(categories = form.categories, base = form.base ?: info.base, radiusKm = form.radiusKm ?: info.radiusKm)
     },
+    area = if (role == UserRole.CLIENT) form.area else null,
 )
 
 private fun MutableMap<String, Any>.putBase(base: Place) {
@@ -161,6 +180,9 @@ internal fun DocumentSnapshot.toUserDto(): UserDto = UserDto(
     radiusKm = getLong(UserFields.RADIUS_KM),
     ratingSum = getLong(UserFields.RATING_SUM) ?: 0,
     reviewCount = getLong(UserFields.REVIEW_COUNT) ?: 0,
+    areaLat = getDouble(UserFields.AREA_LAT),
+    areaLng = getDouble(UserFields.AREA_LNG),
+    areaAddress = getString(UserFields.AREA_ADDRESS),
 )
 
 internal fun DocumentSnapshot.toUser(): User = toUserDto().toDomain()

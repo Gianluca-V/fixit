@@ -15,6 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,6 +32,7 @@ import com.vespelabs.fixit.core.ui.components.ErrorContent
 import com.vespelabs.fixit.core.ui.components.LoadingContent
 import com.vespelabs.fixit.core.ui.components.ProfileFormFields
 import com.vespelabs.fixit.core.ui.components.ProfileFormState
+import com.vespelabs.fixit.core.ui.map.MapPickerDialog
 import com.vespelabs.fixit.core.ui.permission.LocationPermissionGate
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
@@ -59,6 +63,7 @@ fun ProEditProfileRoute(
             onBack = onBack,
             onFormChange = viewModel::onFormChange,
             onUseLocation = requestLocation,
+            onPlacePicked = viewModel::onPlacePicked,
             onSave = viewModel::onSave,
             onRetry = viewModel::onRetry,
             onMessageShown = viewModel::onMessageShown,
@@ -73,6 +78,7 @@ fun ProEditProfileScreen(
     onBack: () -> Unit,
     onFormChange: (ProfileFormState) -> Unit,
     onUseLocation: () -> Unit,
+    onPlacePicked: (Place) -> Unit,
     onSave: () -> Unit,
     onRetry: () -> Unit,
     onMessageShown: () -> Unit,
@@ -94,6 +100,7 @@ fun ProEditProfileScreen(
                 uiState = uiState,
                 onFormChange = onFormChange,
                 onUseLocation = onUseLocation,
+                onPlacePicked = onPlacePicked,
                 onSave = onSave,
                 modifier = contentModifier,
             )
@@ -106,9 +113,21 @@ private fun EditForm(
     uiState: ProEditProfileUiState,
     onFormChange: (ProfileFormState) -> Unit,
     onUseLocation: () -> Unit,
+    onPlacePicked: (Place) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showMapPicker by rememberSaveable { mutableStateOf(false) }
+    if (showMapPicker) {
+        MapPickerDialog(
+            initial = uiState.form.base,
+            onConfirm = { place ->
+                showMapPicker = false
+                onPlacePicked(place)
+            },
+            onDismiss = { showMapPicker = false },
+        )
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -129,6 +148,7 @@ private fun EditForm(
             validationError = uiState.validationError,
             enabled = !uiState.isSaving && !uiState.isLocating,
             onUseLocationClick = onUseLocation,
+            onPickOnMapClick = { showMapPicker = true },
         )
         if (uiState.isLocating) {
             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -164,6 +184,7 @@ private fun ProEditProfileScreenPreview() {
             onBack = {},
             onFormChange = {},
             onUseLocation = {},
+            onPlacePicked = {},
             onSave = {},
             onRetry = {},
             onMessageShown = {},
@@ -190,6 +211,7 @@ private fun ProEditProfileScreenFilledPreview() {
             onBack = {},
             onFormChange = {},
             onUseLocation = {},
+            onPlacePicked = {},
             onSave = {},
             onRetry = {},
             onMessageShown = {},

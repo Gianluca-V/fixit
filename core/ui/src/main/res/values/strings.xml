@@ -110,4 +110,20 @@
     <string name="location_permission_denied">Sin el permiso de ubicación no es posible obtener las coordenadas. La dirección sigue siendo editable; vuelva a tocar «Usar mi ubicación» para intentarlo de nuevo.</string>
     <string name="location_permission_permanently_denied">El permiso de ubicación fue denegado de forma permanente. Para obtener las coordenadas, habilítelo en los ajustes de la aplicación.</string>
     <string name="location_permission_open_settings">Abrir ajustes</string>
+
+    <!-- Map picker and client area (icon-map-address) -->
+    <string name="map_style_url" translatable="false">https://tiles.openfreemap.org/styles/liberty</string>
+    <string name="map_pick_on_map">Elegir en el mapa</string>
+    <string name="map_title">Elegir ubicación</string>
+    <string name="map_search_hint">Buscar una dirección</string>
+    <string name="map_search_unavailable">La búsqueda no está disponible. Puede mover el mapa para elegir el lugar.</string>
+    <string name="map_address_label">Dirección</string>
+    <string name="map_resolving">Buscando la dirección…</string>
+    <string name="map_confirm">Confirmar</string>
+    <string name="map_pin_description">Punto elegido</string>
+    <string name="map_hint">Mueva el mapa hasta que el pin quede sobre el lugar.</string>
+    <string name="profile_field_area">Zona</string>
+    <string name="profile_area_empty">Sin zona</string>
+    <string name="profile_area_clear">Quitar zona</string>
+    <string name="profile_area_visibility">Visible para los profesionales.</string>
 </resources>

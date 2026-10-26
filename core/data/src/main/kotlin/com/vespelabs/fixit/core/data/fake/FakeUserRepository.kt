@@ -15,7 +15,10 @@ class FakeUserRepository @Inject constructor(
 
     override fun observe(userId: String): Flow<AppResult<User>> = db.observe { it.findUser(userId) }
 
-    /** Updates name, phone and, for a professional, categories, base and radius; never email, role or reputation. */
+    /**
+     * Updates name, phone and, for a professional, categories, base and radius, or for a client its area (replaced
+     * or cleared); never email, role or reputation.
+     */
     override suspend fun updateProfile(userId: String, form: ProfileForm): AppResult<User> =
         db.write { old, _ ->
             val user = old.users.firstOrNull { it.id == userId }
@@ -30,6 +33,7 @@ class FakeUserRepository @Inject constructor(
                         radiusKm = form.radiusKm ?: info.radiusKm,
                     )
                 },
+                area = if (user.professional == null) form.area else null,
             )
             WriteDecision.Commit(old.copy(users = old.users.map { if (it.id == userId) updated else it }), updated)
         }

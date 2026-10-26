@@ -112,6 +112,19 @@ class SignUpUseCaseTest {
     }
 
     @Test
+    fun `given an area on the sign-up form of either role when signing up then the account is created without area`() =
+        runTest {
+            val area = Place(GeoPoint(-34.7206, -58.2546), "Calle 123, Quilmes")
+            val client = clientForm().let { it.copy(profile = it.profile.copy(area = area)) }
+            val professional = professionalForm().let { it.copy(profile = it.profile.copy(area = area)) }
+
+            signUp(client)
+            signUp(professional)
+
+            assertEquals(listOf(null, null), auth.signUpCalls.map { it.profile.area })
+        }
+
+    @Test
     fun `given an invalid email and a short password when signing up then only the first error is reported`() = runTest {
         assertValidation(ValidationError.INVALID_EMAIL, signUp(clientForm(email = "nope", password = "12345")))
     }
