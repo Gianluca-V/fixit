@@ -5,6 +5,8 @@
     <!-- Asked only when tapping "Usar mi ubicación"; an approximate (coarse-only) grant is enough. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Phase 4 push notices (Android 13+): asked once by the signed-in shell; a denial changes nothing else. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".FixItApplication"
@@ -15,12 +17,22 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Phase 4: receives the FCM data messages (design 14b.5). -->
+        <service
+            android:name=".push.FixItMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- Camera captures: TakePicture writes into cacheDir/photos/ through this provider. -->
         <provider

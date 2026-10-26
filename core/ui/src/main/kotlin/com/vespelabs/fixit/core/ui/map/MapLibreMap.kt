@@ -35,8 +35,9 @@ private const val PICKER_ZOOM = 16.0
 /**
  * MapLibre map with the OpenFreeMap style (OpenStreetMap data, icon-map-address D1). It opens at [initialCenter],
  * reports every camera stop to [onCameraIdle] and animates to [cameraTarget] when it changes, then calls
- * [onCameraMoved]. Rotation and tilt are off: a picker only needs pan and zoom. The style shows the OpenStreetMap
- * attribution. No JVM test: the map is checked by hand (tasks 8.2).
+ * [onCameraMoved]. Rotation and tilt are off: a picker only needs pan and zoom. With [interactive] false every
+ * gesture is off, for a fixed map that only shows a place. The style shows the OpenStreetMap attribution.
+ * No JVM test: the map is checked by hand (tasks 8.2).
  */
 @Composable
 fun MapLibreMap(
@@ -45,6 +46,7 @@ fun MapLibreMap(
     onCameraIdle: (GeoPoint) -> Unit,
     onCameraMoved: () -> Unit,
     modifier: Modifier = Modifier,
+    interactive: Boolean = true,
 ) {
     if (LocalInspectionMode.current) {
         // MapLibre does not draw in Android Studio previews.
@@ -63,6 +65,7 @@ fun MapLibreMap(
             getMapAsync { libreMap ->
                 libreMap.uiSettings.isRotateGesturesEnabled = false
                 libreMap.uiSettings.isTiltGesturesEnabled = false
+                if (!interactive) libreMap.uiSettings.setAllGesturesEnabled(false)
                 libreMap.cameraPosition = CameraPosition.Builder()
                     .target(LatLng(initialCenter.latitude, initialCenter.longitude))
                     .zoom(PICKER_ZOOM)

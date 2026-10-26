@@ -25,6 +25,16 @@ CLOUDINARY_UPLOAD_PRESET=<your unsigned preset name>
 
 `:core:data` reads them into `BuildConfig`. When they are missing they become empty strings: the project still compiles and tests pass, but uploading a photo fails with a generic error.
 
+### Push notifications (optional)
+
+Push notifications are sent by a Cloudflare Worker through FCM (`worker/`; setup, secret and deploy steps are in `worker/README.md`). Once the Worker is deployed, add its URL to `local.properties` (never commit it):
+
+```properties
+PUSH_WORKER_URL=https://<your-worker>.<your-subdomain>.workers.dev
+```
+
+`:core:data` reads it into `BuildConfig`. When it is missing it becomes an empty string: the request repository is not decorated, no request is sent to the Worker and the app works without notifications. Topic subscriptions and the notification permission are still handled, so a device subscribes and can receive pushes as soon as any client with the URL sends them.
+
 ### Map and address search (no keys)
 
 "Elegir en el mapa" uses MapLibre with the OpenFreeMap style (`map_style_url` in `core/ui/src/main/res/values/strings.xml`), and address suggestions come from the public Photon instance by komoot. Neither needs an API key, an account or a card. Map data © OpenStreetMap contributors; the map shows the attribution. To work without network, bind `FakeAddressSearch` instead of `PhotonAddressSearch` in `core/data/.../di/NetworkModule.kt`.

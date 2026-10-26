@@ -46,6 +46,7 @@ import com.vespelabs.fixit.core.ui.components.PhotoPager
 import com.vespelabs.fixit.core.ui.components.RatingBar
 import com.vespelabs.fixit.core.ui.components.SamplePhotos
 import com.vespelabs.fixit.core.ui.components.StatusBadge
+import com.vespelabs.fixit.core.ui.map.DestinationMapCard
 import com.vespelabs.fixit.core.ui.text.label
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.professional.R
@@ -161,7 +162,12 @@ private fun DetailContent(
         }
         Text(request.description, style = MaterialTheme.typography.bodyLarge)
         PhotoPager(photoUrls = request.photoUrls)
-        Text(request.place.address, style = MaterialTheme.typography.bodyMedium)
+        // Once the job is the viewer's, the address comes with the map of where to go.
+        if (state.showsDestinationMap) {
+            DestinationMapCard(request.place, Modifier.fillMaxWidth())
+        } else {
+            Text(request.place.address, style = MaterialTheme.typography.bodyMedium)
+        }
         detail.distanceKm?.let { Text(distanceText(it), style = MaterialTheme.typography.labelLarge) }
         Text(
             text = stringResource(R.string.pro_published_on, dateFormat.format(Date(request.createdAt))),

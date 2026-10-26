@@ -216,11 +216,13 @@ Los ViewModels reciben el `Place` confirmado con `onPlacePicked(place)`:
 
 ### D7. Ícono adaptativo
 
-**Recursos en `:app`**:
-- `res/drawable/ic_launcher_background.xml`: un color sólido `#1565C0`.
-- `res/drawable/ic_launcher_foreground.xml`: un vector de 108 dp con una llave inglesa blanca a 45° dentro del círculo seguro de 66 dp.
-- `res/drawable/ic_launcher_monochrome.xml`: el mismo trazado, de un solo color.
-- `res/mipmap-anydpi/ic_launcher.xml` y `ic_launcher_round.xml`, con `<adaptive-icon>` que combina el fondo, el primer plano y `<monochrome>`.
+**Recursos** (revisado: el logo lleva la palabra "FixIt" y también se muestra en el inicio de sesión):
+- `:core:ui` `res/values/colors.xml`: `fixit_logo_background`, el teal de la marca (`#0B5F62`). Es el fondo del ícono.
+- `:core:ui` `res/drawable/fixit_logo_mark.xml`: un vector de 108 dp con una llave inglesa blanca a 45° y, delante y en el centro, "FixIt" en Manrope Bold ("Fix" en teal, "It" en arcilla, como el wordmark), con un halo claro. El texto está convertido a trazados, porque un vector drawable no dibuja texto. Todo queda dentro del círculo seguro de 66 dp. Es el primer plano del ícono y lo usa el componente `FixItLogo`.
+- `:app` `res/drawable/ic_launcher_monochrome.xml`: la llave y la palabra en un solo color; las letras quedan caladas donde se cruzan con la llave.
+- `:app` `res/mipmap-anydpi/ic_launcher.xml` y `ic_launcher_round.xml`, con `<adaptive-icon>` que combina el fondo, el primer plano y `<monochrome>`.
+
+La barra superior sigue mostrando solo el wordmark de texto, sin el logo.
 
 En el manifest se agregan `android:icon="@mipmap/ic_launcher"` y `android:roundIcon="@mipmap/ic_launcher_round"`.
 

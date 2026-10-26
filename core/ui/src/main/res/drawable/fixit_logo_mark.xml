@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FixIt logo mark: white wrench with the wordmark in front, Fix in teal and It in clay as in the app.
+  The 24-unit wrench (Material "build" glyph, Apache 2.0) is scaled 2.4x around the centre and the word
+  "FixIt" (Manrope Bold, generated as paths because a vector drawable cannot draw text) sits across it,
+  so the drawing stays inside the 66dp safe circle of the 108dp adaptive icon.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.4"
+        android:scaleY="2.4"
+        android:translateX="25.2"
+        android:translateY="25.2">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M22.7,19l-9.1,-9.1c0.9,-2.3 0.4,-5 -1.5,-6.9 -2,-2 -5,-2.4 -7.4,-1.3L9,6 6,9 1.6,4.7C0.4,7.1 0.9,10.1 2.9,12.1c1.9,1.9 4.6,2.4 6.9,1.5l9.1,9.1c0.4,0.4 1,0.4 1.4,0l2.3,-2.3c0.5,-0.4 0.5,-1.1 0.1,-1.4z" />
+    </group>
+    <!-- Paper halo, so the word stays legible where it leaves the wrench and crosses the teal background. -->
+    <path
+        android:fillColor="#FCF9F3"
+        android:strokeColor="#FCF9F3"
+        android:strokeWidth="3.2"
+        android:strokeLineJoin="round"
+        android:pathData="M29.8 63.26V44.74H40.95V47.83H32.9V52.45H39.4V55.55H32.9V63.26ZM43.2 47.26V44.42H46.3V47.26ZM43.2 63.26V49.37H46.3V63.26ZM48.3 63.26 53.38 56.24 48.4 49.37H52.06L55.18 53.81L58.25 49.37H61.9L56.93 56.24L62.03 63.26H58.38L55.18 58.66L51.95 63.26ZM64.03 63.26V44.74H67.12V63.26ZM78.8 63.26Q77.43 63.52 76.11 63.49Q74.79 63.45 73.75 63Q72.71 62.55 72.17 61.55Q71.69 60.65 71.66 59.71Q71.64 58.77 71.64 57.58V45.51H74.73V57.41Q74.73 58.24 74.75 58.87Q74.77 59.5 75.01 59.91Q75.48 60.67 76.49 60.76Q77.5 60.85 78.8 60.67ZM69.12 51.8V49.37H78.8V51.8Z" />
+    <path
+        android:fillColor="#0B5F62"
+        android:pathData="M29.8 63.26V44.74H40.95V47.83H32.9V52.45H39.4V55.55H32.9V63.26ZM43.2 47.26V44.42H46.3V47.26ZM43.2 63.26V49.37H46.3V63.26ZM48.3 63.26 53.38 56.24 48.4 49.37H52.06L55.18 53.81L58.25 49.37H61.9L56.93 56.24L62.03 63.26H58.38L55.18 58.66L51.95 63.26Z" />
+    <path
+        android:fillColor="#9A4520"
+        android:pathData="M64.03 63.26V44.74H67.12V63.26ZM78.8 63.26Q77.43 63.52 76.11 63.49Q74.79 63.45 73.75 63Q72.71 62.55 72.17 61.55Q71.69 60.65 71.66 59.71Q71.64 58.77 71.64 57.58V45.51H74.73V57.41Q74.73 58.24 74.75 58.87Q74.77 59.5 75.01 59.91Q75.48 60.67 76.49 60.76Q77.5 60.85 78.8 60.67ZM69.12 51.8V49.37H78.8V51.8Z" />
+</vector>

@@ -42,6 +42,9 @@ sealed interface ProRequestDetailUiState {
         /** The viewer had accepted it and the client cancelled: "Cancelada por el cliente". */
         val isCancelledByClient: Boolean get() = status == RequestStatus.CANCELLED && detail.viewerIsAssignee
 
+        /** The job is the viewer's and still to be done: the map shows where to go. */
+        val showsDestinationMap: Boolean get() = status == RequestStatus.ACCEPTED && detail.viewerIsAssignee
+
         /** Another professional won (AlreadyTaken) or the client cancelled meanwhile (InvalidTransition). */
         val isRaceLost: Boolean get() = message == DomainError.AlreadyTaken || message is DomainError.InvalidTransition
     }

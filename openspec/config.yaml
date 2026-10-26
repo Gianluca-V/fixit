@@ -23,6 +23,10 @@ testing:
     command: "./gradlew test"
     framework: "JUnit4 + kotlinx-coroutines-test (hand-written fakes, no mocking library)"
     runnable_now: true
+  worker_runner:            # Phase 4 Worker-only scenarios (task 4.1.3)
+    command: "npm test  # inside worker/"
+    framework: "vitest in Node 22, pure functions with injected fetch/clock/JWKS, no Miniflare (D23)"
+    runnable_now: true
   layers:
     unit: { available: true, planned: true, tool: "JUnit4 + kotlinx-coroutines-test (JVM, :core:domain first)" }
     integration: { available: false, planned: false, tool: null }

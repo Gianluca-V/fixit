@@ -78,6 +78,7 @@ class ProRequestDetailViewModelTest {
             assertTrue(state.canAccept)
             assertFalse(state.isUnavailable)
             assertNull(state.detail.contact) // [prof] no client name or phone while OPEN
+            assertFalse(state.showsDestinationMap) // not until it is accepted
         }
 
     @Test
@@ -91,6 +92,7 @@ class ProRequestDetailViewModelTest {
         assertTrue(state.isUnavailable)
         assertFalse(state.canAccept)
         assertNull(state.detail.contact)
+        assertFalse(state.showsDestinationMap) // only the assignee is told where to go
     }
 
     @Test
@@ -124,6 +126,18 @@ class ProRequestDetailViewModelTest {
         }
 
     @Test
+    fun `given an accepted request assigned to A when A opens it then the map of where to go is shown`() = runTest {
+        auth.signedInAs(plumberA)
+        requests.setRequests(listOf(acceptedBy("p1")))
+
+        viewModel.load("r1")
+        val state = viewModel.successWhere { true }
+
+        assertTrue(state.showsDestinationMap)
+        assertEquals(openRequest.place, state.detail.request.place)
+    }
+
+    @Test
     fun `given a job of A cancelled by the client when A opens it then it shows cancelled by the client without contact`() =
         runTest {
             auth.signedInAs(plumberA)
@@ -135,6 +149,7 @@ class ProRequestDetailViewModelTest {
             assertTrue(state.isCancelledByClient)
             assertFalse(state.isUnavailable)
             assertNull(state.detail.contact)
+            assertFalse(state.showsDestinationMap)
         }
 
     @Test
@@ -255,6 +270,7 @@ class ProRequestDetailViewModelTest {
             assertEquals("Muy prolijo", state.detail.review?.comment)
             assertFalse(state.canAccept) // the only action of this screen; there is no rating action
             assertFalse(state.isUnavailable)
+            assertFalse(state.showsDestinationMap) // the job is done, there is nowhere to go
         }
 
     // Loading, errors and idempotent load

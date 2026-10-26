@@ -132,6 +132,8 @@
     <string name="map_confirm">Confirmar</string>
     <string name="map_pin_description">Punto elegido</string>
     <string name="map_hint">Mueva el mapa hasta que el pin quede sobre el lugar.</string>
+    <string name="map_destination_title">Dónde es el trabajo</string>
+    <string name="map_directions">Cómo llegar</string>
     <string name="profile_field_area">Zona</string>
     <string name="profile_area_empty">Sin zona</string>
     <string name="profile_area_clear">Quitar zona</string>
