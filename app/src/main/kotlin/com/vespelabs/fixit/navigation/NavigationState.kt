@@ -22,6 +22,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
  *    pops a root nor switches tab (the course version delegates to [goBack]); screens call it for
  *    their own non-root key, so a stale tap can never change the active tab.
  *  - [resetToRoot] exists to trim a stack before accepting a job and before sign out.
+ *  - [open] applies a tapped notice (design 14b.6); it is a member because it needs the start tab.
  */
 class NavigationState(
     private val startTab: TopLevelDestination,
@@ -75,6 +76,14 @@ class NavigationState(
     fun resetToRoot(tab: TopLevelDestination) {
         val stack = backStacks.getValue(tab)
         while (stack.size > 1) stack.removeAt(stack.lastIndex)
+    }
+
+    /** Shows [destination]'s detail on top of its tab root; null (wrong role) shows the start tab root. */
+    fun open(destination: DeepLinkDestination?) {
+        val tab = destination?.tab ?: startTab
+        selectTab(tab)
+        resetToRoot(tab)
+        destination?.let { navigate(it.key) }
     }
 }
 

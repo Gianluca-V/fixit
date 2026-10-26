@@ -8,4 +8,10 @@
     <string name="tab_feed">Feed</string>
     <string name="tab_my_jobs">Mis trabajos</string>
     <string name="tab_auth">Iniciar sesión</string>
+
+    <!-- Push notices (design 14b.5): fixed texts, never request or person data. The title is app_name. -->
+    <string name="notification_channel_requests">Avisos de solicitudes</string>
+    <string name="notice_request_accepted">Un profesional aceptó tu solicitud</string>
+    <string name="notice_new_request">Hay una nueva solicitud cerca</string>
+    <string name="notice_request_cancelled">El cliente canceló un trabajo aceptado</string>
 </resources>
