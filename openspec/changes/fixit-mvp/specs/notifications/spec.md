@@ -37,7 +37,7 @@ En Android 13 o superior, la app DEBE solicitar el permiso `POST_NOTIFICATIONS` 
 El conjunto de temas a los que debe estar suscrito un dispositivo DEBE ser una función pura de la sesión: para un `CLIENT`, `{user_{uid}}`; para un `PROFESSIONAL`, `{user_{uid}}` más `category_{C}` por cada categoría `C` de su perfil; sin sesión, el conjunto vacío.
 
 - Al iniciar sesión (o al restaurarse una sesión al abrir la app), el dispositivo DEBE suscribirse a los temas de ese conjunto.
-- Al editar sus categorías, el profesional DEBE suscribirse a los temas de las categorías agregadas y desuscribirse de los de las categorías quitadas, sin tocar `user_{uid}` ni los temas que se mantienen.
+- Al editar sus categorías, el dispositivo del profesional DEBE quedar suscrito a los temas de las categorías agregadas y desuscrito de los de las categorías quitadas, y DEBE seguir suscrito a `user_{uid}` y a los temas que se mantienen (volver a suscribirse a ellos es idempotente).
 - Al cerrar sesión, el dispositivo DEBE desuscribirse de todos los temas (`user_{uid}` y todos los `category_*`) de esa cuenta.
 - Cerrar o matar la app NO DEBE desuscribir ningún tema.
 - Al cerrar sesión, la app DEBE retirar de la bandeja del sistema los avisos que siguen visibles, para que no los vea la persona que inicie sesión después en el mismo dispositivo. Esta retirada DEBE ocurrir de inmediato al cerrar sesión, sin esperar a que terminen operaciones de suscripción pendientes.
