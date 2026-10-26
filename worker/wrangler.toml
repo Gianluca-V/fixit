@@ -1,6 +1,9 @@
 name = "fixit-push"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
+# Served on fixit-push.<subdomain>.workers.dev, where the app calls it; no per-version preview URLs.
+workers_dev = true
+preview_urls = false
 
 # Public configuration only. The service account JSON is the secret
 # GOOGLE_SERVICE_ACCOUNT (`wrangler secret put`, or `.dev.vars` locally).
