@@ -25,7 +25,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vespelabs.fixit.core.domain.result.FormField
 import com.vespelabs.fixit.core.domain.result.ValidationError
-import com.vespelabs.fixit.core.ui.components.FixItWordmark
+import com.vespelabs.fixit.core.ui.components.FixItLogo
 import com.vespelabs.fixit.core.ui.theme.FixItTheme
 import com.vespelabs.fixit.feature.auth.R
 import com.vespelabs.fixit.feature.auth.common.AuthScaffold
@@ -84,11 +84,9 @@ fun SignInScreen(
                     .padding(top = 24.dp, bottom = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                FixItWordmark(
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(Modifier.height(8.dp))
+                // The logo carries the name, so it is the only element here that announces the app.
+                FixItLogo(contentDescription = "FixIt")
+                Spacer(Modifier.height(16.dp))
                 Text(
                     text = stringResource(R.string.auth_welcome_tagline),
                     style = MaterialTheme.typography.bodyMedium,

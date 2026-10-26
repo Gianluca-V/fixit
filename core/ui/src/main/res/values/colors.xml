@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fixed brand teal behind the logo mark (Teal40 of the light scheme). The logo keeps it in both themes,
+         and the launcher icon uses it as its background layer. -->
+    <color name="fixit_logo_background">#0B5F62</color>
+</resources>
