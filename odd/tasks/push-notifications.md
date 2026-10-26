@@ -15,7 +15,7 @@ Objective: implement FCM push notifications sent by a Cloudflare Worker, with th
 |---|---|---|---|---|
 | T1 | S1, S3 | inline | done | spec, design 14b.4/D26, tasks 4.9.5–4.9.13, state.yaml revised |
 | T2 | S2 (4.1–4.6) | delegated writer (parallel unit: `worker/`, disjoint from Android) | done | 85b20ff; parent spot check `npm test` 152 passed, `tsc --noEmit` ok |
-| T3 | S2 (4.8–4.12), S3 | delegated writer (parallel unit: `core/data`, `app`, gradle) | pending | |
+| T3 | S2 (4.8–4.12), S3 | delegated writer (parallel unit: `core/data`, `app`, gradle) | done | f3ecf7d, d05b2e0; parent spot check `testDebugUnitTest assembleDebug` exit 0 |
 | T4 | S2, S3 | independent verifier (Risk items 2 security, 4 concurrency, 5 dependencies) | pending | |
 | T5 | S4 | user (manual) | pending | |
 
@@ -25,3 +25,5 @@ Objective: implement FCM push notifications sent by a Cloudflare Worker, with th
 - L2: context — the user asked "tenemos implementado el sistema de notificaciones push? si no lo tenemos dame una propuesta"; the answer was that Phase 4 existed only as an OpenSpec proposal with 66 open tasks and an escalated judgment-day on TopicSync, with the candidate simplification recommended.
 - L3: T1 done inline. Route evidence: T2 and T3 are two independent units with disjoint edit surfaces, each several files and well over 100 lines (Writer trigger a), launched together.
 - L4: T2 returned. Deviations accepted: extra pinned `vite` + `.npmrc legacy-peer-deps` (vitest 5 peer crash in npm); JWKS download failure and malformed secret map to 502. Advisory: 3 dev-only `npm audit` findings via wrangler (fix needs wrangler newer than two weeks). Task 4.1.3 done by the parent.
+- L5: T3 returned. Deviations accepted: `NavigationState.open` is a member (private `startTab`); notice title is `app_name`, channel name "Avisos de solicitudes"; firebase-messaging 26 `onRegistered` also calls `resubscribe()`; shared `parsePushEvent`/`PushKeys` and a testable `PendingPushEvent`; small icon reuses `ic_launcher_monochrome`. Writer fixed `Task<Void>.await()` returning null being read as a timeout. README `PUSH_WORKER_URL` added by the parent. Risk: items 2, 3, 4, 5 -> T4.
+- L6: Engram project is `fixit` (user, 2026-10-26).
